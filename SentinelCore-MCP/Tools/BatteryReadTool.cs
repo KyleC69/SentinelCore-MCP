@@ -1,0 +1,100 @@
+// Solution: SentinelCore
+// Project:   SentinelCore.Orchestrations
+// File:         BatteryReadTool.cs
+// Author: Kyle L. Crowder
+// Build Num:  080801
+
+
+
+using ModelContextProtocol.Server;
+
+using System.ComponentModel;
+using System.Management;
+using System.Runtime.Versioning;
+using System.Text;
+using System.Text.Json;
+
+
+
+
+namespace SentinelCoreMCP.Tools;
+
+
+
+
+
+/// <summary>
+///     Read-only tool for querying battery and power status using CIM (Win32_Battery) and system power calls.
+/// </summary>
+[McpServerToolType]
+public sealed class BatteryReadTool
+{
+
+
+
+
+
+
+
+
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Battery_List", ReadOnly = true, Destructive = false)]
+    [Description("Lists battery status for the system using Win32_Battery.")]
+    public static ToolResult BatteryList()
+    {
+        try
+        {
+            List<object> results = new();
+            using ManagementObjectSearcher searcher = new("root\\cimv2", "SELECT Name, Description, EstimatedChargeRemaining, BatteryStatus, EstimatedRunTime, PowerManagementCapabilities FROM Win32_Battery");
+            foreach (ManagementObject battery in searcher.Get())
+                results.Add(new
+                {
+                    Name = battery["Name"]?.ToString(),
+                    Description = battery["Description"]?.ToString(),
+                    EstimatedChargeRemaining = battery["EstimatedChargeRemaining"]?.ToString(),
+                    BatteryStatus = battery["BatteryStatus"]?.ToString(),
+                    EstimatedRunTime = battery["EstimatedRunTime"]?.ToString()
+                });
+
+            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
+            return ToolResult.Ok(json);
+        }
+        catch
+        {
+            return ToolResult.Fail("Battery listing failed.");
+        }
+    }
+
+
+
+
+
+
+
+
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Battery_Read_Power_Settings", ReadOnly = true, Destructive = false)]
+    [Description("Reads power plan settings related to battery from the power WMI namespace.")]
+    public static ToolResult BatteryReadPowerSettings()
+    {
+        try
+        {
+            StringBuilder sb = new();
+            using ManagementObjectSearcher searcher = new("root\\cimv2\\power", "SELECT InstanceId, ElementName, Value FROM Win32_PowerSettingDataIndex");
+            foreach (ManagementObject setting in searcher.Get())
+            {
+                string? name = setting["ElementName"]?.ToString() ?? string.Empty;
+                if (name.Contains("battery", StringComparison.OrdinalIgnoreCase) || name.Contains("low", StringComparison.OrdinalIgnoreCase) || name.Contains("critical", StringComparison.OrdinalIgnoreCase))
+                {
+                    sb.AppendLine($"InstanceId={setting["InstanceId"]}, Name={name}, Value={setting["Value"]}");
+                }
+            }
+
+            return sb.Length == 0 ? ToolResult.Fail("No battery-specific power settings found.") : ToolResult.Ok(sb.ToString());
+        }
+        catch
+        {
+            return ToolResult.Fail("Battery power settings read failed.");
+        }
+    }
+}
