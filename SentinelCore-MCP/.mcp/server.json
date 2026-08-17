@@ -13,6 +13,26 @@
       },
       "packageArguments": [],
       "environmentVariables": []
+    },
+    {
+      "registryType": "nuget",
+      "identifier": "SentinelCoreMCP",
+      "version": "0.1.0-beta",
+      "transport": {
+        "type": "streamable-http",
+        "url": "http://localhost:5000/mcp"
+      },
+      "packageArguments": [],
+      "environmentVariables": [
+        {
+          "name": "MCP_TRANSPORT_TYPE",
+          "value": "http"
+        },
+        {
+          "name": "ASPNETCORE_URLS",
+          "value": "http://localhost:5000"
+        }
+      ]
     }
   ],
   "repository": {

@@ -2,6 +2,10 @@
 
 A Windows security and configuration reconnaissance server implementing the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). SentinelCore-MCP exposes **70+ read-only tools** that allow AI assistants and MCP clients to inspect Windows system state — firewall rules, Defender status, registry keys, services, processes, certificates, and much more — without modifying anything on the host.
 
+This server is a tool module for the Sentinel Core Investigation Platform. The tools are universal and could be used elsewhere if appropriate. 
+All tools are read-only and are designed only for Windows 10-11 Operating Systems. Server implements the MCP protocol over stdio and HTTP transports, and is discoverable by MCP clients.
+Server can run alongside Sentinel Core or be placed on a separate host for remote inspection of Windows systems. Ideal for enterprise environments where AI agents need to inspect Windows hosts without installing additional software or agents.
+
 > **Windows only.** This server uses Windows-specific APIs (WMI, CIM, Registry, COM, P/Invoke) and is marked `<UnsupportedOSPlatform>linux;osx</UnsupportedOSPlatform>`.
 
 ---
