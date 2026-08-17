@@ -40,13 +40,19 @@ public sealed class BatteryReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Battery_List", ReadOnly = true, Destructive = false)]
     [Description("Lists battery status for the system using Win32_Battery.")]
-    public static ToolResult BatteryList()
+    public static ToolResult BatteryList([Description("Maximum number of batteries to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             List<object> results = new();
             using ManagementObjectSearcher searcher = new("root\\cimv2", "SELECT Name, Description, EstimatedChargeRemaining, BatteryStatus, EstimatedRunTime, PowerManagementCapabilities FROM Win32_Battery");
             foreach (ManagementObject battery in searcher.Get())
+            {
+                if (results.Count >= maxRecords)
+                {
+                    break;
+                }
+
                 results.Add(new
                 {
                     Name = battery["Name"]?.ToString(),
@@ -55,6 +61,7 @@ public sealed class BatteryReadTool
                     BatteryStatus = battery["BatteryStatus"]?.ToString(),
                     EstimatedRunTime = battery["EstimatedRunTime"]?.ToString()
                 });
+            }
 
             string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
             return ToolResult.Ok(json);

@@ -40,11 +40,11 @@ public sealed class NetworkReadTool
 
     [McpServerTool(Name = "Network_List_Interfaces", ReadOnly = true, Destructive = false)]
     [Description("Lists network interfaces and their operational status.")]
-    public static ToolResult NetworkListInterfaces()
+    public static ToolResult NetworkListInterfaces([Description("Maximum number of interfaces to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
-            var interfaces = NetworkInterface.GetAllNetworkInterfaces();
+            var interfaces = NetworkInterface.GetAllNetworkInterfaces().Take(maxRecords);
             var results = interfaces.Select(ni => new
             {
                 ni.Name,
@@ -73,13 +73,13 @@ public sealed class NetworkReadTool
 
     [McpServerTool(Name = "Network_List_Tcp_Connections", ReadOnly = true, Destructive = false)]
     [Description("Lists active TCP connections and their local/remote endpoints.")]
-    public static ToolResult NetworkListTcpConnections()
+    public static ToolResult NetworkListTcpConnections([Description("Maximum number of connections to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
             TcpConnectionInformation[] connections = properties.GetActiveTcpConnections();
-            var results = connections.Select(c => new { LocalEndpoint = c.LocalEndPoint.ToString(), RemoteEndpoint = c.RemoteEndPoint.ToString(), c.State });
+            var results = connections.Take(maxRecords).Select(c => new { LocalEndpoint = c.LocalEndPoint.ToString(), RemoteEndpoint = c.RemoteEndPoint.ToString(), c.State });
 
             string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
             return ToolResult.Ok(json);

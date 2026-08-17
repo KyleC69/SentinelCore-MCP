@@ -39,12 +39,13 @@ public sealed class WindowsServiceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Service_List", ReadOnly = true, Destructive = false)]
     [Description("Lists installed Windows services and their current status.")]
-    public ToolResult serviceList([Description("Optional service name filter (partial match).")] string? nameFilter = null)
+    public ToolResult serviceList([Description("Optional service name filter (partial match).")] string? nameFilter = null, [Description("Maximum number of services to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             var services = ServiceController.GetServices();
             StringBuilder sb = new();
+            int count = 0;
             foreach (ServiceController service in services)
             {
                 if (!string.IsNullOrWhiteSpace(nameFilter) && service.ServiceName.IndexOf(nameFilter, StringComparison.OrdinalIgnoreCase) < 0)
@@ -52,7 +53,13 @@ public sealed class WindowsServiceReadTool
                     continue;
                 }
 
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
                 sb.AppendLine($"Name={service.ServiceName}, DisplayName={service.DisplayName}, Status={service.Status}, StartType={service.StartType}");
+                count++;
             }
 
             return ToolResult.Ok(sb.ToString());

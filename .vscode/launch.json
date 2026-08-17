@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/SentinelCore-MCP/bin/Debug/net10.0/win-x64/SentinelCore-MCP.dll",
+            "program": "${workspaceFolder}/SentinelCore-MCP/bin/Debug/net10.0/win-x64/SentinelCoreMCP.dll",
             "args": [],
             "cwd": "${workspaceFolder}/SentinelCore-MCP",
             "console": "internalConsole",

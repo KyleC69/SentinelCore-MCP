@@ -37,7 +37,7 @@ public sealed class CertificateStoreReadTool
 
     [McpServerTool(Name = "Certificate_List", ReadOnly = true, Destructive = false)]
     [Description("Lists certificates in the specified store and location.")]
-    public static ToolResult CertificateList([Description("The store name, e.g. My, Root, TrustedPublisher.")] string storeName, [Description("The store location: CurrentUser or LocalMachine. Defaults to LocalMachine.")] StoreLocation location = StoreLocation.LocalMachine)
+    public static ToolResult CertificateList([Description("The store name, e.g. My, Root, TrustedPublisher.")] string storeName, [Description("The store location: CurrentUser or LocalMachine. Defaults to LocalMachine.")] StoreLocation location = StoreLocation.LocalMachine, [Description("Maximum number of certificates to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -47,10 +47,19 @@ public sealed class CertificateStoreReadTool
             }
 
             StringBuilder sb = new();
+            int count = 0;
             using X509Store store = new(storeName, location);
             store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
             foreach (X509Certificate2 cert in store.Certificates)
+            {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
                 sb.AppendLine($"Subject={cert.Subject}, Issuer={cert.Issuer}, Thumbprint={cert.Thumbprint}, NotAfter={cert.NotAfter}, FriendlyName={cert.FriendlyName}");
+                count++;
+            }
 
             return ToolResult.Ok(sb.ToString());
         }

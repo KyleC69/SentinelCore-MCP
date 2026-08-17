@@ -39,12 +39,22 @@ public sealed class EventLogReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Event_Log_List_Channels", ReadOnly = true, Destructive = false)]
     [Description("Lists available event log channels.")]
-    public static ToolResult EventLogListChannels()
+    public static ToolResult EventLogListChannels([Description("Maximum number of channels to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             StringBuilder sb = new();
-            foreach (string? logName in EventLogSession.GlobalSession.GetLogNames()) sb.AppendLine(logName);
+            int count = 0;
+            foreach (string? logName in EventLogSession.GlobalSession.GetLogNames())
+            {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
+                sb.AppendLine(logName);
+                count++;
+            }
 
             return ToolResult.Ok(sb.ToString());
         }

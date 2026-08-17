@@ -25,7 +25,7 @@ public sealed class LocalAccountsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Local_Accounts_List_Groups", ReadOnly = true, Destructive = false)]
     [Description("Lists local groups and their members.")]
-    public static ToolResult LocalGroupList([Description("Optional group name to filter. If provided, members of that group are listed.")] string? groupName = null)
+    public static ToolResult LocalGroupList([Description("Optional group name to filter. If provided, members of that group are listed.")] string? groupName = null, [Description("Maximum number of groups to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -36,6 +36,7 @@ public sealed class LocalAccountsReadTool
             using PrincipalSearcher searcher = new(filter);
 
             PrincipalSearchResult<Principal> results = searcher.FindAll();
+            int count = 0;
             foreach (GroupPrincipal group in results.OfType<GroupPrincipal>())
             {
                 if (!string.IsNullOrWhiteSpace(groupName) && !group.Name.Equals(groupName, StringComparison.OrdinalIgnoreCase))
@@ -43,11 +44,18 @@ public sealed class LocalAccountsReadTool
                     continue;
                 }
 
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
                 sb.AppendLine($"Group={group.Name}, Description={group.Description}");
 
                 PrincipalSearchResult<Principal> members = group.GetMembers();
                 foreach (Principal member in members)
                     sb.AppendLine($"  Member={member.Name} ({member.StructuralObjectClass})");
+
+                count++;
             }
 
             return ToolResult.Ok(sb.ToString());
@@ -61,7 +69,7 @@ public sealed class LocalAccountsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Local_Accounts_List_Users", ReadOnly = true, Destructive = false)]
     [Description("Lists local user accounts on the system.")]
-    public static ToolResult LocalUserList()
+    public static ToolResult LocalUserList([Description("Maximum number of users to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -72,9 +80,16 @@ public sealed class LocalAccountsReadTool
             using PrincipalSearcher searcher = new(filter);
 
             PrincipalSearchResult<Principal> results = searcher.FindAll();
+            int count = 0;
             foreach (UserPrincipal user in results.OfType<UserPrincipal>())
             {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
                 sb.AppendLine($"Name={user.Name}, Enabled={user.Enabled}, LastLogon={user.LastLogon}, PasswordNeverExpires={user.PasswordNeverExpires}, UserCannotChangePassword={user.UserCannotChangePassword}");
+                count++;
             }
 
             return ToolResult.Ok(sb.ToString());

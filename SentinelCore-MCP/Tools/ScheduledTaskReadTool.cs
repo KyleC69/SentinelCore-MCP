@@ -22,7 +22,7 @@ public sealed class ScheduledTaskReadTool
 {
     [McpServerTool(Name = "Scheduled_Task_List", ReadOnly = true, Destructive = false)]
     [Description("Lists scheduled tasks in the specified folder path.")]
-    public static ToolResult ScheduledTaskList([Description("The task folder path, e.g. \\ or \\Microsoft\\Windows.")] string folderPath = "\\")
+    public static ToolResult ScheduledTaskList([Description("The task folder path, e.g. \\ or \\Microsoft\\Windows.")] string folderPath = "\\", [Description("Maximum number of tasks to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -34,9 +34,16 @@ public sealed class ScheduledTaskReadTool
             }
 
             StringBuilder sb = new();
+            int count = 0;
             foreach (ScheduledTask scheduledTask in folder.Tasks)
             {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
                 sb.AppendLine($"Name={scheduledTask.Name}, Path={scheduledTask.Path}, State={scheduledTask.State}, Enabled={scheduledTask.Enabled}");
+                count++;
             }
 
             foreach (TaskFolder subFolder in folder.SubFolders)

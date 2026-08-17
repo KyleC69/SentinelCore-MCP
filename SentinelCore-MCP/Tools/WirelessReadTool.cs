@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Management;
 using System.Runtime.Versioning;
+using System.Text;
 using System.Text.Json;
 
 
@@ -43,13 +44,19 @@ public sealed class WirelessReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Wireless_List_Interfaces", ReadOnly = true, Destructive = false)]
     [Description("Lists wireless network interfaces on the system using CIM/MSNdis classes.")]
-    public ToolResult wirelessListInterfaces()
+    public ToolResult wirelessListInterfaces([Description("Maximum number of interfaces to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             List<object> results = new();
             using ManagementObjectSearcher searcher = new("root\\StandardCimv2", "SELECT InstanceID, Name, InterfaceDescription, State, Active FROM MSFT_NetAdapter WHERE InterfaceDescription LIKE '%Wireless%' OR InterfaceDescription LIKE '%Wi-Fi%'");
             foreach (ManagementObject adapter in searcher.Get())
+            {
+                if (results.Count >= maxRecords)
+                {
+                    break;
+                }
+
                 results.Add(new
                 {
                     InstanceID = adapter["InstanceID"]?.ToString(),
@@ -58,6 +65,7 @@ public sealed class WirelessReadTool
                     State = adapter["State"]?.ToString(),
                     Active = adapter["Active"]?.ToString()
                 });
+            }
 
             string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
             return ToolResult.Ok(json);
@@ -78,7 +86,7 @@ public sealed class WirelessReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Wireless_List_Profiles", ReadOnly = true, Destructive = false)]
     [Description("Lists saved Wi-Fi profiles using netsh as a read-only native command invocation.")]
-    public ToolResult wirelessListProfiles()
+    public ToolResult wirelessListProfiles([Description("Maximum number of profiles to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -102,8 +110,29 @@ public sealed class WirelessReadTool
             string stderr = process.StandardError.ReadToEnd();
             process.WaitForExit();
 
-            return process.ExitCode != 0 ? ToolResult.Fail($"netsh failed: {stderr}") : ToolResult.Ok(stdout);
+            if (process.ExitCode != 0)
+            {
+                return ToolResult.Fail($"netsh failed: {stderr}");
+            }
 
+            StringBuilder sb = new();
+            int count = 0;
+            foreach (string line in stdout.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
+            {
+                if (line.Contains("Profile", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (count >= maxRecords)
+                    {
+                        continue;
+                    }
+
+                    count++;
+                }
+
+                sb.AppendLine(line);
+            }
+
+            return ToolResult.Ok(sb.ToString());
         }
         catch
         {

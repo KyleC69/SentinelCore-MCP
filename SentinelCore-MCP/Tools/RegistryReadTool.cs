@@ -99,7 +99,7 @@ public sealed class RegistryReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Registry_List_Key", ReadOnly = true, Destructive = false)]
     [Description("Queries the registry and returns Lists subkey names and value names under the specified registry key path.")]
-    public ToolResult registryListKey([Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive, [Description("The key path within the hive.")] string keyPath)
+    public ToolResult registryListKey([Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive, [Description("The key path within the hive.")] string keyPath, [Description("Maximum number of subkeys and values to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -130,14 +130,31 @@ public sealed class RegistryReadTool
             StringBuilder sb = new();
             sb.AppendLine($"Hive={hive}");
             sb.AppendLine($"Path={keyPath}");
+            int count = 0;
+
             sb.AppendLine("SubKeys:");
-            foreach (string sub in subkeys) sb.AppendLine($"  {sub}");
+            foreach (string sub in subkeys)
+            {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
+                sb.AppendLine($"  {sub}");
+                count++;
+            }
 
             sb.AppendLine("Values:");
             foreach (string val in values)
             {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
                 string displayName = string.IsNullOrEmpty(val) ? "(Default)" : val;
                 sb.AppendLine($"  {displayName}");
+                count++;
             }
 
             return ToolResult.Ok(sb.ToString());

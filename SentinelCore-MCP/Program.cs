@@ -79,21 +79,34 @@ internal class Program
 
         options.ServerInstructions =
             """
-            SentinelCore-MCP provides 70+ read-only tools for inspecting Windows system state.
+            SentinelCore-MCP provides 100+ read-only tools for inspecting Windows system state.
 
             All tools are safe: ReadOnly = true, Destructive = false. They never modify the host.
 
             Key tool categories:
             - Firewall: Firewall_List_Rules, Firewall_Read_Profiles
-            - Defender: Defender_Read_Status, Defender_Read_Registry_Config
-            - Services: Service_List, Service_Read
+            - Defender: Defender_Read_Status, Defender_Read_Registry_Config, Defender_Read_SmartScreen
+            - Services: Service_List, Service_Read, Service_Read_Acl
             - Processes: Process_List, Process_Read
-            - Registry: Registry_List_Key, Registry_Read_Value
-            - Certificates: Certificate_List, Certificate_Read
-            - Network: Network_List_Interfaces, Network_Read_IP_Config
+            - Registry: Registry_List_Key, Registry_Read_Value, Registry_Read_Acl
+            - Certificates: Certificate_List, Certificate_Read, Certificate_Verify
+            - Network: Network_List_Interfaces, Network_Read_IP_Config, Network_List_Listening_Ports, Network_Read_DNS_Cache, Network_Read_ARP_Table, Network_Read_Routing_Table, Network_List_Shares, Network_Read_DNS_Settings
+            - File System: File_System_Read_Content, File_System_Compute_Hash, File_System_List_Streams, File_System_Read_Hosts
             - BitLocker: Bitlocker_List_Volumes, Bitlocker_Read_Volume
-            - Group Policy: Group_Policy_List, Group_Policy_Read_Value
+            - Group Policy: Group_Policy_List, Group_Policy_Read_Value, Group_Policy_Read_RSOP
             - UAC: UAC_Read_Settings, UAC_Read_Token_Elevation
+            - Autoruns: Autoruns_List, Autoruns_List_IFEO
+            - Security: Security_Read_Credential_Guard, Security_Read_SecureBoot, Security_Read_TPM, Security_Read_Exploit_Protection
+            - Sessions: Sessions_List_Active
+            - System: System_Read_Info, System_Read_TimeZone
+            - Browser: Browser_List_Extensions, Browser_Read_History
+            - RDP: RDP_Read_Settings, RDP_Read_Listener_Config, RDP_List_Sessions
+            - USB: Pnp_List_USB_History
+            - COM: COM_List_Classes
+            - Event Log: Event_Log_List_Channels, Event_Log_Query, Event_Log_Read_Configuration, Event_Log_Read_Forwarding
+            - Windows Update: Windows_Update_List_History, Windows_Update_Read_Settings, Windows_Update_List_Missing
+            - Wireless: Wireless_List_Connection_History
+            - Environment: Environment_Read_Path
 
             Every tool returns a ToolResult with Success, Results, and ErrorDetails fields.
             """;

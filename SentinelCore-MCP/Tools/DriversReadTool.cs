@@ -54,9 +54,11 @@ public sealed class DriversReadTool
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Driver_List", ReadOnly = true, Destructive = false)]
-    [Description("Lists installed kernel and file-system drivers via SCM.")]
-    public static ToolResult DriverList([Description("Optional filter: kernel, filesystem, or all. Defaults to all.")] string? typeFilter = null)
+    [Description("Lists installed kernel and file-system drivers via SCM. Use count to limit the number of results returned.")]
+    public static ToolResult DriverList([Description("Optional filter: kernel, filesystem, or all. Defaults to all.")] string? typeFilter = null, [Description("Maximum number of drivers to return. Defaults to 50.")] int count = 50)
     {
+        int maxResults = count > 0 ? count : 50;
+        int resultCount = 0;
         try
         {
             string filter = typeFilter != null ? typeFilter.ToLowerInvariant() : "all";
@@ -64,6 +66,9 @@ public sealed class DriversReadTool
             var services = ServiceController.GetDevices();
             foreach (ServiceController service in services)
             {
+                if (resultCount >= maxResults)
+                    break;
+
                 string kind;
                 try
                 {
@@ -88,6 +93,7 @@ public sealed class DriversReadTool
                 }
 
                 sb.AppendLine($"Name={service.ServiceName}, DisplayName={service.DisplayName}, Status={service.Status}, StartType={service.StartType}, Kind={kind}");
+                resultCount++;
             }
 
             return ToolResult.Ok(sb.ToString());

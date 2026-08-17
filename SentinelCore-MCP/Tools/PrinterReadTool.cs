@@ -85,7 +85,7 @@ public sealed class PrinterReadTool
 
     [McpServerTool(Name = "Printer_List", ReadOnly = true, Destructive = false)]
     [Description("Lists installed printers and their queue status via the Print Spooler API.")]
-    public ToolResult printerList()
+    public ToolResult printerList([Description("Maximum number of printers to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -104,11 +104,18 @@ public sealed class PrinterReadTool
                 }
 
                 int entrySize = Marshal.SizeOf<PrinterInfo2>();
+                int count = 0;
                 for (int i = 0; i < returned; i++)
                 {
+                    if (count >= maxRecords)
+                    {
+                        break;
+                    }
+
                     IntPtr ptr = IntPtr.Add(buffer, i * entrySize);
                     PrinterInfo2 info = Marshal.PtrToStructure<PrinterInfo2>(ptr);
                     sb.AppendLine($"Name={info.pPrinterName}, PortName={info.pPortName}, DriverName={info.pDriverName}, Status={info.Status}, ServerName={info.pServerName}");
+                    count++;
                 }
             }
             finally

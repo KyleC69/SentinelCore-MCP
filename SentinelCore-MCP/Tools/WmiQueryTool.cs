@@ -37,27 +37,31 @@ public sealed class WmiQueryTool
 
 
 
-
     [McpServerTool(Name = "WMI_List_Classes", ReadOnly = true, Destructive = false)]
-    [Description("Lists the names of CIM classes in the specified namespace.")]
-    public ToolResult wmiListClasses([Description("The CIM namespace, e.g. root\\cimv2.")] string nameSpace = @"root\cimv2", [Description("Optional class name prefix filter, e.g. Win32_.")] string? prefix = null)
+    [Description("Lists CIM class names in the specified namespace, compact output.")]
+    public ToolResult wmiListClasses(
+            string nameSpace = @"root\cimv2",
+            string? prefix = null,
+            int maxResults = 50)
     {
         try
         {
-            StringBuilder sb = new();
-            using CimSession? session = CimSession.Create(null);
-            foreach (CimClass? cimClass in session.EnumerateClasses(nameSpace))
+            using CimSession session = CimSession.Create(null);
+
+            var classes = session.EnumerateClasses(nameSpace)
+                    .Select(c => c.CimSystemProperties.ClassName)
+                    .Where(n => prefix == null || n.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    .Take(maxResults)
+                    .ToList();
+
+            var result = new
             {
-                string? className = cimClass.CimSystemProperties.ClassName;
-                if (!string.IsNullOrWhiteSpace(prefix) && !className.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
+                    Namespace = nameSpace,
+                    Count = classes.Count,
+                    Classes = classes
+            };
 
-                sb.AppendLine(className);
-            }
-
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(JsonSerializer.Serialize(result));
         }
         catch (Exception ex)
         {
@@ -71,40 +75,63 @@ public sealed class WmiQueryTool
 
 
 
-
     [McpServerTool(Name = "WMI_Query", ReadOnly = true, Destructive = false)]
-    [Description("Executes a read-only CIM WQL query and returns the results as JSON.")]
-    public ToolResult wmiQuery([Description("The WQL query to execute, e.g. SELECT * FROM Win32_OperatingSystem.")] string query)
+    [Description("Executes a read-only CIM WQL query and returns a compact result set.")]
+    public ToolResult wmiQuery(
+            string query,
+            int maxRows = 25,
+            int maxProperties = 10)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(query))
-            {
                 return ToolResult.Fail("query is required.");
-            }
 
-            List<Dictionary<string, object?>> results = new();
-            using CimSession? session = CimSession.Create(null);
-            foreach (CimInstance? instance in session.QueryInstances(@"root\cimv2", "WQL", query))
+            using CimSession session = CimSession.Create(null);
+
+            var compactRows = new List<Dictionary<string, object?>>();
+            int totalRows = 0;
+
+            foreach (var instance in session.QueryInstances(@"root\cimv2", "WQL", query))
             {
-                Dictionary<string, object?> record = new();
-                foreach (CimProperty? property in instance.CimInstanceProperties)
-                    record[property.Name] = property.Value switch
+                totalRows++;
+
+                if (compactRows.Count >= maxRows)
+                    continue; // count but don't include
+
+                var row = new Dictionary<string, object?>();
+
+                foreach (var prop in instance.CimInstanceProperties.Take(maxProperties))
+                {
+                    object? value = prop.Value switch
                     {
-                        CimInstance nested => nested.ToString(),
-                        Array array => string.Join("|", array.Cast<object>().Select(x => x != null ? x.ToString() != null ? x.ToString() : string.Empty : string.Empty)),
-                        _ => property.Value
+                            CimInstance nested => nested.CimSystemProperties.ClassName,
+                            Array array => string.Join(",", array.Cast<object?>().Where(x => x != null)),
+                            _ => prop.Value
                     };
 
-                results.Add(record);
+                    row[prop.Name] = value;
+                }
+
+                compactRows.Add(row);
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            var result = new
+            {
+                    Query = query,
+                    TotalRows = totalRows,
+                    ReturnedRows = compactRows.Count,
+                    MaxRows = maxRows,
+                    MaxProperties = maxProperties,
+                    Rows = compactRows
+            };
+
+            return ToolResult.Ok(JsonSerializer.Serialize(result));
         }
         catch (Exception ex)
         {
             return ToolResult.Fail($"CIM query failed: {ex.Message}");
         }
     }
+
 }

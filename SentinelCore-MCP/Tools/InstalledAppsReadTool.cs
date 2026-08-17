@@ -42,7 +42,7 @@ public sealed class InstalledAppsReadTool
 
 
     [SupportedOSPlatform("windows")]
-    private static void CollectFromRegistry(RegistryHive hive, string keyPath, List<Dictionary<string, string?>> results, string? filter)
+    private static void CollectFromRegistry(RegistryHive hive, string keyPath, List<Dictionary<string, string?>> results, string? filter, int maxRecords)
     {
         using RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
         using RegistryKey? uninstallKey = baseKey.OpenSubKey(keyPath, false);
@@ -52,6 +52,12 @@ public sealed class InstalledAppsReadTool
         }
 
         foreach (string subKeyName in uninstallKey.GetSubKeyNames())
+        {
+            if (results.Count >= maxRecords)
+            {
+                break;
+            }
+
             try
             {
                 using RegistryKey? subKey = uninstallKey.OpenSubKey(subKeyName, false);
@@ -85,6 +91,7 @@ public sealed class InstalledAppsReadTool
             {
                 // Ignore individual corrupted entries.
             }
+        }
     }
 
 
@@ -97,14 +104,14 @@ public sealed class InstalledAppsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Installed_Apps_List", ReadOnly = true, Destructive = false)]
     [Description("Lists installed applications from the Add/Remove Programs registry entries.")]
-    public static ToolResult InstalledAppsList([Description("Optional publisher or display name filter (partial match).")] string? filter = null)
+    public static ToolResult InstalledAppsList([Description("Optional publisher or display name filter (partial match).")] string? filter = null, [Description("Maximum number of applications to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             List<Dictionary<string, string?>> results = new();
-            CollectFromRegistry(RegistryHive.LocalMachine, UninstallKey, results, filter);
-            CollectFromRegistry(RegistryHive.LocalMachine, Wow64UninstallKey, results, filter);
-            CollectFromRegistry(RegistryHive.CurrentUser, UninstallKey, results, filter);
+            CollectFromRegistry(RegistryHive.LocalMachine, UninstallKey, results, filter, maxRecords);
+            CollectFromRegistry(RegistryHive.LocalMachine, Wow64UninstallKey, results, filter, maxRecords);
+            CollectFromRegistry(RegistryHive.CurrentUser, UninstallKey, results, filter, maxRecords);
 
             string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
             return ToolResult.Ok(json);
@@ -125,7 +132,7 @@ public sealed class InstalledAppsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Installed_Apps_MSI_List", ReadOnly = true, Destructive = false)]
     [Description("Lists installed applications using the Win32_Product CIM provider (MSI API surface).")]
-    public static ToolResult InstalledAppsMsiList([Description("Optional product name filter (partial match).")] string? filter = null)
+    public static ToolResult InstalledAppsMsiList([Description("Optional product name filter (partial match).")] string? filter = null, [Description("Maximum number of applications to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -133,6 +140,11 @@ public sealed class InstalledAppsReadTool
             using ManagementObjectSearcher searcher = new("root\\cimv2", "SELECT Name, Version, Vendor, InstallDate, IdentifyingNumber FROM Win32_Product");
             foreach (ManagementObject product in searcher.Get())
             {
+                if (results.Count >= maxRecords)
+                {
+                    break;
+                }
+
                 string name = product["Name"]?.ToString() ?? string.Empty;
                 if (!string.IsNullOrWhiteSpace(filter) && name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
                 {

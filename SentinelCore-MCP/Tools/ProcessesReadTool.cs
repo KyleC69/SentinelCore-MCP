@@ -57,7 +57,7 @@ public sealed class ProcessesReadTool
 
 
     [Description("Lists running processes with PID, name, and basic metadata.")]
-    public ToolResult processList([Description("Optional process name filter (partial match).")] string? nameFilter = null)
+    public ToolResult processList([Description("Optional process name filter (partial match).")] string? nameFilter = null, [Description("Maximum number of processes to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -68,6 +68,11 @@ public sealed class ProcessesReadTool
                     if (!string.IsNullOrWhiteSpace(nameFilter) && process.ProcessName.IndexOf(nameFilter, StringComparison.OrdinalIgnoreCase) < 0)
                     {
                         continue;
+                    }
+
+                    if (results.Count >= maxRecords)
+                    {
+                        break;
                     }
 
                     results.Add(new

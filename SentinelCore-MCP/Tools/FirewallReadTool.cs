@@ -131,7 +131,7 @@ public sealed class FirewallReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Firewall_List_Rules", ReadOnly = true, Destructive = false)]
     [Description("Lists Windows Firewall rules with optional profile and direction filters.")]
-    public ToolResult firewallListRules([Description("Optional direction filter: Inbound or Outbound.")] string? direction = null, [Description("Optional profile filter: Domain, Private, Public.")] string? profile = null)
+    public ToolResult firewallListRules([Description("Optional direction filter: Inbound or Outbound.")] string? direction = null, [Description("Optional profile filter: Domain, Private, Public.")] string? profile = null, [Description("Maximum number of rules to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -154,8 +154,22 @@ public sealed class FirewallReadTool
 
             int desiredDirection = ParseDirection(direction);
             int desiredProfile = ParseProfile(profile);
+            int resultCount = 0;
 
-            foreach (INetFwRule rule in rules) AppendRule(rule, sb, desiredDirection, desiredProfile);
+            foreach (INetFwRule rule in rules)
+            {
+                if (resultCount >= maxRecords)
+                {
+                    break;
+                }
+
+                int beforeLength = sb.Length;
+                AppendRule(rule, sb, desiredDirection, desiredProfile);
+                if (sb.Length > beforeLength)
+                {
+                    resultCount++;
+                }
+            }
 
             Marshal.ReleaseComObject(rules);
             return ToolResult.Ok(sb.ToString());

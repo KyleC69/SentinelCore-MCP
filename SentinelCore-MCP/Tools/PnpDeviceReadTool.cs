@@ -11,6 +11,7 @@ using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 
 
 
@@ -63,6 +64,44 @@ public sealed class PnpDeviceReadTool
 
 
 
+
+
+
+
+
+
+    private static string LimitOutput(string output, int maxRecords)
+    {
+        if (maxRecords <= 0)
+        {
+            return output;
+        }
+
+        string[] lines = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+        StringBuilder sb = new();
+        int deviceCount = 0;
+        foreach (string line in lines)
+        {
+            if (line.StartsWith("Device", StringComparison.OrdinalIgnoreCase) || line.Contains(":"))
+            {
+                // Counting device entries by header pattern in pnputil output
+                if (line.StartsWith("Device", StringComparison.OrdinalIgnoreCase))
+                {
+                    deviceCount++;
+                }
+            }
+
+            if (deviceCount > maxRecords)
+            {
+                sb.AppendLine($"\n... Output truncated to {maxRecords} device(s).");
+                break;
+            }
+
+            sb.AppendLine(line);
+        }
+
+        return sb.ToString().TrimEnd();
+    }
 
 
 
@@ -143,8 +182,8 @@ public sealed class PnpDeviceReadTool
 
 
     [McpServerTool(Name = "PnpListDevices", ReadOnly = true, Destructive = false)]
-    [Description("Lists PnP devices using the pnputil /enum-devices command. Optional class and status filters are applied when provided.")]
-    public static ToolResult PnpListDevices([Description("Optional class filter for the PnP devices.")] string className = "", [Description("Optional status filter for the PnP devices.")] string status = "")
+    [Description("Lists PnP devices using the pnputil /enum-devices command. Optional class and status filters are applied when provided. Results are limited to maxRecords.")]
+    public static ToolResult PnpListDevices([Description("Optional class filter for the PnP devices.")] string className = "", [Description("Optional status filter for the PnP devices.")] string status = "", [Description("Maximum number of device records to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -175,7 +214,13 @@ public sealed class PnpDeviceReadTool
             }
 
             ToolResult? error = RunPnputil(args, out string output);
-            return error ?? ToolResult.Ok(output);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            string limited = LimitOutput(output, maxRecords);
+            return ToolResult.Ok(limited);
         }
         catch (Exception ex)
         {

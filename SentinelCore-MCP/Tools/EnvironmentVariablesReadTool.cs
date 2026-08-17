@@ -37,13 +37,23 @@ public sealed class EnvironmentVariablesReadTool
 
     [McpServerTool(Name = "Environment_Variables_List", ReadOnly = true, Destructive = false)]
     [Description("Lists environment variables for the current process, user, or machine.")]
-    public static ToolResult EnvironmentList([Description("The target scope: Process, User, or Machine. Defaults to Process.")] EnvironmentVariableTarget target = EnvironmentVariableTarget.Process)
+    public static ToolResult EnvironmentList([Description("The target scope: Process, User, or Machine. Defaults to Process.")] EnvironmentVariableTarget target = EnvironmentVariableTarget.Process, [Description("Maximum number of variables to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             IDictionary variables = Environment.GetEnvironmentVariables(target);
             StringBuilder sb = new();
-            foreach (DictionaryEntry entry in variables) sb.AppendLine($"{entry.Key}={entry.Value}");
+            int count = 0;
+            foreach (DictionaryEntry entry in variables)
+            {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
+                sb.AppendLine($"{entry.Key}={entry.Value}");
+                count++;
+            }
 
             return ToolResult.Ok(sb.ToString());
         }

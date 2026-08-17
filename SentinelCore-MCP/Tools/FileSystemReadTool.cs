@@ -25,7 +25,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 /// <summary>
-///     Read-only tool for inspecting file system metadata, attributes, and ACLs.
+///     Read-only tool for inspecting file system metadata, attributes, ACLs, and file contents.
 /// </summary>
 [McpServerToolType]
 public sealed class FileSystemReadTool
@@ -40,7 +40,7 @@ public sealed class FileSystemReadTool
 
     [McpServerTool(Name = "File_System_List_Directory", ReadOnly = true, Destructive = false)]
     [Description("Lists the names of files and directories in the specified directory path.")]
-    public static ToolResult FileSystemListDirectory([Description("The absolute directory path to list.")] string path, [Description("Optional search pattern, e.g. *.txt. Defaults to *.")] string? searchPattern = null)
+    public static ToolResult FileSystemListDirectory([Description("The absolute directory path to list.")] string path, [Description("Optional search pattern, e.g. *.txt. Defaults to *.")] string? searchPattern = null, [Description("Maximum number of entries (files + directories) to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -57,11 +57,31 @@ public sealed class FileSystemReadTool
 
             string pattern = string.IsNullOrWhiteSpace(searchPattern) ? "*" : searchPattern;
             StringBuilder sb = new();
+            int count = 0;
+
             sb.AppendLine("Directories:");
-            foreach (DirectoryInfo subDir in dir.GetDirectories(pattern)) sb.AppendLine($"  {subDir.Name}");
+            foreach (DirectoryInfo subDir in dir.GetDirectories(pattern))
+            {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
+                sb.AppendLine($"  {subDir.Name}");
+                count++;
+            }
 
             sb.AppendLine("Files:");
-            foreach (FileInfo file in dir.GetFiles(pattern)) sb.AppendLine($"  {file.Name} ({file.Length} bytes)");
+            foreach (FileInfo file in dir.GetFiles(pattern))
+            {
+                if (count >= maxRecords)
+                {
+                    break;
+                }
+
+                sb.AppendLine($"  {file.Name} ({file.Length} bytes)");
+                count++;
+            }
 
             return ToolResult.Ok(sb.ToString());
         }
@@ -179,6 +199,109 @@ public sealed class FileSystemReadTool
         catch
         {
             return ToolResult.Fail("File system metadata read failed.");
+        }
+    }
+
+
+
+
+
+
+
+
+    [McpServerTool(Name = "File_System_Read_Content", ReadOnly = true, Destructive = false)]
+    [Description("Reads the text content of a file. Supports optional line range selection and encoding detection. Binary files are rejected.")]
+    public static ToolResult FileSystemReadContent(
+        [Description("The absolute file path to read.")] string path,
+        [Description("Optional 1-based starting line number. Defaults to 1.")] int startLine = 1,
+        [Description("Optional number of lines to read from the starting line. Defaults to 0 (read all lines).")] int lineCount = 0,
+        [Description("Optional encoding name (e.g. utf-8, ascii). Defaults to utf-8.")] string? encoding = null)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return ToolResult.Fail("path is required.");
+            }
+
+            FileInfo info = new(path);
+            if (!info.Exists)
+            {
+                return ToolResult.Fail($"File not found: {path}");
+            }
+
+            if (info.Attributes.HasFlag(FileAttributes.Directory))
+            {
+                return ToolResult.Fail($"Path is a directory, not a file: {path}");
+            }
+
+            // Reject files that are likely binary by checking for null bytes in the first 8KB.
+            byte[] probe = new byte[Math.Min(info.Length, 8192)];
+            using (FileStream probeStream = new(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                int bytesRead = probeStream.Read(probe, 0, probe.Length);
+                for (int i = 0; i < bytesRead; i++)
+                {
+                    if (probe[i] == 0)
+                    {
+                        return ToolResult.Fail($"File appears to be binary and cannot be read as text: {path}");
+                    }
+                }
+            }
+
+            // Resolve the encoding.
+            Encoding fileEncoding = !string.IsNullOrWhiteSpace(encoding)
+                ? Encoding.GetEncoding(encoding)
+                : Encoding.UTF8;
+
+            string[] lines = File.ReadAllLines(path, fileEncoding);
+
+            if (lines.Length == 0)
+            {
+                return ToolResult.Ok("(file is empty)");
+            }
+
+            // Validate and apply line range.
+            int start = startLine < 1 ? 1 : startLine;
+            int startIndex = start - 1;
+
+            if (startIndex >= lines.Length)
+            {
+                return ToolResult.Fail($"startLine {startLine} exceeds total line count ({lines.Length}).");
+            }
+
+            int count = lineCount > 0 ? lineCount : lines.Length - startIndex;
+            int endIndex = Math.Min(startIndex + count, lines.Length);
+
+            StringBuilder sb = new();
+            int totalLines = endIndex - startIndex;
+            sb.AppendLine($"File: {info.FullName}");
+            sb.AppendLine($"Encoding: {fileEncoding.WebName}");
+            sb.AppendLine($"Total lines: {lines.Length} | Showing: {start}–{endIndex} ({totalLines} lines)");
+            sb.AppendLine(new string('-', 60));
+
+            for (int i = startIndex; i < endIndex; i++)
+            {
+                sb.AppendLine($"{i + 1,6}  |  {lines[i]}");
+            }
+
+            return ToolResult.Ok(sb.ToString());
+        }
+        catch (ArgumentException ex) when (ex.Message.Contains("encoding", StringComparison.OrdinalIgnoreCase))
+        {
+            return ToolResult.Fail($"Unsupported encoding: {encoding}. Use a valid encoding name like 'utf-8' or 'ascii'.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return ToolResult.Fail($"Access denied reading file: {path}");
+        }
+        catch (IOException)
+        {
+            return ToolResult.Fail($"I/O error reading file: {path}");
+        }
+        catch
+        {
+            return ToolResult.Fail("File content read failed.");
         }
     }
 }
