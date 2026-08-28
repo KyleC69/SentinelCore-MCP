@@ -12,7 +12,6 @@ using System.ComponentModel;
 using System.Management;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -40,7 +39,7 @@ public sealed class BatteryReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Battery_List", ReadOnly = true, Destructive = false)]
     [Description("Lists battery status for the system using Win32_Battery.")]
-    public static ToolResult BatteryList([Description("Maximum number of batteries to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> BatteryListAsync([Description("Maximum number of batteries to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -63,12 +62,11 @@ public sealed class BatteryReadTool
                 });
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "BatteryReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Battery listing failed.");
+            return ToolResult.Fail("Battery listing failed.", "BatteryReadTool");
         }
     }
 
@@ -82,7 +80,7 @@ public sealed class BatteryReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Battery_Read_Power_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads power plan settings related to battery from the power WMI namespace.")]
-    public static ToolResult BatteryReadPowerSettings()
+    public async Task<ToolResult> BatteryReadPowerSettingsAsync()
     {
         try
         {
@@ -97,11 +95,11 @@ public sealed class BatteryReadTool
                 }
             }
 
-            return sb.Length == 0 ? ToolResult.Fail("No battery-specific power settings found.") : ToolResult.Ok(sb.ToString());
+            return sb.Length == 0 ? ToolResult.Fail("No battery-specific power settings found.", "BatteryReadTool") : ToolResult.Ok(sb.ToString(), "BatteryReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Battery power settings read failed.");
+            return ToolResult.Fail("Battery power settings read failed.", "BatteryReadTool");
         }
     }
 }

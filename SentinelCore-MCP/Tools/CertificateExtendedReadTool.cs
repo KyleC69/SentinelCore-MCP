@@ -11,8 +11,6 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Text.Json;
 
 
 
@@ -41,7 +39,7 @@ public sealed class CertificateExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Certificate_Verify", ReadOnly = true, Destructive = false)]
     [Description("Verifies a certificate's trust chain and revocation status from the specified store.")]
-    public static ToolResult CertificateVerify(
+    public async Task<ToolResult> CertificateVerifyAsync(
         [Description("The certificate thumbprint/hash to verify.")] string thumbprint,
         [Description("The certificate store name: My, Root, CA, Trust, Disallowed. Defaults to My.")] string storeName = "My",
         [Description("The certificate store location: CurrentUser or LocalMachine. Defaults to LocalMachine.")] string storeLocation = "LocalMachine")
@@ -50,7 +48,7 @@ public sealed class CertificateExtendedReadTool
         {
             if (string.IsNullOrWhiteSpace(thumbprint))
             {
-                return ToolResult.Fail("thumbprint is required.");
+                return ToolResult.Fail("thumbprint is required.", "CertificateExtendedReadTool");
             }
 
             StoreLocation location = storeLocation.Equals("CurrentUser", StringComparison.OrdinalIgnoreCase)
@@ -73,7 +71,7 @@ public sealed class CertificateExtendedReadTool
             X509Certificate2Collection certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
             if (certs.Count == 0)
             {
-                return ToolResult.Fail($"Certificate not found with thumbprint: {thumbprint}");
+                return ToolResult.Fail($"Certificate not found with thumbprint: {thumbprint}", "CertificateExtendedReadTool");
             }
 
             X509Certificate2 cert = certs[0];
@@ -93,12 +91,11 @@ public sealed class CertificateExtendedReadTool
                 cert.IssuerName?.Name
             };
 
-            string json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(result, "CertificateExtendedReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"Certificate verification failed: {ex.Message}");
+            return ToolResult.Fail($"Certificate verification failed: {ex.Message}", "CertificateExtendedReadTool");
         }
     }
 }

@@ -10,8 +10,8 @@ using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Text.Json;
+using System.Security.AccessControl;
+using System.Security.Principal;
 
 
 
@@ -25,22 +25,66 @@ namespace SentinelCoreMCP.Tools;
 /// <summary>
 ///     Read-only tool for analyzing the system PATH environment variable
 ///     for hijack detection and misconfiguration.
+///     Uses ACL inspection instead of creating test files, so the tool has no side effects.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class EnvironmentExtendedReadTool
 {
 
+    /// <summary>
+    ///     Determines whether the current user has write access to a directory by inspecting
+    ///     its ACL, without creating any files.
+    /// </summary>
+    /// <param name="directoryPath">The directory to check.</param>
+    /// <returns><c>true</c> if the current user has write access; otherwise <c>false</c>.</returns>
+    [SupportedOSPlatform("windows")]
+    private static bool IsDirectoryWritable(string directoryPath)
+    {
+        try
+        {
+            DirectorySecurity security = new DirectoryInfo(directoryPath).GetAccessControl();
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            WindowsPrincipal principal = new(identity);
+
+            foreach (FileSystemAccessRule rule in security.GetAccessRules(true, true, typeof(SecurityIdentifier)).Cast<FileSystemAccessRule>())
+            {
+                if (!rule.FileSystemRights.HasFlag(FileSystemRights.Write) && !rule.FileSystemRights.HasFlag(FileSystemRights.CreateFiles))
+                {
+                    continue;
+                }
+
+                if (rule.AccessControlType == AccessControlType.Deny && (identity.User is null || rule.IdentityReference.Value == identity.User.Value))
+                {
+                    return false;
+                }
+
+                if (rule.AccessControlType == AccessControlType.Allow &&
+                    (identity.User is not null && rule.IdentityReference.Value == identity.User.Value ||
+                     principal.IsInRole(WindowsBuiltInRole.Administrator) && rule.IdentityReference.Value.Contains("Administrators", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
 
 
-
-
-
-
+    /// <summary>
+    ///     Reads and analyzes the system and user PATH environment variables for hijack detection.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing JSON-formatted PATH analysis.</returns>
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Environment_Read_Path", ReadOnly = true, Destructive = false)]
     [Description("Reads and analyzes the system and user PATH environment variables for hijack detection.")]
-    public static ToolResult EnvironmentReadPath()
+    public async Task<ToolResult> EnvironmentReadPathAsync()
     {
         try
         {
@@ -52,18 +96,7 @@ public sealed class EnvironmentExtendedReadTool
             foreach (string entry in systemPathEntries)
             {
                 bool exists = Directory.Exists(entry);
-                bool isWritable = false;
-                try
-                {
-                    string testFile = Path.Combine(entry, $"_sentinel_test_{Guid.NewGuid():N}");
-                    File.Create(testFile).Close();
-                    File.Delete(testFile);
-                    isWritable = true;
-                }
-                catch
-                {
-                    // Not writable
-                }
+                bool isWritable = exists && IsDirectoryWritable(entry);
 
                 results.Add(new
                 {
@@ -77,18 +110,7 @@ public sealed class EnvironmentExtendedReadTool
             foreach (string entry in userPathEntries)
             {
                 bool exists = Directory.Exists(entry);
-                bool isWritable = false;
-                try
-                {
-                    string testFile = Path.Combine(entry, $"_sentinel_test_{Guid.NewGuid():N}");
-                    File.Create(testFile).Close();
-                    File.Delete(testFile);
-                    isWritable = true;
-                }
-                catch
-                {
-                    // Not writable
-                }
+                bool isWritable = exists && IsDirectoryWritable(entry);
 
                 results.Add(new
                 {
@@ -105,20 +127,20 @@ public sealed class EnvironmentExtendedReadTool
                 .Where(g => g.Count() > 1)
                 .Select(g => g.Key)
                 .ToList();
-
-            string json = JsonSerializer.Serialize(new
+            var analysis = new
             {
                 Entries = results,
                 DuplicatePaths = duplicates,
                 TotalSystemPaths = systemPathEntries.Length,
                 TotalUserPaths = userPathEntries.Length
-            }, new JsonSerializerOptions { WriteIndented = true });
+            };
 
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(analysis, "PATH analysis complete.");
+
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("PATH analysis failed.");
+            return ToolResult.Fail(ex.Message, "PATH analysis");
         }
     }
 }

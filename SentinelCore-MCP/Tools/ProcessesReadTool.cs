@@ -10,8 +10,7 @@
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Text;
-using System.Text.Json;
+using System.Runtime.Versioning;
 
 
 
@@ -26,6 +25,7 @@ namespace SentinelCoreMCP.Tools;
 ///     Read-only tool for enumerating running processes and basic metadata.
 ///     Uses the managed Process API (a safe read-only interface over ToolHelp32Snapshot / NtQuery APIs).
 /// </summary>
+[SupportedOSPlatform("windows")]
 [McpServerToolType]
 public sealed class ProcessesReadTool
 {
@@ -37,13 +37,13 @@ public sealed class ProcessesReadTool
 
 
 
-    private static T? SafeGet<T>(Func<T> getter)
+    private T? SafeGet<T>(Func<T> getter)
     {
         try
         {
             return getter();
         }
-        catch
+        catch (Exception)
         {
             return default;
         }
@@ -56,8 +56,9 @@ public sealed class ProcessesReadTool
 
 
 
+    [McpServerTool(Name = "Process_List", ReadOnly = true, Destructive = false)]
     [Description("Lists running processes with PID, name, and basic metadata.")]
-    public ToolResult processList([Description("Optional process name filter (partial match).")] string? nameFilter = null, [Description("Maximum number of processes to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> ProcessListAsync([Description("Optional process name filter (partial match).")] string? nameFilter = null, [Description("Maximum number of processes to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -87,17 +88,16 @@ public sealed class ProcessesReadTool
                         PagedMemorySize = process.PagedMemorySize64
                     });
                 }
-                catch
+                catch (Exception)
                 {
                     // Skip processes we cannot inspect (e.g., protected/elevated).
                 }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "ProcessesReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Process listing failed.");
+            return ToolResult.Fail(ex.Message, "Process listing failed.");
         }
     }
 
@@ -110,40 +110,44 @@ public sealed class ProcessesReadTool
 
     [McpServerTool(Name = "Process_Read", ReadOnly = true, Destructive = false)]
     [Description("Reads details for a specific process by PID.")]
-    public ToolResult processRead([Description("The process identifier.")] int processId)
+    public async Task<ToolResult> ProcessReadAsync([Description("The process identifier.")] int processId)
     {
         try
         {
             using Process process = Process.GetProcessById(processId);
             process.Refresh();
-            StringBuilder sb = new();
-            sb.AppendLine($"Id={process.Id}");
-            sb.AppendLine($"Name={process.ProcessName}");
-            sb.AppendLine($"MainWindowTitle={process.MainWindowTitle}");
-            sb.AppendLine($"SessionId={process.SessionId}");
-            sb.AppendLine($"Responding={process.Responding}");
-            sb.AppendLine($"StartTime={SafeGet(() => process.StartTime)}");
-            sb.AppendLine($"WorkingSet64={process.WorkingSet64}");
-            sb.AppendLine($"PagedMemorySize64={process.PagedMemorySize64}");
-            sb.AppendLine($"VirtualMemorySize64={process.VirtualMemorySize64}");
-            sb.AppendLine($"HandleCount={process.HandleCount}");
-            sb.AppendLine($"Threads={process.Threads.Count}");
-            sb.AppendLine("Modules:");
+
+            List<object> moduleList = new();
             try
             {
                 foreach (ProcessModule module in process.Modules)
-                    sb.AppendLine($"  {module.ModuleName}={module.FileName}");
+                    moduleList.Add(new { ModuleName = module.ModuleName, FileName = module.FileName });
             }
-            catch
+            catch (Exception)
             {
-                sb.AppendLine("  (modules unavailable)");
+                moduleList.Add(new { ModuleName = "(unavailable)", FileName = "(unavailable)" });
             }
 
-            return ToolResult.Ok(sb.ToString());
+            var processInfo = new
+            {
+                Id = process.Id,
+                Name = process.ProcessName,
+                MainWindowTitle = process.MainWindowTitle,
+                SessionId = process.SessionId,
+                Responding = process.Responding,
+                StartTime = SafeGet(() => process.StartTime),
+                WorkingSet64 = process.WorkingSet64,
+                PagedMemorySize64 = process.PagedMemorySize64,
+                VirtualMemorySize64 = process.VirtualMemorySize64,
+                HandleCount = process.HandleCount,
+                ThreadCount = process.Threads.Count,
+                Modules = moduleList
+            };
+            return ToolResult.Ok(processInfo, "ProcessesReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Process read failed.");
+            return ToolResult.Fail(ex.Message, "Process read failed.");
         }
     }
 }

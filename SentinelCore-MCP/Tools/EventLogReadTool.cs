@@ -12,7 +12,6 @@ using System.ComponentModel;
 using System.Diagnostics.Eventing.Reader;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -39,7 +38,7 @@ public sealed class EventLogReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Event_Log_List_Channels", ReadOnly = true, Destructive = false)]
     [Description("Lists available event log channels.")]
-    public static ToolResult EventLogListChannels([Description("Maximum number of channels to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> EventLogListChannelsAsync([Description("Maximum number of channels to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -56,11 +55,11 @@ public sealed class EventLogReadTool
                 count++;
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "EventLogReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Event log channel listing failed.");
+            return ToolResult.Fail("Event log channel listing failed.", "EventLogReadTool");
         }
     }
 
@@ -73,13 +72,13 @@ public sealed class EventLogReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Event_Log_Query", ReadOnly = true, Destructive = false)]
     [Description("Queries events from a specific event log channel.")]
-    public static ToolResult EventLogQuery([Description("The event log channel name, e.g. Application or System.")] string channel, [Description("Optional XPath filter expression. Defaults to all events.")] string? query = null, [Description("Maximum number of events to return. Defaults to 50.")] int maxEvents = 50)
+    public async Task<ToolResult> EventLogQueryAsync([Description("The event log channel name, e.g. Application or System.")] string channel, [Description("Optional XPath filter expression. Defaults to all events.")] string? query = null, [Description("Maximum number of events to return. Defaults to 50.")] int maxEvents = 50)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(channel))
             {
-                return ToolResult.Fail("channel is required.");
+                return ToolResult.Fail("channel is required.", "EventLogReadTool");
             }
 
             string xpath = string.IsNullOrWhiteSpace(query) ? "*" : query;
@@ -93,11 +92,11 @@ public sealed class EventLogReadTool
                 count++;
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "EventLogReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Event log query failed.");
+            return ToolResult.Fail("Event log query failed.", "EventLogReadTool");
         }
     }
 
@@ -110,13 +109,13 @@ public sealed class EventLogReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Event_Log_Read_Configuration", ReadOnly = true, Destructive = false)]
     [Description("Reads event log configuration such as retention and file size.")]
-    public static ToolResult EventLogReadConfiguration([Description("The event log channel name.")] string channel)
+    public async Task<ToolResult> EventLogReadConfigurationAsync([Description("The event log channel name.")] string channel)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(channel))
             {
-                return ToolResult.Fail("channel is required.");
+                return ToolResult.Fail("channel is required.", "EventLogReadTool");
             }
 
             EventLogConfiguration config = new(channel);
@@ -130,11 +129,11 @@ public sealed class EventLogReadTool
                 config.IsClassicLog
             };
 
-            return ToolResult.Ok(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+            return ToolResult.Ok(result, "Event log configuration read.");
         }
         catch
         {
-            return ToolResult.Fail("Event log configuration read failed.");
+            return ToolResult.Fail("Event log configuration read failed.", "EventLogReadTool");
         }
     }
 }

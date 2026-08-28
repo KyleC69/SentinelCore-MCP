@@ -9,6 +9,7 @@ using System.Text;
 
 using Microsoft.Win32.TaskScheduler;
 using ModelContextProtocol.Server;
+using System.Runtime.Versioning;
 
 using ScheduledTask = Microsoft.Win32.TaskScheduler.Task;
 
@@ -18,11 +19,12 @@ namespace SentinelCoreMCP.Tools;
 ///     Read-only tool for querying Windows Scheduled Tasks.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class ScheduledTaskReadTool
 {
     [McpServerTool(Name = "Scheduled_Task_List", ReadOnly = true, Destructive = false)]
     [Description("Lists scheduled tasks in the specified folder path.")]
-    public static ToolResult ScheduledTaskList([Description("The task folder path, e.g. \\ or \\Microsoft\\Windows.")] string folderPath = "\\", [Description("Maximum number of tasks to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> ScheduledTaskListAsync([Description("The task folder path, e.g. \\ or \\Microsoft\\Windows.")] string folderPath = "\\", [Description("Maximum number of tasks to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -30,7 +32,7 @@ public sealed class ScheduledTaskReadTool
             TaskFolder? folder = taskService.GetFolder(folderPath);
             if (folder is null)
             {
-                return ToolResult.Fail($"Task folder not found: {folderPath}");
+                return ToolResult.Fail($"Task folder not found: {folderPath}", "ScheduledTaskReadTool");
             }
 
             StringBuilder sb = new();
@@ -51,21 +53,21 @@ public sealed class ScheduledTaskReadTool
                 sb.AppendLine($"[Folder] {subFolder.Path}");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "ScheduledTaskReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Scheduled task listing failed.");
+            return ToolResult.Fail("Scheduled task listing failed.", "ScheduledTaskReadTool");
         }
     }
 
     [McpServerTool(Name = "Scheduled_Task_Read", ReadOnly = true, Destructive = false)]
     [Description("Reads details of a specific scheduled task.")]
-    public static ToolResult ScheduledTaskRead([Description("The full task path, e.g. \\Microsoft\\Windows\\Defender\\Defender Scheduled Scan.")] string taskPath)
+    public async Task<ToolResult> ScheduledTaskReadAsync([Description("The full task path, e.g. \\Microsoft\\Windows\\Defender\\Defender Scheduled Scan.")] string taskPath)
     {
         if (string.IsNullOrWhiteSpace(taskPath))
         {
-            return ToolResult.Fail("taskPath is required.");
+            return ToolResult.Fail("taskPath is required.", "ScheduledTaskReadTool");
         }
 
         try
@@ -74,7 +76,7 @@ public sealed class ScheduledTaskReadTool
             ScheduledTask? scheduledTask = taskService.GetTask(taskPath);
             if (scheduledTask is null)
             {
-                return ToolResult.Fail($"Task not found: {taskPath}");
+                return ToolResult.Fail($"Task not found: {taskPath}", "ScheduledTaskReadTool");
             }
 
             StringBuilder sb = new();
@@ -91,11 +93,11 @@ public sealed class ScheduledTaskReadTool
             sb.AppendLine($"Definition.Settings.AllowDemandStart={scheduledTask.Definition.Settings.AllowDemandStart}");
             sb.AppendLine($"Definition.Settings.StartWhenAvailable={scheduledTask.Definition.Settings.StartWhenAvailable}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "ScheduledTaskReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Scheduled task read failed.");
+            return ToolResult.Fail("Scheduled task read failed.", "ScheduledTaskReadTool");
         }
     }
 }

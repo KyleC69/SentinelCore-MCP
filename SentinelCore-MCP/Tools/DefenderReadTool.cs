@@ -14,7 +14,6 @@ using System.ComponentModel;
 using System.Management;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -42,7 +41,7 @@ public sealed class DefenderReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Defender_Read_Registry_Config", ReadOnly = true, Destructive = false)]
     [Description("Reads Defender exclusion and general configuration registry entries.")]
-    public static ToolResult DefenderReadRegistryConfig()
+    public async Task<ToolResult> DefenderReadRegistryConfigAsync()
     {
         try
         {
@@ -51,16 +50,16 @@ public sealed class DefenderReadTool
             using RegistryKey? key = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows Defender", false);
             if (key is null)
             {
-                return ToolResult.Fail("Windows Defender registry key not found.");
+                return ToolResult.Fail("Windows Defender registry key not found.", "DefenderReadTool");
             }
 
             foreach (string valueName in key.GetValueNames()) sb.AppendLine($"{valueName}={key.GetValue(valueName)}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "DefenderReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Defender registry config read failed.");
+            return ToolResult.Fail("Defender registry config read failed.", "DefenderReadTool");
         }
     }
 
@@ -73,7 +72,7 @@ public sealed class DefenderReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Defender_Read_Status", ReadOnly = true, Destructive = false)]
     [Description("Reads Microsoft Defender antivirus status via the Windows Security Center WMI provider.")]
-    public static ToolResult DefenderReadStatus()
+    public async Task<ToolResult> DefenderReadStatusAsync()
     {
         try
         {
@@ -87,12 +86,11 @@ public sealed class DefenderReadTool
                 results.Add(record);
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "DefenderReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Defender status read failed.");
+            return ToolResult.Fail("Defender status read failed.", "DefenderReadTool");
         }
     }
 }

@@ -41,7 +41,7 @@ public sealed class DcomReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "DCOM_List_Applications", ReadOnly = true, Destructive = false)]
     [Description("Lists DCOM applications registered on the system using WMI Win32_DCOMApplication.")]
-    public static ToolResult DcomListApplications()
+    public async Task<ToolResult> DcomListApplicationsAsync()
     {
         try
         {
@@ -54,11 +54,11 @@ public sealed class DcomReadTool
                 sb.AppendLine($"AppID={appId}, Name={name}");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "DcomReadTool");
         }
         catch
         {
-            return ToolResult.Fail("DCOM application query failed.");
+            return ToolResult.Fail("DCOM application query failed.", "DcomReadTool");
         }
     }
 
@@ -72,20 +72,20 @@ public sealed class DcomReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "DCOM_Read_AppId_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads DCOM AppID settings from the registry under HKLM\\SOFTWARE\\Classes\\AppID.")]
-    public static ToolResult DcomReadAppidSettings([Description("The AppID GUID to inspect, including braces.")] string appId)
+    public async Task<ToolResult> DcomReadAppidSettingsAsync([Description("The AppID GUID to inspect, including braces.")] string appId)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(appId))
             {
-                return ToolResult.Fail("appId is required.");
+                return ToolResult.Fail("appId is required.", "DcomReadTool");
             }
 
             string keyPath = $"SOFTWARE\\Classes\\AppID\\{appId}";
             using RegistryKey? key = Registry.LocalMachine.OpenSubKey(keyPath, false);
             if (key is null)
             {
-                return ToolResult.Fail($"AppID registry key not found: {keyPath}");
+                return ToolResult.Fail($"AppID registry key not found: {keyPath}", "DcomReadTool");
             }
 
             StringBuilder sb = new();
@@ -96,11 +96,11 @@ public sealed class DcomReadTool
                 sb.AppendLine($"{displayName}={key.GetValue(valueName)}");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "DcomReadTool");
         }
         catch
         {
-            return ToolResult.Fail("DCOM AppID read failed.");
+            return ToolResult.Fail("DCOM AppID read failed.", "DcomReadTool");
         }
     }
 }

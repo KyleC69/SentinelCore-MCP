@@ -40,7 +40,7 @@ public sealed class UacReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "UAC_Read_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads UAC policy settings from the registry.")]
-    public ToolResult uacReadSettings()
+    public async Task<ToolResult> uacReadSettingsAsync()
     {
         try
         {
@@ -48,16 +48,16 @@ public sealed class UacReadTool
             using RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", false);
             if (key is null)
             {
-                return ToolResult.Fail("System UAC policy key not found.");
+                return ToolResult.Fail("System UAC policy key not found.", "UacReadTool");
             }
 
             foreach (string valueName in key.GetValueNames()) sb.AppendLine($"{valueName}={key.GetValue(valueName)}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "UacReadTool");
         }
         catch
         {
-            return ToolResult.Fail("UAC settings read failed.");
+            return ToolResult.Fail("UAC settings read failed.", "UacReadTool");
         }
     }
 
@@ -71,7 +71,7 @@ public sealed class UacReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "UAC_Read_Token_Elevation", ReadOnly = true, Destructive = false)]
     [Description("Reports whether the current process token is elevated.")]
-    public ToolResult uacReadTokenElevation()
+    public async Task<ToolResult> uacReadTokenElevationAsync()
     {
         try
         {
@@ -79,11 +79,11 @@ public sealed class UacReadTool
             WindowsPrincipal principal = new(identity);
             bool isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
             bool elevated = !identity.IsSystem && isAdmin;
-            return ToolResult.Ok($"IsElevated={elevated}, IsAdministrator={isAdmin}");
+            return ToolResult.Ok($"IsElevated={elevated}, IsAdministrator={isAdmin}", "UacReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Token elevation read failed.");
+            return ToolResult.Fail("Token elevation read failed.", "UacReadTool");
         }
     }
 }

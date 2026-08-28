@@ -25,7 +25,7 @@ public sealed class LocalAccountsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Local_Accounts_List_Groups", ReadOnly = true, Destructive = false)]
     [Description("Lists local groups and their members.")]
-    public static ToolResult LocalGroupList([Description("Optional group name to filter. If provided, members of that group are listed.")] string? groupName = null, [Description("Maximum number of groups to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> LocalGroupListAsync([Description("Optional group name to filter. If provided, members of that group are listed.")] string? groupName = null, [Description("Maximum number of groups to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -58,18 +58,18 @@ public sealed class LocalAccountsReadTool
                 count++;
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "LocalAccountsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Local group listing failed.");
+            return ToolResult.Fail("Local group listing failed.", "LocalAccountsReadTool");
         }
     }
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Local_Accounts_List_Users", ReadOnly = true, Destructive = false)]
     [Description("Lists local user accounts on the system.")]
-    public static ToolResult LocalUserList([Description("Maximum number of users to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> LocalUserListAsync([Description("Maximum number of users to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -92,11 +92,11 @@ public sealed class LocalAccountsReadTool
                 count++;
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "LocalAccountsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Local user listing failed.");
+            return ToolResult.Fail("Local user listing failed.", "LocalAccountsReadTool");
         }
     }
 }

@@ -39,7 +39,7 @@ public sealed class WindowsServiceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Service_List", ReadOnly = true, Destructive = false)]
     [Description("Lists installed Windows services and their current status.")]
-    public ToolResult serviceList([Description("Optional service name filter (partial match).")] string? nameFilter = null, [Description("Maximum number of services to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> serviceListAsync([Description("Optional service name filter (partial match).")] string? nameFilter = null, [Description("Maximum number of services to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -62,11 +62,11 @@ public sealed class WindowsServiceReadTool
                 count++;
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "WindowsServiceReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"Service listing failed: {ex.Message}");
+            return ToolResult.Fail($"Service listing failed: {ex.Message}", "WindowsServiceReadTool");
         }
     }
 
@@ -79,13 +79,13 @@ public sealed class WindowsServiceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Service_Read", ReadOnly = true, Destructive = false)]
     [Description("Reads detailed information about a specific Windows service.")]
-    public ToolResult serviceRead([Description("The service name (not display name) to inspect.")] string serviceName)
+    public async Task<ToolResult> serviceReadAsync([Description("The service name (not display name) to inspect.")] string serviceName)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(serviceName))
             {
-                return ToolResult.Fail("serviceName is required.");
+                return ToolResult.Fail("serviceName is required.", "WindowsServiceReadTool");
             }
 
             using ServiceController service = new(serviceName);
@@ -103,11 +103,11 @@ public sealed class WindowsServiceReadTool
             sb.AppendLine($"ServicesDependedOn={string.Join(", ", service.ServicesDependedOn.Select(s => s.ServiceName))}");
             sb.AppendLine($"MachineName={service.MachineName}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "WindowsServiceReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"Service read failed: {ex.Message}");
+            return ToolResult.Fail($"Service read failed: {ex.Message}", "WindowsServiceReadTool");
         }
     }
 }

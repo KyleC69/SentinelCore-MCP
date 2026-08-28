@@ -4,44 +4,32 @@
 // Author: Kyle L. Crowder
 // Build Num:  080801
 
-
-
 using Microsoft.Win32;
-
 using ModelContextProtocol.Server;
-
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
 
-
-
-
 namespace SentinelCoreMCP.Tools;
 
-
-
-
-
 /// <summary>
-///     Read-only tool for querying system proxy configuration from the registry and WinHTTP.
+///     Read-only tool for querying system proxy configuration from the registry
+///     (user Internet Settings and machine WinHTTP settings).
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class ProxyReadTool
 {
+    private const string WinHttpSettingsKey = @"SYSTEM\CurrentControlSet\Services\Http\Parameters\ProxySettings";
 
-
-
-
-
-
-
-
+    /// <summary>
+    ///     Reads the per-user system proxy configuration from the Internet Settings registry key.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing the user proxy settings.</returns>
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Proxy_Read_System", ReadOnly = true, Destructive = false)]
     [Description("Reads the system proxy configuration from the Internet Settings registry key.")]
-    public ToolResult proxyReadSystem()
+    public async Task<ToolResult> ProxyReadSystemAsync()
     {
         try
         {
@@ -49,63 +37,52 @@ public sealed class ProxyReadTool
             using RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings", false);
             if (key is null)
             {
-                return ToolResult.Fail("Internet Settings registry key not found.");
+                return ToolResult.Fail("Internet Settings registry key not found.", "ProxyReadTool");
             }
 
             foreach (string valueName in key.GetValueNames())
+            {
                 if (valueName.Contains("Proxy", StringComparison.OrdinalIgnoreCase) || valueName.Contains("AutoConfig", StringComparison.OrdinalIgnoreCase))
                 {
                     sb.AppendLine($"{valueName}={key.GetValue(valueName)}");
                 }
+            }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "ProxyReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("System proxy read failed.");
+            return ToolResult.Fail(ex.Message, "System proxy read");
         }
     }
 
-
-
-
-
-
-
-
+    /// <summary>
+    ///     Reads the machine-wide WinHTTP proxy configuration from the registry
+    ///     instead of shelling out to <c>netsh winhttp show proxy</c>.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing the WinHTTP proxy settings.</returns>
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Proxy_Read_WinHTTP", ReadOnly = true, Destructive = false)]
-    [Description("Reads the WinHTTP proxy configuration using the netsh native command (read-only).")]
-    public ToolResult proxyReadWinhttp()
+    [Description("Reads the machine-wide WinHTTP proxy configuration from the registry.")]
+    public async Task<ToolResult> ProxyReadWinhttpAsync()
     {
         try
         {
-            ProcessStartInfo startInfo = new()
+            StringBuilder sb = new();
+            using RegistryKey? key = Registry.LocalMachine.OpenSubKey(WinHttpSettingsKey, false);
+            if (key is null)
             {
-                FileName = "netsh",
-                Arguments = "winhttp show proxy",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using Process? process = Process.Start(startInfo);
-            if (process is null)
-            {
-                return ToolResult.Fail("Failed to start netsh.");
+                return ToolResult.Ok("WinHttpSettings=DirectAccess (no proxy configured)", "ProxyReadTool");
             }
 
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit();
+            sb.AppendLine($"[HKLM\\{WinHttpSettingsKey}]");
+            foreach (var v in RegistryHelper.ReadValues(key)) sb.AppendLine($"  {v.Name}={v.Value}");
 
-            return process.ExitCode != 0 ? ToolResult.Fail($"netsh failed: {stderr}") : ToolResult.Ok(stdout);
-
+            return ToolResult.Ok(sb.ToString(), "ProxyReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("WinHTTP proxy read failed.");
+            return ToolResult.Fail(ex.Message, "WinHTTP proxy read");
         }
     }
 }

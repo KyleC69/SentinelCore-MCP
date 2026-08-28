@@ -13,7 +13,6 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Management;
 using System.Runtime.Versioning;
-using System.Text.Json;
 
 
 
@@ -104,7 +103,7 @@ public sealed class InstalledAppsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Installed_Apps_List", ReadOnly = true, Destructive = false)]
     [Description("Lists installed applications from the Add/Remove Programs registry entries.")]
-    public static ToolResult InstalledAppsList([Description("Optional publisher or display name filter (partial match).")] string? filter = null, [Description("Maximum number of applications to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> InstalledAppsListAsync([Description("Optional publisher or display name filter (partial match).")] string? filter = null, [Description("Maximum number of applications to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -113,12 +112,11 @@ public sealed class InstalledAppsReadTool
             CollectFromRegistry(RegistryHive.LocalMachine, Wow64UninstallKey, results, filter, maxRecords);
             CollectFromRegistry(RegistryHive.CurrentUser, UninstallKey, results, filter, maxRecords);
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "InstalledAppsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Installed app listing failed.");
+            return ToolResult.Fail("Installed app listing failed.", "InstalledAppsReadTool");
         }
     }
 
@@ -132,7 +130,7 @@ public sealed class InstalledAppsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Installed_Apps_MSI_List", ReadOnly = true, Destructive = false)]
     [Description("Lists installed applications using the Win32_Product CIM provider (MSI API surface).")]
-    public static ToolResult InstalledAppsMsiList([Description("Optional product name filter (partial match).")] string? filter = null, [Description("Maximum number of applications to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> InstalledAppsMsiListAsync([Description("Optional product name filter (partial match).")] string? filter = null, [Description("Maximum number of applications to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -161,12 +159,11 @@ public sealed class InstalledAppsReadTool
                 });
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "InstalledAppsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("MSI product listing failed.");
+            return ToolResult.Fail("MSI product listing failed.", "InstalledAppsReadTool");
         }
     }
 }

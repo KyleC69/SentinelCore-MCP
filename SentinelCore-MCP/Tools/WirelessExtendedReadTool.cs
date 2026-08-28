@@ -12,8 +12,6 @@ using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Text.Json;
 
 
 
@@ -42,7 +40,7 @@ public sealed class WirelessExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Wireless_List_Connection_History", ReadOnly = true, Destructive = false)]
     [Description("Lists wireless network connection history from the registry for rogue access point detection.")]
-    public static ToolResult WirelessListConnectionHistory([Description("Maximum number of profiles to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> WirelessListConnectionHistoryAsync([Description("Maximum number of profiles to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -93,12 +91,11 @@ public sealed class WirelessExtendedReadTool
                 }
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "WirelessExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Wireless connection history listing failed.");
+            return ToolResult.Fail("Wireless connection history listing failed.", "WirelessExtendedReadTool");
         }
     }
 }

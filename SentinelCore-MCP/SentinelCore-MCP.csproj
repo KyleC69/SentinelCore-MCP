@@ -25,7 +25,7 @@
     <AssemblyName>SentinelCoreMCP</AssemblyName>
     <RootNamespace>SentinelCoreMCP</RootNamespace>
     <PackageId>SentinelCoreMCP</PackageId>
-    <PackageVersion>0.1.2</PackageVersion>
+    <PackageVersion>1.0.0</PackageVersion>
     <PackageTags>AI; MCP; server; stdio; http</PackageTags>
     <Description>SentinelCoreMCP is a Windows security and configuration reconnaissance server implementing the Model Context Protocol (MCP). It must be used with Sentinel Core Platform</Description>
   </PropertyGroup>
@@ -37,6 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
     <PackageReference Include="JetBrains.Annotations" Version="2026.2.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.11" />
     <PackageReference Include="TaskScheduler" Version="2.12.2" />
@@ -48,6 +49,14 @@
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.11" />
   </ItemGroup>
 
-  <ProjectExtensions><VisualStudio><UserProperties _1mcp_4server_1json__JsonSchema="https://github.com/ky" /></VisualStudio></ProjectExtensions>
+
+
+
+<Target Name="CopyBuildOutput" AfterTargets="Publish">
+<Message Text="Copying build output..." Importance="High" />
+<Copy SourceFiles="$(TargetDir)\SentinelCoreMCP.exe" DestinationFolder="F:\\Released" SkipUnchangedFiles="false" />
+<Message Text="Copied files to F:\\Released" Importance="High" />
+
+</Target>
 
 </Project>

@@ -11,8 +11,8 @@ using Microsoft.Management.Infrastructure;
 using ModelContextProtocol.Server;
 
 using System.ComponentModel;
+using System.Runtime.Versioning;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -26,6 +26,7 @@ namespace SentinelCoreMCP.Tools;
 /// <summary>
 ///     Read-only tool for querying Hyper-V virtual machines and settings via the CIM-based Hyper-V WMI v2 namespace.
 /// </summary>
+[SupportedOSPlatform("windows")]
 [McpServerToolType]
 public sealed class HyperVReadTool
 {
@@ -41,7 +42,7 @@ public sealed class HyperVReadTool
 
     [McpServerTool(Name = "HyperV_List_Switches", ReadOnly = true, Destructive = false)]
     [Description("Lists Hyper-V virtual switches.")]
-    public static ToolResult HypervListSwitches()
+    public async Task<ToolResult> HypervListSwitchesAsync()
     {
         try
         {
@@ -55,11 +56,11 @@ public sealed class HyperVReadTool
                 sb.AppendLine($"Name={name}, ElementName={elementName}");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "HyperVReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Hyper-V switch listing failed.");
+            return ToolResult.Fail(ex.Message, "Hyper-V switch listing");
         }
     }
 
@@ -72,7 +73,7 @@ public sealed class HyperVReadTool
 
     [McpServerTool(Name = "HyperV_List_VMs", ReadOnly = true, Destructive = false)]
     [Description("Lists Hyper-V virtual machines.")]
-    public static ToolResult HypervListVms()
+    public async Task<ToolResult> HypervListVmsAsync()
     {
         try
         {
@@ -88,11 +89,11 @@ public sealed class HyperVReadTool
                 sb.AppendLine($"Name={name}, ElementName={elementName}, EnabledState={enabledState}, HealthState={healthState}");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "HyperVReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Hyper-V VM listing failed.");
+            return ToolResult.Fail(ex.Message, "Hyper-V VM listing");
         }
     }
 
@@ -105,17 +106,17 @@ public sealed class HyperVReadTool
 
     [McpServerTool(Name = "HyperV_Read_VM", ReadOnly = true, Destructive = false)]
     [Description("Reads settings of a specific Hyper-V virtual machine.")]
-    public static ToolResult HypervReadVm([Description("The VM name (ElementName).")] string vmName)
+    public async Task<ToolResult> HypervReadVmAsync([Description("The VM name (ElementName).")] string vmName)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(vmName))
-            {
-                return ToolResult.Fail("vmName is required.");
-            }
+            ToolResult? nameValidation = InputValidator.ValidateRequired(vmName, "vmName");
+            if (nameValidation is not null) return nameValidation;
 
-            string escaped = vmName.Replace("'", "''");
-            string query = $"SELECT * FROM Msvm_ComputerSystem WHERE ElementName = '{escaped}' AND Caption = 'Virtual Machine'";
+            ToolResult? sanitizedValidation = InputValidator.ValidateSanitizedWqlValue(vmName, "vmName");
+            if (sanitizedValidation is not null) return sanitizedValidation;
+
+            string query = $"SELECT * FROM Msvm_ComputerSystem WHERE ElementName = '{vmName.Replace("'", "''")}' AND Caption = 'Virtual Machine'";
             List<Dictionary<string, object?>> results = new();
             using CimSession? session = CimSession.Create(null!);
             foreach (CimInstance? vm in session.QueryInstances(HyperVNamespace, "WQL", query))
@@ -133,15 +134,14 @@ public sealed class HyperVReadTool
 
             if (results.Count == 0)
             {
-                return ToolResult.Fail($"Hyper-V VM not found: {vmName}");
+                return ToolResult.Fail($"Hyper-V VM not found: {vmName}", "HyperVReadTool");
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "HyperVReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Hyper-V VM read failed.");
+            return ToolResult.Fail(ex.Message, "Hyper-V VM read");
         }
     }
 }

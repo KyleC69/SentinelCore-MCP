@@ -12,8 +12,6 @@ using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Text.Json;
 
 
 
@@ -29,6 +27,7 @@ namespace SentinelCoreMCP.Tools;
 ///     and COM class registrations for COM hijacking detection.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class RegistryExtendedReadTool
 {
 
@@ -39,143 +38,120 @@ public sealed class RegistryExtendedReadTool
 
 
 
-    [SupportedOSPlatform("windows")]
+    /// <summary>
+    ///     Reads the ACL (access control list) of a registry key for permission auditing.
+    /// </summary>
+    /// <param name="hive">Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).</param>
+    /// <param name="keyPath">The key path within the hive.</param>
+    /// <returns>A <see cref="ToolResult" /> containing the typed ACL payload.</returns>
     [McpServerTool(Name = "Registry_Read_Acl", ReadOnly = true, Destructive = false)]
     [Description("Reads the ACL (access control list) of a registry key for permission auditing.")]
-    public static ToolResult RegistryReadAcl(
+    public async Task<ToolResult> RegistryReadAclAsync(
         [Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive,
         [Description("The key path within the hive.")] string keyPath)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(hive))
+            ToolResult? hiveValidation = InputValidator.ValidateRegistryHive(hive);
+            if (hiveValidation is not null)
             {
-                return ToolResult.Fail("hive is required.");
+                return hiveValidation;
             }
 
-            if (string.IsNullOrWhiteSpace(keyPath))
+            ToolResult? pathValidation = InputValidator.ValidateRequired(keyPath, "keyPath");
+            if (pathValidation is not null)
             {
-                return ToolResult.Fail("keyPath is required.");
+                return pathValidation;
             }
 
-            RegistryKey? root = hive.ToUpperInvariant() switch
-            {
-                "HKLM" => Registry.LocalMachine,
-                "HKCU" => Registry.CurrentUser,
-                "HKCR" => Registry.ClassesRoot,
-                "HKU" => Registry.Users,
-                "HKCC" => Registry.CurrentConfig,
-                _ => null
-            };
-
-            if (root is null)
-            {
-                return ToolResult.Fail($"Unknown registry hive: {hive}");
-            }
-
-            using RegistryKey? key = root.OpenSubKey(keyPath, false);
-            if (key is null)
-            {
-                return ToolResult.Fail($"Registry key not found: {hive}\\{keyPath}");
-            }
-
-            // Use PowerShell to get ACL since . doesn't expose registry ACLs easily
-            System.Diagnostics.ProcessStartInfo psi = new()
-            {
-                FileName = "powershell",
-                Arguments = $"-NoProfile -Command \"Get-Acl -Path 'Registry::{hive}\\{keyPath}' | Format-List\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
-            if (process is null)
-            {
-                return ToolResult.Fail("Unable to start PowerShell for ACL query.");
-            }
-
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-
-            return ToolResult.Ok(output);
+            return await RegistryHelper.ReadAclAsync(hive, keyPath).ConfigureAwait(false);
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Registry ACL read failed.");
+            return ToolResult.Fail(ex.Message, $"Registry ACL read for {hive}\\{keyPath}");
         }
     }
 
 
 
+    /// <summary>
+    ///     A single COM class registration record.
+    /// </summary>
+    /// <param name="Clsid">The COM class GUID.</param>
+    /// <param name="ProgId">The programmatic identifier.</param>
+    /// <param name="InprocServer32">The in-process server path, if registered.</param>
+    /// <param name="LocalServer32">The local server path, if registered.</param>
+    public sealed record ComClassRecord(string Clsid, string ProgId, string InprocServer32, string LocalServer32);
 
-
-
-
-
-    [SupportedOSPlatform("windows")]
+    /// <summary>
+    ///     Lists COM class registrations from the registry for COM hijacking detection.
+    /// </summary>
+    /// <param name="maxRecords">Maximum number of classes to return. Defaults to 50.</param>
+    /// <returns>A <see cref="ToolResult" /> containing typed COM class records.</returns>
     [McpServerTool(Name = "COM_List_Classes", ReadOnly = true, Destructive = false)]
     [Description("Lists COM class registrations from the registry for COM hijacking detection.")]
-    public static ToolResult ComListClasses([Description("Maximum number of classes to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> ComListClassesAsync([Description("Maximum number of classes to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
-            List<object> results = new();
-
-            using (RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64))
+            ToolResult? maxRecordsValidation = InputValidator.ValidateMaxRecords(maxRecords);
+            if (maxRecordsValidation is not null)
             {
-                using RegistryKey? clsidKey = baseKey.OpenSubKey(@"CLSID", false);
-                if (clsidKey is not null)
-                {
-                    foreach (string clsid in clsidKey.GetSubKeyNames())
-                    {
-                        if (results.Count >= maxRecords) break;
-
-                        using RegistryKey? classKey = clsidKey.OpenSubKey(clsid, false);
-                        if (classKey is null) continue;
-
-                        object? inprocServer = null;
-                        object? localServer = null;
-                        string? inprocPath = null;
-
-                        using RegistryKey? inprocKey = classKey.OpenSubKey(@"InprocServer32", false);
-                        if (inprocKey is not null)
-                        {
-                            inprocServer = inprocKey.GetValue(null); // Default value is the path
-                            inprocPath = inprocServer?.ToString();
-                        }
-
-                        using RegistryKey? localServerKey = classKey.OpenSubKey(@"LocalServer32", false);
-                        if (localServerKey is not null)
-                        {
-                            localServer = localServerKey.GetValue(null);
-                        }
-
-                        string? progId = null;
-                        using RegistryKey? progIdKey = classKey.OpenSubKey(@"ProgID", false);
-                        if (progIdKey is not null)
-                        {
-                            progId = progIdKey.GetValue(null)?.ToString();
-                        }
-
-                        results.Add(new
-                        {
-                            CLSID = clsid,
-                            ProgID = progId ?? "",
-                            InprocServer32 = inprocPath ?? "",
-                            LocalServer32 = localServer?.ToString() ?? ""
-                        });
-                    }
-                }
+                return maxRecordsValidation;
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            List<ComClassRecord> results = await Task.Run(() =>
+            {
+                List<ComClassRecord> records = new();
+                using RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64);
+                using RegistryKey? clsidKey = baseKey.OpenSubKey(@"CLSID", false);
+                if (clsidKey is null)
+                {
+                    return records;
+                }
+
+                foreach (string clsid in clsidKey.GetSubKeyNames())
+                {
+                    if (records.Count >= maxRecords)
+                    {
+                        break;
+                    }
+
+                    using RegistryKey? classKey = clsidKey.OpenSubKey(clsid, false);
+                    if (classKey is null)
+                    {
+                        continue;
+                    }
+
+                    string? inprocPath = null;
+                    using (RegistryKey? inprocKey = classKey.OpenSubKey(@"InprocServer32", false))
+                    {
+                        inprocPath = inprocKey?.GetValue(null)?.ToString();
+                    }
+
+                    string? localServer = null;
+                    using (RegistryKey? localServerKey = classKey.OpenSubKey(@"LocalServer32", false))
+                    {
+                        localServer = localServerKey?.GetValue(null)?.ToString();
+                    }
+
+                    string? progId = null;
+                    using (RegistryKey? progIdKey = classKey.OpenSubKey(@"ProgID", false))
+                    {
+                        progId = progIdKey?.GetValue(null)?.ToString();
+                    }
+
+                    records.Add(new ComClassRecord(clsid, progId ?? string.Empty, inprocPath ?? string.Empty, localServer ?? string.Empty));
+                }
+
+                return records;
+            }).ConfigureAwait(false);
+
+            return ToolResult.Ok(results, $"Enumerated {results.Count} COM class registration(s).");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("COM class listing failed.");
+            return ToolResult.Fail(ex.Message, "COM class listing");
         }
     }
 }

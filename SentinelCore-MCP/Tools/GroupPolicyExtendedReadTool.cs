@@ -9,8 +9,8 @@
 using ModelContextProtocol.Server;
 
 using System.ComponentModel;
+using System.Management;
 using System.Runtime.Versioning;
-using System.Text;
 
 
 
@@ -20,63 +20,57 @@ namespace SentinelCoreMCP.Tools;
 
 
 
-
 /// <summary>
 ///     Read-only tool for querying Group Policy Resultant Set of Policy (RSOP)
-///     for effective policy analysis.
+///     for effective policy analysis via the RSOP WMI namespace.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class GroupPolicyExtendedReadTool
 {
 
-
-
-
-
-
-
-
+    /// <summary>
+    ///     Reads the Resultant Set of Policy (RSOP) for the computer via the RSOP WMI namespace.
+    /// </summary>
+    /// <param name="maxRecords">Maximum number of policy entries to return. Defaults to 50.</param>
+    /// <returns>A <see cref="ToolResult" /> containing JSON-formatted RSOP entries.</returns>
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Group_Policy_Read_RSOP", ReadOnly = true, Destructive = false)]
-    [Description("Reads the Resultant Set of Policy (RSOP) for the current user and computer.")]
-    public static ToolResult GroupPolicyReadRsop([Description("Maximum number of policy entries to return. Defaults to 50.")] int maxRecords = 50)
+    [Description("Reads the Resultant Set of Policy (RSOP) applied to the computer via the WMI RSOP namespace.")]
+    public async Task<ToolResult> GroupPolicyReadRsopAsync([Description("Maximum number of policy entries to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
-            System.Diagnostics.ProcessStartInfo psi = new()
+            ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxRecords);
+            if (maxValidation is not null)
             {
-                FileName = "powershell",
-                Arguments = $"-NoProfile -Command \"gpresult /Scope Computer /V | Select-Object -First {maxRecords}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
-            if (process is null)
-            {
-                return ToolResult.Fail("Unable to start gpresult.");
+                return maxValidation;
             }
 
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
+            List<object> results = new();
+            using ManagementObjectSearcher searcher = new(@"root\rsop\computer", "SELECT namespace, GPOID, SOMID, idName, idVersion FROM RSOP_GPLink");
+            foreach (ManagementObject link in searcher.Get())
             {
-                string error = process.StandardError.ReadToEnd();
-                // gpresult may return non-zero but still have useful output
-                if (string.IsNullOrWhiteSpace(output))
+                if (results.Count >= maxRecords)
                 {
-                    return ToolResult.Fail($"gpresult failed: {error}");
+                    break;
                 }
+
+                results.Add(new
+                {
+                    Namespace = link["namespace"]?.ToString() ?? string.Empty,
+                    GpoId = link["GPOID"]?.ToString() ?? string.Empty,
+                    SomId = link["SOMID"]?.ToString() ?? string.Empty,
+                    LinkName = link["idName"]?.ToString() ?? string.Empty,
+                    LinkVersion = link["idVersion"]?.ToString() ?? string.Empty
+                });
             }
 
-            return ToolResult.Ok(output);
+            return ToolResult.Ok(results, "GroupPolicyExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("RSOP read failed.");
+            return ToolResult.Fail(ex.Message, "RSOP read");
         }
     }
 }

@@ -12,8 +12,6 @@ using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Text.Json;
 
 
 
@@ -51,7 +49,7 @@ public sealed class HyperVExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "HyperV_List_Checkpoints", ReadOnly = true, Destructive = false)]
     [Description("Lists Hyper-V virtual machine checkpoints (snapshots) for VM rollback detection.")]
-    public static ToolResult HyperVListCheckpoints([Description("Maximum number of checkpoints to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> HyperVListCheckpointsAsync([Description("Maximum number of checkpoints to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -77,12 +75,11 @@ public sealed class HyperVExtendedReadTool
                 });
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "HyperVExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Hyper-V checkpoint listing failed.");
+            return ToolResult.Fail("Hyper-V checkpoint listing failed.", "HyperVExtendedReadTool");
         }
     }
 }

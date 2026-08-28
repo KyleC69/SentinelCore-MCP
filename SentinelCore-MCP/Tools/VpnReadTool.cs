@@ -8,9 +8,9 @@
 
 
 using ModelContextProtocol.Server;
+using System.Runtime.Versioning;
 
 using System.ComponentModel;
-using System.Text.Json;
 
 
 
@@ -25,6 +25,7 @@ namespace SentinelCoreMCP.Tools;
 ///     Read-only tool for enumerating configured VPN connections using the RAS phonebook and registry.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class VpnReadTool
 {
 
@@ -69,7 +70,7 @@ public sealed class VpnReadTool
 
     [McpServerTool(Name = "VPN_List_Connections", ReadOnly = true, Destructive = false)]
     [Description("Lists configured VPN/RAS connections from the current user's phonebook directory.")]
-    public ToolResult vpnListConnections()
+    public async Task<ToolResult> vpnListConnectionsAsync()
     {
         try
         {
@@ -81,12 +82,11 @@ public sealed class VpnReadTool
                 results.AddRange(ParsePhonebook(phonebookPath));
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "VpnReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"VPN connection listing failed: {ex.Message}");
+            return ToolResult.Fail($"VPN connection listing failed: {ex.Message}", "VpnReadTool");
         }
     }
 
@@ -99,18 +99,18 @@ public sealed class VpnReadTool
 
     [McpServerTool(Name = "VPN_Read_Phonebook_Status", ReadOnly = true, Destructive = false)]
     [Description("Reads the phonebook directory path and whether a user phonebook exists.")]
-    public ToolResult vpnReadPhonebookStatus()
+    public async Task<ToolResult> vpnReadPhonebookStatusAsync()
     {
         try
         {
             string phonebookDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Network", "Connections", "Pbk");
             string phonebookPath = Path.Combine(phonebookDir, RasPhonebookFileName);
             bool exists = File.Exists(phonebookPath);
-            return ToolResult.Ok($"PhonebookPath={phonebookPath}, Exists={exists}");
+            return ToolResult.Ok($"PhonebookPath={phonebookPath}, Exists={exists}", "VpnReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"VPN phonebook status read failed: {ex.Message}");
+            return ToolResult.Fail($"VPN phonebook status read failed: {ex.Message}", "VpnReadTool");
         }
     }
 }

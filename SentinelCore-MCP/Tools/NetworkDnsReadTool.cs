@@ -41,7 +41,7 @@ public sealed class NetworkDnsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_Read_DNS_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads DNS server configuration settings from the registry for DNS hijacking detection.")]
-    public static ToolResult NetworkReadDnsSettings()
+    public async Task<ToolResult> NetworkReadDnsSettingsAsync()
     {
         try
         {
@@ -94,11 +94,11 @@ public sealed class NetworkDnsReadTool
                 }
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "NetworkDnsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("DNS settings read failed.");
+            return ToolResult.Fail("DNS settings read failed.", "NetworkDnsReadTool");
         }
     }
 }

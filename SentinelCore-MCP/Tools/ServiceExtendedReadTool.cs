@@ -6,11 +6,12 @@
 
 
 
-using ModelContextProtocol.Server;
-
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -20,89 +21,118 @@ namespace SentinelCoreMCP.Tools;
 
 
 
-
 /// <summary>
 ///     Read-only tool for querying Windows service ACLs (access control lists)
 ///     for service permission misconfiguration detection.
+///     Uses <c>sc.exe sdshow</c> with strict input validation to prevent argument injection.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class ServiceExtendedReadTool
 {
 
+    /// <summary>
+    ///     Validates a service name to prevent argument injection into sc.exe.
+    ///     Service names may contain letters, digits, spaces, hyphens, underscores, and dots.
+    /// </summary>
+    /// <param name="serviceName">The service name to validate.</param>
+    /// <returns>A <see cref="ToolResult" /> indicating failure if validation fails, or <c>null</c> if validation passes.</returns>
+    private static ToolResult? ValidateServiceName(string? serviceName)
+    {
+        ToolResult? requiredResult = InputValidator.ValidateRequired(serviceName, "serviceName");
+        if (requiredResult is not null)
+        {
+            return requiredResult;
+        }
 
+        if (serviceName!.IndexOfAny(['/', '\\', '"', '\'', '&', '|', ';', '<', '>', '%', '$', '`', '!']) >= 0)
+        {
+            return ToolResult.Fail($"serviceName contains invalid characters: {serviceName}. Service names must not contain path separators, quotes, or shell metacharacters.", "ServiceExtendedReadTool");
+        }
 
+        return null;
+    }
 
+    /// <summary>
+    ///     Runs sc.exe with the specified arguments and returns the standard output.
+    /// </summary>
+    /// <param name="arguments">The validated arguments to pass to sc.exe.</param>
+    /// <param name="operation">The operation description for error reporting.</param>
+    /// <returns>The standard output of sc.exe.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when sc.exe fails or times out.</exception>
+    private static string RunSc(string arguments, string operation)
+    {
+        using Process process = new()
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = "sc.exe",
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            }
+        };
 
+        process.Start();
 
+        string stdout = process.StandardOutput.ReadToEnd();
+        string stderr = process.StandardError.ReadToEnd();
 
+        if (!process.WaitForExit(30_000))
+        {
+            process.Kill();
+            throw new TimeoutException($"sc.exe {operation} timed out after 30 seconds.");
+        }
 
+        if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(stdout))
+        {
+            throw new InvalidOperationException($"sc.exe {operation} failed with exit code {process.ExitCode}: {stderr}");
+        }
+
+        return stdout;
+    }
+
+    /// <summary>
+    ///     Reads the ACL (access control list) of a Windows service for permission auditing.
+    /// </summary>
+    /// <param name="serviceName">The service name to inspect.</param>
+    /// <returns>A <see cref="ToolResult" /> containing the service SDDL and configuration.</returns>
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Service_Read_Acl", ReadOnly = true, Destructive = false)]
     [Description("Reads the ACL (access control list) of a Windows service for permission auditing.")]
-    public static ToolResult ServiceReadAcl([Description("The service name to inspect.")] string serviceName)
+    public async Task<ToolResult> ServiceReadAclAsync([Description("The service name to inspect.")] string serviceName)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(serviceName))
+            ToolResult? nameValidation = ValidateServiceName(serviceName);
+            if (nameValidation is not null)
             {
-                return ToolResult.Fail("serviceName is required.");
+                return nameValidation;
             }
 
-            // Use sc.exe sdshow to get the service security descriptor
-            System.Diagnostics.ProcessStartInfo psi = new()
-            {
-                FileName = "sc",
-                Arguments = $"sdshow {serviceName}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+            string sddl = RunSc($"sdshow \"{serviceName}\"", "sdshow");
 
-            using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
-            if (process is null)
+            if (string.IsNullOrWhiteSpace(sddl.Trim()))
             {
-                return ToolResult.Fail("Unable to start sc.exe.");
+                return ToolResult.Fail($"Service not found or no ACL available: {serviceName}", "ServiceExtendedReadTool");
             }
 
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
+            string config = RunSc($"qc \"{serviceName}\"", "qc");
 
-            if (string.IsNullOrWhiteSpace(output.Trim()))
-            {
-                return ToolResult.Fail($"Service not found or no ACL available: {serviceName}");
-            }
-
-            // Also get service config for context
-            System.Diagnostics.ProcessStartInfo psiConfig = new()
-            {
-                FileName = "sc",
-                Arguments = $"qc {serviceName}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using System.Diagnostics.Process? processConfig = System.Diagnostics.Process.Start(psiConfig);
             StringBuilder sb = new();
             sb.AppendLine($"[Service: {serviceName}]");
             sb.AppendLine("[Security Descriptor (SDDL)]");
-            sb.AppendLine(output.Trim());
+            sb.AppendLine(sddl.Trim());
+            sb.AppendLine("[Service Configuration]");
+            sb.AppendLine(config.Trim());
 
-            if (processConfig is not null)
-            {
-                string configOutput = processConfig.StandardOutput.ReadToEnd();
-                processConfig.WaitForExit();
-                sb.AppendLine("[Service Configuration]");
-                sb.AppendLine(configOutput.Trim());
-            }
-
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "ServiceExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Service ACL read failed.");
+            return ToolResult.Fail(ex.Message, $"Service ACL read for {serviceName}");
         }
     }
 }

@@ -41,7 +41,7 @@ public sealed class EventLogExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Event_Log_Read_Forwarding", ReadOnly = true, Destructive = false)]
     [Description("Reads Windows Event Forwarding (WEF) subscription configuration from the registry.")]
-    public static ToolResult EventLogReadForwarding()
+    public async Task<ToolResult> EventLogReadForwardingAsync()
     {
         try
         {
@@ -96,11 +96,11 @@ public sealed class EventLogExtendedReadTool
                 }
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "EventLogExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Event log forwarding read failed.");
+            return ToolResult.Fail("Event log forwarding read failed.", "EventLogExtendedReadTool");
         }
     }
 }

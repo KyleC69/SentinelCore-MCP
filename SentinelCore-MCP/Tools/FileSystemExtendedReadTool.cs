@@ -11,8 +11,6 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 
 
 
@@ -41,7 +39,7 @@ public sealed class FileSystemExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "File_System_Compute_Hash", ReadOnly = true, Destructive = false)]
     [Description("Computes a cryptographic hash of a file using the specified algorithm (MD5, SHA1, SHA256, SHA384, SHA512).")]
-    public static ToolResult FileSystemComputeHash(
+    public async Task<ToolResult> FileSystemComputeHashAsync(
         [Description("The full path to the file to hash.")] string filePath,
         [Description("The hash algorithm to use: MD5, SHA1, SHA256, SHA384, or SHA512. Defaults to SHA256.")] string algorithm = "SHA256")
     {
@@ -49,12 +47,12 @@ public sealed class FileSystemExtendedReadTool
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {
-                return ToolResult.Fail("filePath is required.");
+                return ToolResult.Fail("filePath is required.", "FileSystemExtendedReadTool");
             }
 
             if (!File.Exists(filePath))
             {
-                return ToolResult.Fail($"File not found: {filePath}");
+                return ToolResult.Fail($"File not found: {filePath}", "FileSystemExtendedReadTool");
             }
 
             using var hashAlgorithm = algorithm.ToUpperInvariant() switch
@@ -79,12 +77,11 @@ public sealed class FileSystemExtendedReadTool
                 FileSize = new FileInfo(filePath).Length
             };
 
-            string json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(result, "FileSystemExtendedReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"File hash computation failed: {ex.Message}");
+            return ToolResult.Fail($"File hash computation failed: {ex.Message}", "FileSystemExtendedReadTool");
         }
     }
 
@@ -98,7 +95,7 @@ public sealed class FileSystemExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "File_System_List_Streams", ReadOnly = true, Destructive = false)]
     [Description("Lists alternate data streams (ADS) for a file or directory on an NTFS volume.")]
-    public static ToolResult FileSystemListStreams(
+    public async Task<ToolResult> FileSystemListStreamsAsync(
         [Description("The full path to the file or directory to inspect for alternate data streams.")] string path,
         [Description("Maximum number of streams to return. Defaults to 50.")] int maxRecords = 50)
     {
@@ -106,12 +103,12 @@ public sealed class FileSystemExtendedReadTool
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.");
+                return ToolResult.Fail("path is required.", "FileSystemExtendedReadTool");
             }
 
             if (!File.Exists(path) && !Directory.Exists(path))
             {
-                return ToolResult.Fail($"Path not found: {path}");
+                return ToolResult.Fail($"Path not found: {path}", "FileSystemExtendedReadTool");
             }
 
             List<object> results = new();
@@ -128,7 +125,7 @@ public sealed class FileSystemExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start dir command.");
+                return ToolResult.Fail("Unable to start dir command.", "FileSystemExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -155,12 +152,11 @@ public sealed class FileSystemExtendedReadTool
                 }
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "FileSystemExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Alternate data stream listing failed.");
+            return ToolResult.Fail("Alternate data stream listing failed.", "FileSystemExtendedReadTool");
         }
     }
 
@@ -174,14 +170,14 @@ public sealed class FileSystemExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "File_System_Read_Hosts", ReadOnly = true, Destructive = false)]
     [Description("Reads the contents of the Windows hosts file for DNS redirection detection.")]
-    public static ToolResult FileSystemReadHosts()
+    public async Task<ToolResult> FileSystemReadHostsAsync()
     {
         try
         {
             string hostsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "drivers", "etc", "hosts");
             if (!File.Exists(hostsPath))
             {
-                return ToolResult.Fail($"Hosts file not found at: {hostsPath}");
+                return ToolResult.Fail($"Hosts file not found at: {hostsPath}", "FileSystemExtendedReadTool");
             }
 
             string[] lines = File.ReadAllLines(hostsPath);
@@ -207,12 +203,11 @@ public sealed class FileSystemExtendedReadTool
                 }
             }
 
-            string json = JsonSerializer.Serialize(entries, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(entries, "FileSystemExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Hosts file read failed.");
+            return ToolResult.Fail("Hosts file read failed.", "FileSystemExtendedReadTool");
         }
     }
 }

@@ -14,7 +14,6 @@ using System.Diagnostics;
 using System.Management;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -44,7 +43,7 @@ public sealed class WirelessReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Wireless_List_Interfaces", ReadOnly = true, Destructive = false)]
     [Description("Lists wireless network interfaces on the system using CIM/MSNdis classes.")]
-    public ToolResult wirelessListInterfaces([Description("Maximum number of interfaces to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> wirelessListInterfacesAsync([Description("Maximum number of interfaces to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -67,12 +66,11 @@ public sealed class WirelessReadTool
                 });
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "WirelessReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"Wireless interface listing failed: {ex.Message}");
+            return ToolResult.Fail($"Wireless interface listing failed: {ex.Message}", "WirelessReadTool");
         }
     }
 
@@ -86,7 +84,7 @@ public sealed class WirelessReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Wireless_List_Profiles", ReadOnly = true, Destructive = false)]
     [Description("Lists saved Wi-Fi profiles using netsh as a read-only native command invocation.")]
-    public ToolResult wirelessListProfiles([Description("Maximum number of profiles to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> wirelessListProfilesAsync([Description("Maximum number of profiles to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -103,7 +101,7 @@ public sealed class WirelessReadTool
             using Process? process = Process.Start(startInfo);
             if (process is null)
             {
-                return ToolResult.Fail("Failed to start netsh.");
+                return ToolResult.Fail("Failed to start netsh.", "WirelessReadTool");
             }
 
             string stdout = process.StandardOutput.ReadToEnd();
@@ -112,7 +110,7 @@ public sealed class WirelessReadTool
 
             if (process.ExitCode != 0)
             {
-                return ToolResult.Fail($"netsh failed: {stderr}");
+                return ToolResult.Fail($"netsh failed: {stderr}", "WirelessReadTool");
             }
 
             StringBuilder sb = new();
@@ -132,11 +130,11 @@ public sealed class WirelessReadTool
                 sb.AppendLine(line);
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "WirelessReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Wireless profile listing failed.");
+            return ToolResult.Fail("Wireless profile listing failed.", "WirelessReadTool");
         }
     }
 }

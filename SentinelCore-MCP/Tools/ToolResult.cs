@@ -30,31 +30,35 @@ public class ToolResult
 
     /// <summary>
     ///     Indicates the reason for the failure of the tool operation, if any.
+    ///     THIS MUST BE USED FOR ALL FAILURES AND CONTAIN THE EXCEPTION MESSAGE AND ANY ADDITIONAL CONTEXTUAL INFORMATION ABOUT THE FAILURE. This is critical for debugging and understanding why a tool operation failed.
+    ///    ///     If the tool operation was successful, this property should be null.
     /// </summary>
     public string? ErrorDetails { get; set; }
 
     /// <summary>
-    ///     Indicates the results of the tool operation. This is a free-form string that can be used to store any information
-    ///     that the tool wants to return to the caller.
+    ///     Indicates the results of the tool operation. This is oftype object to allow for flexibility in the type of results that can be returned. It can be a string, a complex object, or any other type that represents the results of the tool operation.
     /// </summary>
-    public string? Results { get; set; }
+    public object? Results { get; set; }
 
     /// <summary>
     ///     Indicates whether the tool operation was successful.
     /// </summary>
-    public bool Success { get; set;}
+    public bool Success { get; set; }
+
+    ///<summary>
+    ///      Human readable message providing additional context about the result of the tool operation. This can be used to explain the outcome of the operation in a more user-friendly way, or to provide additional information about the result. It can be used for logging, debugging, or providing feedback to the user. If the tool operation was successful, this property can contain a success message. If the operation failed, it can contain a message explaining the failure.
+    /// </summary>
+    public string? Message { get; set; }
 
 
-public string? Message { get; set; }
 
 
 
-
-
-    public static ToolResult Fail(string errorDetails, string message = "Fail")
+    public static ToolResult Fail(string errorDetails, string message)
        => new ToolResult
        {
            Success = false,
+           Message = message,
            ErrorDetails = errorDetails,
            Results = null
        };
@@ -66,7 +70,7 @@ public string? Message { get; set; }
 
 
 
-    public static ToolResult Ok(string results , string message = "Ok")
+    public static ToolResult Ok(object results, string message)
     {
         return new ToolResult
         {

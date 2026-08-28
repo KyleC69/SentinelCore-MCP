@@ -11,7 +11,6 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Management;
 using System.Text;
-using System.Text.Json;
 using System.Runtime.Versioning;
 
 
@@ -40,7 +39,7 @@ public sealed class SensorsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sensor_List_Devices", ReadOnly = true, Destructive = false)]
     [Description("Lists sensor devices via CIM Win32_PnPEntity matching common sensor class names.")]
-    public ToolResult sensorListDevices()
+    public async Task<ToolResult> sensorListDevicesAsync()
     {
         try
         {
@@ -56,12 +55,11 @@ public sealed class SensorsReadTool
                     Manufacturer = device["Manufacturer"]?.ToString()
                 });
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "SensorsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Sensor device listing failed.");
+            return ToolResult.Fail("Sensor device listing failed.", "SensorsReadTool");
         }
     }
 
@@ -75,7 +73,7 @@ public sealed class SensorsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sensor_Read_Location_Service", ReadOnly = true, Destructive = false)]
     [Description("Reads the Windows sensor permissions / location service status from CIM.")]
-    public ToolResult sensorReadLocationService()
+    public async Task<ToolResult> sensorReadLocationServiceAsync()
     {
         try
         {
@@ -84,11 +82,11 @@ public sealed class SensorsReadTool
             foreach (ManagementObject service in searcher.Get())
                 sb.AppendLine($"LocationService(lfsvc) Status={service["Status"]}");
 
-            return sb.Length == 0 ? ToolResult.Fail("Location service not found.") : ToolResult.Ok(sb.ToString());
+            return sb.Length == 0 ? ToolResult.Fail("Location service not found.", "SensorsReadTool") : ToolResult.Ok(sb.ToString(), "SensorsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Sensor location service read failed.");
+            return ToolResult.Fail("Sensor location service read failed.", "SensorsReadTool");
         }
     }
 }

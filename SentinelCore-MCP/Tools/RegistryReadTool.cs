@@ -7,12 +7,9 @@
 
 
 using Microsoft.Win32;
-
 using ModelContextProtocol.Server;
-
 using System.ComponentModel;
 using System.Runtime.Versioning;
-using System.Text;
 
 
 
@@ -22,199 +19,169 @@ namespace SentinelCoreMCP.Tools;
 
 
 
-
 /// <summary>
 ///     Read-only tool for querying Windows registry keys and values.
 /// </summary>
+[SupportedOSPlatform("windows")]
 [McpServerToolType]
 public sealed class RegistryReadTool
 {
 
+    /// <summary>
+    ///     A single registry subkey/value listing record.
+    /// </summary>
+    /// <param name="Hive">The hive abbreviation.</param>
+    /// <param name="Path">The key path within the hive.</param>
+    /// <param name="SubKeys">The subkey names.</param>
+    /// <param name="Values">The value names.</param>
+    public sealed record RegistryKeyListingRecord(string Hive, string Path, IReadOnlyList<string> SubKeys, IReadOnlyList<string> Values);
 
-
-
-
-
-
-
-    [SupportedOSPlatform("windows")]
-    private static string FormatRegistryValue(object value, RegistryValueKind kind)
-    {
-        return kind switch
-        {
-            RegistryValueKind.MultiString => string.Join("|", (string[])value),
-            RegistryValueKind.Binary => Convert.ToHexString((byte[])value),
-            _ => value?.ToString() ?? string.Empty
-        };
-    }
-
-
-
-
-
-
-
-
-    [SupportedOSPlatform("windows")]
-    [Description("Registry tool to get the hive root")]
-    private static RegistryKey? GetHiveRoot([Description("The hive to get the root of")] string hive)
-    {
-        return hive.ToUpperInvariant() switch
-        {
-            "HKLM" => Registry.LocalMachine,
-            "HKCU" => Registry.CurrentUser,
-            "HKCR" => Registry.ClassesRoot,
-            "HKU" => Registry.Users,
-            "HKCC" => Registry.CurrentConfig,
-            _ => null
-        };
-    }
-
-
-
-
-
-
-
+    /// <summary>
+    ///     A single registry value read record.
+    /// </summary>
+    /// <param name="Hive">The hive abbreviation.</param>
+    /// <param name="Path">The key path within the hive.</param>
+    /// <param name="ValueName">The value name, or "(Default)".</param>
+    /// <param name="Kind">The registry value kind.</param>
+    /// <param name="Value">The formatted value data.</param>
+    public sealed record RegistryValueReadRecord(string Hive, string Path, string ValueName, string Kind, string Value);
 
     /// <summary>
     ///     Lists the subkey names and value names under the specified registry key path.
     /// </summary>
-    /// <param name="hive">
-    ///     The registry hive abbreviation (e.g., HKLM, HKCU, HKCR, HKU, HKCC).
-    /// </param>
-    /// <param name="keyPath">
-    ///     The path of the registry key within the specified hive.
-    /// </param>
-    /// <returns>
-    ///     A <see cref="ToolResult" /> containing the list of subkeys and values if successful,
-    ///     or an error message if the operation fails.
-    /// </returns>
-    /// <exception cref="ArgumentException">
-    ///     Thrown if <paramref name="hive" /> or <paramref name="keyPath" /> is null, empty, or whitespace.
-    /// </exception>
-    /// <exception cref="Exception">
-    ///     Thrown if an unexpected error occurs while accessing the registry.
-    /// </exception>
+    /// <param name="hive">Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).</param>
+    /// <param name="keyPath">The key path within the hive.</param>
+    /// <param name="maxRecords">Maximum number of subkeys and values to return. Defaults to 50.</param>
+    /// <returns>A <see cref="ToolResult" /> containing the typed key listing.</returns>
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Registry_List_Key", ReadOnly = true, Destructive = false)]
     [Description("Queries the registry and returns Lists subkey names and value names under the specified registry key path.")]
-    public ToolResult registryListKey([Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive, [Description("The key path within the hive.")] string keyPath, [Description("Maximum number of subkeys and values to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> RegistryListKeyAsync(
+        [Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive,
+        [Description("The key path within the hive.")] string keyPath,
+        [Description("Maximum number of subkeys and values to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(hive))
+            ToolResult? validationResult = InputValidator.ValidateRegistryHive(hive);
+            if (validationResult is not null)
             {
-                return ToolResult.Fail("hive is required.");
+                return validationResult;
             }
 
-            if (string.IsNullOrWhiteSpace(keyPath))
+            validationResult = InputValidator.ValidateRequired(keyPath, "keyPath");
+            if (validationResult is not null)
             {
-                return ToolResult.Fail("keyPath is required.");
+                return validationResult;
             }
 
-            RegistryKey? root = GetHiveRoot(hive);
+            validationResult = InputValidator.ValidateMaxRecords(maxRecords);
+            if (validationResult is not null)
+            {
+                return validationResult;
+            }
+
+            RegistryKey? root = RegistryHelper.GetHiveRoot(hive);
             if (root is null)
             {
-                return ToolResult.Fail($"Unknown registry hive: {hive}");
+                return ToolResult.Fail($"Unknown registry hive: {hive}. Supported hives: HKLM, HKCU, HKCR, HKU, HKCC.", "Registry list key");
             }
 
-            using RegistryKey? key = root.OpenSubKey(keyPath, false);
-            if (key is null)
+            RegistryKeyListingRecord? listing = await Task.Run(() =>
             {
-                return ToolResult.Fail($"Registry key not found: {hive}\\{keyPath}");
-            }
-
-            string[] subkeys = key.GetSubKeyNames();
-            string[] values = key.GetValueNames();
-            StringBuilder sb = new();
-            sb.AppendLine($"Hive={hive}");
-            sb.AppendLine($"Path={keyPath}");
-            int count = 0;
-
-            sb.AppendLine("SubKeys:");
-            foreach (string sub in subkeys)
-            {
-                if (count >= maxRecords)
+                using RegistryKey? key = root.OpenSubKey(keyPath, false);
+                if (key is null)
                 {
-                    break;
+                    return null;
                 }
 
-                sb.AppendLine($"  {sub}");
-                count++;
-            }
+                List<string> subkeys = key.GetSubKeyNames().Take(maxRecords).ToList();
+                List<string> values = key.GetValueNames()
+                    .Select(v => string.IsNullOrEmpty(v) ? "(Default)" : v)
+                    .Take(maxRecords)
+                    .ToList();
 
-            sb.AppendLine("Values:");
-            foreach (string val in values)
+                return new RegistryKeyListingRecord(hive, keyPath, subkeys, values);
+            }).ConfigureAwait(false);
+
+            if (listing is null)
             {
-                if (count >= maxRecords)
-                {
-                    break;
-                }
-
-                string displayName = string.IsNullOrEmpty(val) ? "(Default)" : val;
-                sb.AppendLine($"  {displayName}");
-                count++;
+                return ToolResult.Fail($"Registry key not found: {hive}\\{keyPath}", "Registry list key");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(listing, $"Registry key listing for {hive}\\{keyPath}");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Registry list failed.");
+            return ToolResult.Fail(ex.Message, $"Registry list key for {hive}\\{keyPath}");
         }
     }
 
-
-
-
-
-
-
-
+    /// <summary>
+    ///     Reads a registry value from the specified key path.
+    /// </summary>
+    /// <param name="hive">Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).</param>
+    /// <param name="keyPath">The path within the hive to return values from.</param>
+    /// <param name="valueName">The name of the value to read. Null reads the default value.</param>
+    /// <returns>A <see cref="ToolResult" /> containing the typed value record.</returns>
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Registry_Read_Value", ReadOnly = true, Destructive = false)]
     [Description("Reads a registry value from the specified key path. Use hive names such as HKLM, HKCU, HKCR, HKU, HKCC.")]
-    public ToolResult registryReadValue([Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive, [Description("The path within the hive to return values from, e.g. SOFTWARE\\Microsoft\\Windows\\CurrentVersion.")] string keyPath, [Description("The name of the value to read. ")] string? valueName = null)
+    public async Task<ToolResult> RegistryReadValueAsync(
+        [Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive,
+        [Description("The path within the hive to return values from, e.g. SOFTWARE\\Microsoft\\Windows\\CurrentVersion.")] string keyPath,
+        [Description("The name of the value to read.")] string? valueName = null)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(hive))
+            ToolResult? validationResult = InputValidator.ValidateRegistryHive(hive);
+            if (validationResult is not null)
             {
-                return ToolResult.Fail("hive is required.");
+                return validationResult;
             }
 
-            if (string.IsNullOrWhiteSpace(keyPath))
+            validationResult = InputValidator.ValidateRequired(keyPath, "keyPath");
+            if (validationResult is not null)
             {
-                return ToolResult.Fail("keyPath is required.");
+                return validationResult;
             }
 
-            RegistryKey? root = GetHiveRoot(hive);
+            RegistryKey? root = RegistryHelper.GetHiveRoot(hive);
             if (root is null)
             {
-                return ToolResult.Fail($"Unknown registry hive: {hive}");
+                return ToolResult.Fail($"Unknown registry hive: {hive}. Supported hives: HKLM, HKCU, HKCR, HKU, HKCC.", "Registry read value");
             }
 
-            using RegistryKey? key = root.OpenSubKey(keyPath, false);
-            if (key is null)
+            RegistryValueReadRecord? record = await Task.Run(() =>
             {
-                return ToolResult.Fail($"Registry key not found: {hive}\\{keyPath}");
-            }
+                using RegistryKey? key = root.OpenSubKey(keyPath, false);
+                if (key is null)
+                {
+                    return null;
+                }
 
-            string actualValueName = string.IsNullOrWhiteSpace(valueName) ? string.Empty : valueName;
-            object? value = key.GetValue(actualValueName);
-            if (value is null)
+                string actualValueName = string.IsNullOrWhiteSpace(valueName) ? string.Empty : valueName;
+                object? value = key.GetValue(actualValueName);
+                if (value is null)
+                {
+                    return null;
+                }
+
+                RegistryValueKind kind = key.GetValueKind(actualValueName);
+                string displayName = string.IsNullOrEmpty(actualValueName) ? "(Default)" : actualValueName;
+                return new RegistryValueReadRecord(hive, keyPath, displayName, kind.ToString(), RegistryHelper.FormatRegistryValue(value, kind));
+            }).ConfigureAwait(false);
+
+            if (record is null)
             {
-                return ToolResult.Fail($"Registry value not found: {actualValueName} under {hive}\\{keyPath}");
+                return ToolResult.Fail($"Registry value not found: {valueName ?? "(Default)"} under {hive}\\{keyPath}", "Registry read value");
             }
 
-            RegistryValueKind kind = key.GetValueKind(actualValueName);
-            string result = $"Kind={kind}, Value={FormatRegistryValue(value, kind)}";
-            return ToolResult.Ok(result);
+            return ToolResult.Ok(record, $"Registry value read for {hive}\\{keyPath}\\{record.ValueName}");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Registry read failed.");
+            return ToolResult.Fail(ex.Message, $"Registry read value for {hive}\\{keyPath}");
         }
     }
 }

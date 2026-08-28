@@ -7,6 +7,7 @@
 
 
 using ModelContextProtocol.Server;
+using System.Runtime.Versioning;
 
 using System.Collections;
 using System.ComponentModel;
@@ -25,6 +26,7 @@ namespace SentinelCoreMCP.Tools;
 ///     Read-only tool for querying environment variables.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class EnvironmentVariablesReadTool
 {
 
@@ -37,7 +39,7 @@ public sealed class EnvironmentVariablesReadTool
 
     [McpServerTool(Name = "Environment_Variables_List", ReadOnly = true, Destructive = false)]
     [Description("Lists environment variables for the current process, user, or machine.")]
-    public static ToolResult EnvironmentList([Description("The target scope: Process, User, or Machine. Defaults to Process.")] EnvironmentVariableTarget target = EnvironmentVariableTarget.Process, [Description("Maximum number of variables to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> EnvironmentListAsync([Description("The target scope: Process, User, or Machine. Defaults to Process.")] EnvironmentVariableTarget target = EnvironmentVariableTarget.Process, [Description("Maximum number of variables to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -55,11 +57,11 @@ public sealed class EnvironmentVariablesReadTool
                 count++;
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "EnvironmentVariablesReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Environment variable listing failed.");
+            return ToolResult.Fail("Environment variable listing failed.", "EnvironmentVariablesReadTool");
         }
     }
 
@@ -72,22 +74,22 @@ public sealed class EnvironmentVariablesReadTool
 
     [McpServerTool(Name = "Environment_Variables_Read_Value", ReadOnly = true, Destructive = false)]
     [Description("Reads a specific environment variable for the current process, user, or machine.")]
-    public static ToolResult EnvironmentReadValue([Description("The name of the environment variable.")] string variableName, [Description("The target scope: Process, User, or Machine. Defaults to Process.")] EnvironmentVariableTarget target = EnvironmentVariableTarget.Process)
+    public async Task<ToolResult> EnvironmentReadValueAsync([Description("The name of the environment variable.")] string variableName, [Description("The target scope: Process, User, or Machine. Defaults to Process.")] EnvironmentVariableTarget target = EnvironmentVariableTarget.Process)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(variableName))
             {
-                return ToolResult.Fail("variableName is required.");
+                return ToolResult.Fail("variableName is required.", "EnvironmentVariablesReadTool");
             }
 
             string? value = Environment.GetEnvironmentVariable(variableName, target);
-            return value is null ? ToolResult.Fail($"Environment variable not found: {variableName} ({target})") : ToolResult.Ok($"{variableName}={value}");
+            return value is null ? ToolResult.Fail($"Environment variable not found: {variableName} ({target})", "EnvironmentVariablesReadTool") : ToolResult.Ok($"{variableName}={value}", "EnvironmentVariablesReadTool");
 
         }
         catch
         {
-            return ToolResult.Fail("Environment variable read failed.");
+            return ToolResult.Fail("Environment variable read failed.", "EnvironmentVariablesReadTool");
         }
     }
 }

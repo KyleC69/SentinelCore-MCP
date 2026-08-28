@@ -13,7 +13,6 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -71,7 +70,7 @@ public sealed class AutorunsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Autoruns_List", ReadOnly = true, Destructive = false)]
     [Description("Enumerates common Windows persistence and autorun locations including registry Run/RunOnce keys, Winlogon, Startup folder, and IFEO entries.")]
-    public static ToolResult AutorunsList([Description("Maximum number of entries per category. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> AutorunsListAsync([Description("Maximum number of entries per category. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -205,11 +204,11 @@ public sealed class AutorunsReadTool
                 }
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "AutorunsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Autoruns listing failed.");
+            return ToolResult.Fail("Autoruns listing failed.", "AutorunsReadTool");
         }
     }
 
@@ -223,7 +222,7 @@ public sealed class AutorunsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Autoruns_List_IFEO", ReadOnly = true, Destructive = false)]
     [Description("Lists Image File Execution Options (IFEO) debugger entries, commonly used for persistence and process hijacking.")]
-    public static ToolResult AutorunsListIfeo([Description("Maximum number of entries to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> AutorunsListIfeoAsync([Description("Maximum number of entries to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -232,7 +231,7 @@ public sealed class AutorunsReadTool
             using RegistryKey? ifeoKey = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options", false);
             if (ifeoKey is null)
             {
-                return ToolResult.Ok("No IFEO entries found.");
+                return ToolResult.Ok("No IFEO entries found.", "AutorunsReadTool");
             }
 
             foreach (string subKeyName in ifeoKey.GetSubKeyNames())
@@ -249,12 +248,11 @@ public sealed class AutorunsReadTool
                 }
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "AutorunsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("IFEO listing failed.");
+            return ToolResult.Fail("IFEO listing failed.", "AutorunsReadTool");
         }
     }
 }

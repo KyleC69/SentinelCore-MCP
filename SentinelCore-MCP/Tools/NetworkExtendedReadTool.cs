@@ -13,7 +13,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -42,10 +41,16 @@ public sealed class NetworkExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_List_Listening_Ports", ReadOnly = true, Destructive = false)]
     [Description("Lists TCP and UDP listening ports with process association where available.")]
-    public static ToolResult NetworkListListeningPorts([Description("Maximum number of ports to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> NetworkListListeningPortsAsync([Description("Maximum number of ports to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
+            ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxRecords);
+            if (maxValidation is not null)
+            {
+                return maxValidation;
+            }
+
             List<object> results = new();
             IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
 
@@ -75,12 +80,11 @@ public sealed class NetworkExtendedReadTool
                 });
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "NetworkExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Listening port listing failed.");
+            return ToolResult.Fail(ex.Message, "Listening port listing");
         }
     }
 
@@ -94,15 +98,14 @@ public sealed class NetworkExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_Read_DNS_Cache", ReadOnly = true, Destructive = false)]
     [Description("Reads the local DNS resolver cache entries.")]
-    public static ToolResult NetworkReadDnsCache([Description("Maximum number of entries to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> NetworkReadDnsCacheAsync([Description("Maximum number of entries to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
-            List<object> results = new();
-            IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
-            foreach (IPAddressCollection? entry in new[] { properties.GetActiveTcpListeners().Select(e => e.Address).Distinct().Select(a => new { Address = a }) })
+            ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxRecords);
+            if (maxValidation is not null)
             {
-                // Fallback: managed API does not expose DNS cache directly; use ipconfig /displaydns
+                return maxValidation;
             }
 
             // The managed IPGlobalProperties API does not expose the DNS cache.
@@ -121,7 +124,7 @@ public sealed class NetworkExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start ipconfig.");
+                return ToolResult.Fail("Unable to start ipconfig.", "NetworkExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -167,12 +170,11 @@ public sealed class NetworkExtendedReadTool
                 entries.Add(new { RecordName = currentName, RecordType = currentType ?? "", Data = currentData ?? "" });
             }
 
-            string json = JsonSerializer.Serialize(entries, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(entries, "NetworkExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("DNS cache read failed.");
+            return ToolResult.Fail("DNS cache read failed.", "NetworkExtendedReadTool");
         }
     }
 
@@ -186,7 +188,7 @@ public sealed class NetworkExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_Read_ARP_Table", ReadOnly = true, Destructive = false)]
     [Description("Reads the ARP cache table mapping IP addresses to physical addresses.")]
-    public static ToolResult NetworkReadArpTable([Description("Maximum number of entries to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> NetworkReadArpTableAsync([Description("Maximum number of entries to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -204,7 +206,7 @@ public sealed class NetworkExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start arp.");
+                return ToolResult.Fail("Unable to start arp.", "NetworkExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -232,12 +234,11 @@ public sealed class NetworkExtendedReadTool
                 }
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "NetworkExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("ARP table read failed.");
+            return ToolResult.Fail("ARP table read failed.", "NetworkExtendedReadTool");
         }
     }
 
@@ -251,7 +252,7 @@ public sealed class NetworkExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_Read_Routing_Table", ReadOnly = true, Destructive = false)]
     [Description("Reads the IPv4 routing table.")]
-    public static ToolResult NetworkReadRoutingTable([Description("Maximum number of routes to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> NetworkReadRoutingTableAsync([Description("Maximum number of routes to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -269,7 +270,7 @@ public sealed class NetworkExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start route.");
+                return ToolResult.Fail("Unable to start route.", "NetworkExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -306,12 +307,11 @@ public sealed class NetworkExtendedReadTool
                 }
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "NetworkExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Routing table read failed.");
+            return ToolResult.Fail("Routing table read failed.", "NetworkExtendedReadTool");
         }
     }
 
@@ -325,7 +325,7 @@ public sealed class NetworkExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_List_Shares", ReadOnly = true, Destructive = false)]
     [Description("Lists network shares on the local machine.")]
-    public static ToolResult NetworkListShares([Description("Maximum number of shares to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> NetworkListSharesAsync([Description("Maximum number of shares to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -343,7 +343,7 @@ public sealed class NetworkExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start net share.");
+                return ToolResult.Fail("Unable to start net share.", "NetworkExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -374,12 +374,11 @@ public sealed class NetworkExtendedReadTool
                 }
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "NetworkExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Network share listing failed.");
+            return ToolResult.Fail("Network share listing failed.", "NetworkExtendedReadTool");
         }
     }
 }

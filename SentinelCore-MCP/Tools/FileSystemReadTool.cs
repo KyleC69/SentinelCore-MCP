@@ -13,7 +13,6 @@ using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -40,19 +39,19 @@ public sealed class FileSystemReadTool
 
     [McpServerTool(Name = "File_System_List_Directory", ReadOnly = true, Destructive = false)]
     [Description("Lists the names of files and directories in the specified directory path.")]
-    public static ToolResult FileSystemListDirectory([Description("The absolute directory path to list.")] string path, [Description("Optional search pattern, e.g. *.txt. Defaults to *.")] string? searchPattern = null, [Description("Maximum number of entries (files + directories) to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> FileSystemListDirectoryAsync([Description("The absolute directory path to list.")] string path, [Description("Optional search pattern, e.g. *.txt. Defaults to *.")] string? searchPattern = null, [Description("Maximum number of entries (files + directories) to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.");
+                return ToolResult.Fail("path is required.", "FileSystemReadTool");
             }
 
             DirectoryInfo dir = new(path);
             if (!dir.Exists)
             {
-                return ToolResult.Fail($"Directory not found: {path}");
+                return ToolResult.Fail($"Directory not found: {path}", "FileSystemReadTool");
             }
 
             string pattern = string.IsNullOrWhiteSpace(searchPattern) ? "*" : searchPattern;
@@ -83,11 +82,11 @@ public sealed class FileSystemReadTool
                 count++;
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "FileSystemReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Directory listing failed.");
+            return ToolResult.Fail("Directory listing failed.", "FileSystemReadTool");
         }
     }
 
@@ -101,13 +100,13 @@ public sealed class FileSystemReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "File_System_Read_Acl", ReadOnly = true, Destructive = false)]
     [Description("Reads the NTFS access control list (ACL) for a file or directory path.")]
-    public static ToolResult FileSystemReadAcl([Description("The absolute file or directory path to inspect.")] string path)
+    public async Task<ToolResult> FileSystemReadAclAsync([Description("The absolute file or directory path to inspect.")] string path)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.");
+                return ToolResult.Fail("path is required.", "FileSystemReadTool");
             }
 
             FileSystemSecurity security;
@@ -122,7 +121,7 @@ public sealed class FileSystemReadTool
             }
             else
             {
-                return ToolResult.Fail($"Path not found: {path}");
+                return ToolResult.Fail($"Path not found: {path}", "FileSystemReadTool");
             }
 
             StringBuilder sb = new();
@@ -133,11 +132,11 @@ public sealed class FileSystemReadTool
             foreach (FileSystemAccessRule rule in security.GetAccessRules(true, true, typeof(NTAccount)))
                 sb.AppendLine($"  Identity={rule.IdentityReference}, Rights={rule.FileSystemRights}, Type={rule.AccessControlType}, Inheritance={rule.InheritanceFlags}, Propagation={rule.PropagationFlags}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "FileSystemReadTool");
         }
         catch
         {
-            return ToolResult.Fail("ACL read failed.");
+            return ToolResult.Fail("ACL read failed.", "FileSystemReadTool");
         }
     }
 
@@ -150,13 +149,13 @@ public sealed class FileSystemReadTool
 
     [McpServerTool(Name = "File_System_Read_Metadata", ReadOnly = true, Destructive = false)]
     [Description("Reads metadata and attributes for a file or directory path.")]
-    public static ToolResult FileSystemReadMetadata([Description("The absolute file or directory path to inspect.")] string path)
+    public async Task<ToolResult> FileSystemReadMetadataAsync([Description("The absolute file or directory path to inspect.")] string path)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.");
+                return ToolResult.Fail("path is required.", "FileSystemReadTool");
             }
 
             FileInfo info = new(path);
@@ -176,10 +175,10 @@ public sealed class FileSystemReadTool
                         dirInfo.LastAccessTimeUtc
                     };
 
-                    return ToolResult.Ok(JsonSerializer.Serialize(dirResult, new JsonSerializerOptions { WriteIndented = true }));
+                    return ToolResult.Ok(dirResult, "File system metadata read.");
                 }
 
-                return ToolResult.Fail($"Path not found: {path}");
+                return ToolResult.Fail($"Path not found: {path}", "FileSystemReadTool");
             }
 
             var fileResult = new
@@ -194,11 +193,11 @@ public sealed class FileSystemReadTool
                 info.LastAccessTimeUtc
             };
 
-            return ToolResult.Ok(JsonSerializer.Serialize(fileResult, new JsonSerializerOptions { WriteIndented = true }));
+            return ToolResult.Ok(fileResult, "File system metadata read.");
         }
         catch
         {
-            return ToolResult.Fail("File system metadata read failed.");
+            return ToolResult.Fail("File system metadata read failed.", "FileSystemReadTool");
         }
     }
 
@@ -211,7 +210,7 @@ public sealed class FileSystemReadTool
 
     [McpServerTool(Name = "File_System_Read_Content", ReadOnly = true, Destructive = false)]
     [Description("Reads the text content of a file. Supports optional line range selection and encoding detection. Binary files are rejected.")]
-    public static ToolResult FileSystemReadContent(
+    public async Task<ToolResult> FileSystemReadContentAsync(
         [Description("The absolute file path to read.")] string path,
         [Description("Optional 1-based starting line number. Defaults to 1.")] int startLine = 1,
         [Description("Optional number of lines to read from the starting line. Defaults to 0 (read all lines).")] int lineCount = 0,
@@ -221,18 +220,18 @@ public sealed class FileSystemReadTool
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.");
+                return ToolResult.Fail("path is required.", "FileSystemReadTool");
             }
 
             FileInfo info = new(path);
             if (!info.Exists)
             {
-                return ToolResult.Fail($"File not found: {path}");
+                return ToolResult.Fail($"File not found: {path}", "FileSystemReadTool");
             }
 
             if (info.Attributes.HasFlag(FileAttributes.Directory))
             {
-                return ToolResult.Fail($"Path is a directory, not a file: {path}");
+                return ToolResult.Fail($"Path is a directory, not a file: {path}", "FileSystemReadTool");
             }
 
             // Reject files that are likely binary by checking for null bytes in the first 8KB.
@@ -244,7 +243,7 @@ public sealed class FileSystemReadTool
                 {
                     if (probe[i] == 0)
                     {
-                        return ToolResult.Fail($"File appears to be binary and cannot be read as text: {path}");
+                        return ToolResult.Fail($"File appears to be binary and cannot be read as text: {path}", "FileSystemReadTool");
                     }
                 }
             }
@@ -258,7 +257,7 @@ public sealed class FileSystemReadTool
 
             if (lines.Length == 0)
             {
-                return ToolResult.Ok("(file is empty)");
+                return ToolResult.Ok("(file is empty)", "FileSystemReadTool");
             }
 
             // Validate and apply line range.
@@ -267,7 +266,7 @@ public sealed class FileSystemReadTool
 
             if (startIndex >= lines.Length)
             {
-                return ToolResult.Fail($"startLine {startLine} exceeds total line count ({lines.Length}).");
+                return ToolResult.Fail($"startLine {startLine} exceeds total line count ({lines.Length}).", "FileSystemReadTool");
             }
 
             int count = lineCount > 0 ? lineCount : lines.Length - startIndex;
@@ -285,23 +284,23 @@ public sealed class FileSystemReadTool
                 sb.AppendLine($"{i + 1,6}  |  {lines[i]}");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "FileSystemReadTool");
         }
         catch (ArgumentException ex) when (ex.Message.Contains("encoding", StringComparison.OrdinalIgnoreCase))
         {
-            return ToolResult.Fail($"Unsupported encoding: {encoding}. Use a valid encoding name like 'utf-8' or 'ascii'.");
+            return ToolResult.Fail($"Unsupported encoding: {encoding}. Use a valid encoding name like 'utf-8' or 'ascii'.", "FileSystemReadTool");
         }
         catch (UnauthorizedAccessException)
         {
-            return ToolResult.Fail($"Access denied reading file: {path}");
+            return ToolResult.Fail($"Access denied reading file: {path}", "FileSystemReadTool");
         }
         catch (IOException)
         {
-            return ToolResult.Fail($"I/O error reading file: {path}");
+            return ToolResult.Fail($"I/O error reading file: {path}", "FileSystemReadTool");
         }
         catch
         {
-            return ToolResult.Fail("File content read failed.");
+            return ToolResult.Fail("File content read failed.", "FileSystemReadTool");
         }
     }
 }

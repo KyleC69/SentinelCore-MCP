@@ -12,8 +12,6 @@ using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Text.Json;
 
 
 
@@ -42,7 +40,7 @@ public sealed class PnpExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Pnp_List_USB_History", ReadOnly = true, Destructive = false)]
     [Description("Lists USB device connection history from the registry (USBSTOR entries) for removable media forensics.")]
-    public static ToolResult PnpListUsbHistory([Description("Maximum number of devices to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> PnpListUsbHistoryAsync([Description("Maximum number of devices to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -121,12 +119,11 @@ public sealed class PnpExtendedReadTool
                 }
             }
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "PnpExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("USB history listing failed.");
+            return ToolResult.Fail("USB history listing failed.", "PnpExtendedReadTool");
         }
     }
 }

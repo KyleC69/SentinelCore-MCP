@@ -40,7 +40,7 @@ public sealed class DefenderExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Defender_Read_SmartScreen", ReadOnly = true, Destructive = false)]
     [Description("Reads Windows Defender SmartScreen and reputation-based protection settings from the registry.")]
-    public static ToolResult DefenderReadSmartScreen()
+    public async Task<ToolResult> DefenderReadSmartScreenAsync()
     {
         try
         {
@@ -112,11 +112,11 @@ public sealed class DefenderExtendedReadTool
                 }
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "DefenderExtendedReadTool");
         }
         catch
         {
-            return ToolResult.Fail("SmartScreen read failed.");
+            return ToolResult.Fail("SmartScreen read failed.", "DefenderExtendedReadTool");
         }
     }
 }

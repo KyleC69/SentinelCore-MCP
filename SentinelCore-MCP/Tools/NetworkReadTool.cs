@@ -7,13 +7,13 @@
 
 
 using ModelContextProtocol.Server;
+using System.Runtime.Versioning;
 
 using System.ComponentModel;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -28,6 +28,7 @@ namespace SentinelCoreMCP.Tools;
 ///     Read-only tools for querying network interfaces, TCP/IP configuration, and DNS.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class NetworkReadTool
 {
 
@@ -40,7 +41,7 @@ public sealed class NetworkReadTool
 
     [McpServerTool(Name = "Network_List_Interfaces", ReadOnly = true, Destructive = false)]
     [Description("Lists network interfaces and their operational status.")]
-    public static ToolResult NetworkListInterfaces([Description("Maximum number of interfaces to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> NetworkListInterfacesAsync([Description("Maximum number of interfaces to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -55,12 +56,11 @@ public sealed class NetworkReadTool
                 ni.GetIPProperties().UnicastAddresses.Count
             });
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "NetworkReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Network interface listing failed.");
+            return ToolResult.Fail("Network interface listing failed.", "NetworkReadTool");
         }
     }
 
@@ -73,7 +73,7 @@ public sealed class NetworkReadTool
 
     [McpServerTool(Name = "Network_List_Tcp_Connections", ReadOnly = true, Destructive = false)]
     [Description("Lists active TCP connections and their local/remote endpoints.")]
-    public static ToolResult NetworkListTcpConnections([Description("Maximum number of connections to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> NetworkListTcpConnectionsAsync([Description("Maximum number of connections to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -81,12 +81,11 @@ public sealed class NetworkReadTool
             TcpConnectionInformation[] connections = properties.GetActiveTcpConnections();
             var results = connections.Take(maxRecords).Select(c => new { LocalEndpoint = c.LocalEndPoint.ToString(), RemoteEndpoint = c.RemoteEndPoint.ToString(), c.State });
 
-            string json = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(results, "NetworkReadTool");
         }
         catch
         {
-            return ToolResult.Fail("TCP connection listing failed.");
+            return ToolResult.Fail("TCP connection listing failed.", "NetworkReadTool");
         }
     }
 
@@ -99,20 +98,20 @@ public sealed class NetworkReadTool
 
     [McpServerTool(Name = "Network_Read_IP_Config", ReadOnly = true, Destructive = false)]
     [Description("Reads IP configuration for a specific network interface.")]
-    public static ToolResult NetworkReadIpConfig([Description("The network interface name.")] string interfaceName)
+    public async Task<ToolResult> NetworkReadIpConfigAsync([Description("The network interface name.")] string interfaceName)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(interfaceName))
             {
-                return ToolResult.Fail("interfaceName is required.");
+                return ToolResult.Fail("interfaceName is required.", "NetworkReadTool");
             }
 
             NetworkInterface? ni = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(x => x.Name.Equals(interfaceName, StringComparison.OrdinalIgnoreCase));
 
             if (ni is null)
             {
-                return ToolResult.Fail($"Network interface not found: {interfaceName}");
+                return ToolResult.Fail($"Network interface not found: {interfaceName}", "NetworkReadTool");
             }
 
             IPInterfaceProperties props = ni.GetIPProperties();
@@ -135,11 +134,11 @@ public sealed class NetworkReadTool
             sb.AppendLine("Gateways:");
             foreach (GatewayIPAddressInformation gw in props.GatewayAddresses) sb.AppendLine($"  {gw.Address}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "NetworkReadTool");
         }
         catch
         {
-            return ToolResult.Fail("IP config read failed.");
+            return ToolResult.Fail("IP config read failed.", "NetworkReadTool");
         }
     }
 
@@ -152,13 +151,13 @@ public sealed class NetworkReadTool
 
     [McpServerTool(Name = "Network_Resolve_DNS", ReadOnly = true, Destructive = false)]
     [Description("Resolves a hostname to IP addresses using DNS.")]
-    public static ToolResult NetworkResolveDns([Description("The hostname or domain to resolve.")] string hostName)
+    public async Task<ToolResult> NetworkResolveDnsAsync([Description("The hostname or domain to resolve.")] string hostName)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                return ToolResult.Fail("hostName is required.");
+                return ToolResult.Fail("hostName is required.", "NetworkReadTool");
             }
 
             IPHostEntry entries = Dns.GetHostEntry(hostName);
@@ -170,11 +169,11 @@ public sealed class NetworkReadTool
             sb.AppendLine("Aliases:");
             foreach (string alias in entries.Aliases) sb.AppendLine($"  {alias}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "NetworkReadTool");
         }
         catch
         {
-            return ToolResult.Fail("DNS resolution failed.");
+            return ToolResult.Fail("DNS resolution failed.", "NetworkReadTool");
         }
     }
 }

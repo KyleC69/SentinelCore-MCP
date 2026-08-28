@@ -39,7 +39,7 @@ public sealed class PowerSettingsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Power_List_Plans", ReadOnly = true, Destructive = false)]
     [Description("Lists active and available power plans using WMI.")]
-    public ToolResult powerListPlans()
+    public async Task<ToolResult> powerListPlansAsync()
     {
         try
         {
@@ -53,11 +53,11 @@ public sealed class PowerSettingsReadTool
                 sb.AppendLine($"InstanceId={instanceId}, Name={name}, IsActive={isActive}");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "PowerSettingsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Power plan listing failed.");
+            return ToolResult.Fail("Power plan listing failed.", "PowerSettingsReadTool");
         }
     }
 
@@ -71,7 +71,7 @@ public sealed class PowerSettingsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Power_List_Settings", ReadOnly = true, Destructive = false)]
     [Description("Lists power settings for the active power plan.")]
-    public ToolResult powerListSettings()
+    public async Task<ToolResult> powerListSettingsAsync()
     {
         try
         {
@@ -85,11 +85,11 @@ public sealed class PowerSettingsReadTool
                 sb.AppendLine($"InstanceId={instanceId}, Name={name}, Value={value}");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "PowerSettingsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Power setting listing failed.");
+            return ToolResult.Fail("Power setting listing failed.", "PowerSettingsReadTool");
         }
     }
 }

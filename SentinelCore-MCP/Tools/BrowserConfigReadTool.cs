@@ -62,18 +62,18 @@ public sealed class BrowserConfigReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Browser_Config_Read_Chrome_Policies", ReadOnly = true, Destructive = false)]
     [Description("Reads Google Chrome policy entries from the registry if present.")]
-    public static ToolResult BrowserReadChromePolicies()
+    public async Task<ToolResult> BrowserReadChromePoliciesAsync()
     {
         try
         {
             StringBuilder sb = new();
             ReadRegistryValues(RegistryHive.LocalMachine, @"SOFTWARE\Policies\Google\Chrome", sb, "HKLM Chrome Policies");
             ReadRegistryValues(RegistryHive.CurrentUser, @"SOFTWARE\Policies\Google\Chrome", sb, "HKCU Chrome Policies");
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "BrowserConfigReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Chrome policy read failed.");
+            return ToolResult.Fail("Chrome policy read failed.", "BrowserConfigReadTool");
         }
     }
 
@@ -87,22 +87,22 @@ public sealed class BrowserConfigReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Browser_Config_Read_Default", ReadOnly = true, Destructive = false)]
     [Description("Reads the default browser ProgId from the registry.")]
-    public static ToolResult BrowserReadDefault()
+    public async Task<ToolResult> BrowserReadDefaultAsync()
     {
         try
         {
             using RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\Shell\Associations\UrlAssociations\http\\UserChoice", false);
             if (key is null)
             {
-                return ToolResult.Fail("Default browser UserChoice key not found.");
+                return ToolResult.Fail("Default browser UserChoice key not found.", "BrowserConfigReadTool");
             }
 
             string progId = key.GetValue("ProgId")?.ToString() ?? string.Empty;
-            return ToolResult.Ok($"DefaultBrowserProgId={progId}");
+            return ToolResult.Ok($"DefaultBrowserProgId={progId}", "BrowserConfigReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Default browser read failed.");
+            return ToolResult.Fail("Default browser read failed.", "BrowserConfigReadTool");
         }
     }
 
@@ -116,7 +116,7 @@ public sealed class BrowserConfigReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Browser_Config_Read_IE_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads Internet Explorer / Edge proxy and security zone settings from the registry.")]
-    public static ToolResult BrowserReadIeSettings()
+    public async Task<ToolResult> BrowserReadIeSettingsAsync()
     {
         try
         {
@@ -146,11 +146,11 @@ public sealed class BrowserConfigReadTool
                 }
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "BrowserConfigReadTool");
         }
         catch
         {
-            return ToolResult.Fail("IE/Edge browser settings read failed.");
+            return ToolResult.Fail("IE/Edge browser settings read failed.", "BrowserConfigReadTool");
         }
     }
 }

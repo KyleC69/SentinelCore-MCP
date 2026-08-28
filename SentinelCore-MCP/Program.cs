@@ -71,7 +71,7 @@ internal class Program
         options.ServerInfo = new Implementation
         {
             Name = "io.github.kylec69/SentinelCoreMCP",
-            Version = "0.1.0-beta",
+            Version = "1.1.1",
             Title = "SentinelCoreMCP",
             Description = "Windows security and configuration reconnaissance server implementing the Model Context Protocol (MCP).",
             WebsiteUrl = "https://github.com/kylec69/SentinelCore-MCP",

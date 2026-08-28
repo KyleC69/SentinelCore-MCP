@@ -13,7 +13,6 @@ using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Text;
-using System.Text.Json;
 
 
 
@@ -29,6 +28,7 @@ namespace SentinelCoreMCP.Tools;
 ///     Credential Guard, Secure Boot, TPM, and Exploit Protection (DEP/ASLR/CFG).
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class SecurityExtendedReadTool
 {
 
@@ -42,7 +42,7 @@ public sealed class SecurityExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Security_Read_Credential_Guard", ReadOnly = true, Destructive = false)]
     [Description("Reads Credential Guard and LSA Protection status from the registry and system configuration.")]
-    public static ToolResult SecurityReadCredentialGuard()
+    public async Task<ToolResult> SecurityReadCredentialGuardAsync()
     {
         try
         {
@@ -74,11 +74,11 @@ public sealed class SecurityExtendedReadTool
                 }
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "SecurityExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Credential Guard read failed.");
+            return ToolResult.Fail(ex.Message, "Credential Guard read");
         }
     }
 
@@ -92,7 +92,7 @@ public sealed class SecurityExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Security_Read_SecureBoot", ReadOnly = true, Destructive = false)]
     [Description("Reads Secure Boot status from the registry and UEFI variables.")]
-    public static ToolResult SecurityReadSecureBoot()
+    public async Task<ToolResult> SecurityReadSecureBootAsync()
     {
         try
         {
@@ -123,36 +123,24 @@ public sealed class SecurityExtendedReadTool
                 }
             }
 
-            // Also check via system information
-            try
+            // Also check via the UEFI variable through the registry-backed state value
+            // (Confirm-SecureBootUEFI requires admin; the registry State value is readable without elevation).
+            object? uefiState = null;
+            using (RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
             {
-                using System.Diagnostics.Process process = new()
-                {
-                    StartInfo = new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = "powershell",
-                        Arguments = "-NoProfile -Command \"[System.Environment]::Is64BitOperatingSystem; try { Confirm-SecureBootUEFI } catch { $false }\"",
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    }
-                };
-                process.Start();
-                string output = process.StandardOutput.ReadToEnd();
-                process.WaitForExit();
-                sb.AppendLine($"[PowerShell Check] SecureBootEnabled={output.Trim()}");
-            }
-            catch
-            {
-                sb.AppendLine("[PowerShell Check] Unable to determine Secure Boot state via PowerShell.");
+                using RegistryKey? uefiKey = baseKey.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State", false);
+                uefiState = uefiKey?.GetValue("UEFISecureBootEnabled");
             }
 
-            return ToolResult.Ok(sb.ToString());
+            sb.AppendLine(uefiState is not null
+                ? $"[UEFI State] SecureBootEnabled={uefiState}"
+                : "[UEFI State] Secure Boot state not available (system may not support UEFI Secure Boot).");
+
+            return ToolResult.Ok(sb.ToString(), "SecurityExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Secure Boot read failed.");
+            return ToolResult.Fail(ex.Message, "Secure Boot read");
         }
     }
 
@@ -166,7 +154,7 @@ public sealed class SecurityExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Security_Read_TPM", ReadOnly = true, Destructive = false)]
     [Description("Reads TPM (Trusted Platform Module) status and information from the registry.")]
-    public static ToolResult SecurityReadTpm()
+    public async Task<ToolResult> SecurityReadTpmAsync()
     {
         try
         {
@@ -217,11 +205,11 @@ public sealed class SecurityExtendedReadTool
                 }
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "SecurityExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("TPM read failed.");
+            return ToolResult.Fail(ex.Message, "TPM read");
         }
     }
 
@@ -235,7 +223,7 @@ public sealed class SecurityExtendedReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Security_Read_Exploit_Protection", ReadOnly = true, Destructive = false)]
     [Description("Reads Windows Defender Exploit Guard, DEP, ASLR, and Control Flow Guard settings from the registry.")]
-    public static ToolResult SecurityReadExploitProtection()
+    public async Task<ToolResult> SecurityReadExploitProtectionAsync()
     {
         try
         {
@@ -294,11 +282,11 @@ public sealed class SecurityExtendedReadTool
                 }
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "SecurityExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Exploit protection read failed.");
+            return ToolResult.Fail(ex.Message, "Exploit protection read");
         }
     }
 }

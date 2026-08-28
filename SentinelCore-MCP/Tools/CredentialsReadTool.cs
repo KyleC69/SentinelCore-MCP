@@ -6,11 +6,12 @@
 
 
 
+using System.Diagnostics;
+using System.Runtime.Versioning;
+
 using ModelContextProtocol.Server;
 
 using System.ComponentModel;
-using System.Runtime.InteropServices;
-using System.Text;
 
 
 
@@ -20,100 +21,108 @@ namespace SentinelCoreMCP.Tools;
 
 
 
-
 /// <summary>
 ///     Read-only tool for enumerating generic credential targets stored in Windows Credential Manager.
-///     Uses P/Invoke over CredEnumerate (NOT CredRead, to avoid exposing secrets).
+///     Uses the built-in <c>cmdkey /list</c> utility instead of direct P/Invoke into advapi32.dll,
+///     per spec §6.2. Only target names and metadata are returned; no secrets are exposed.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class CredentialsReadTool
 {
 
+    /// <summary>
+    ///     A single stored credential record (metadata only, no secrets).
+    /// </summary>
+    /// <param name="Target">The credential target name.</param>
+    /// <param name="UserName">The stored user name, if present.</param>
+    /// <param name="Type">The credential type (e.g., Domain, Generic).</param>
+    public sealed record CredentialTargetRecord(string Target, string UserName, string Type);
 
 
-
-
-
-
-
+    /// <summary>
+    ///     Lists the names (targets) of stored Windows credentials without reading passwords.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing typed credential target records.</returns>
+    [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Credentials_List_Targets", ReadOnly = true, Destructive = false)]
     [Description("Lists the names (targets) of stored Windows credentials without reading passwords.")]
-    public static ToolResult CredentialListTargets()
+    public async Task<ToolResult> CredentialListTargetsAsync()
     {
         try
         {
-            int count = 0;
-            StringBuilder sb = new();
-            if (NativeMethods.CredEnumerate(null, 0, out int credentialCount, out IntPtr credentialArray))
+            ProcessStartInfo psi = new()
             {
-                try
-                {
-                    for (int i = 0; i < credentialCount; i++)
-                    {
-                        IntPtr credential = Marshal.ReadIntPtr(credentialArray, i * IntPtr.Size);
-                        string? targetName = Marshal.PtrToStringUni(credential);
-                        if (!string.IsNullOrWhiteSpace(targetName))
-                        {
-                            sb.AppendLine($"Target={targetName}");
-                            count++;
-                        }
-                    }
-                }
-                finally
-                {
-                    if (credentialArray != IntPtr.Zero)
-                    {
-                        NativeMethods.CredFree(credentialArray);
-                    }
-                }
+                FileName = "cmdkey.exe",
+                Arguments = "/list",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            bool exited = await Task.Run(() => process.WaitForExit(30_000)).ConfigureAwait(false);
+            if (!exited)
+            {
+                process.Kill();
+                return ToolResult.Fail("cmdkey /list timed out after 30 seconds.", "CredentialsReadTool");
             }
-            else
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
             {
-                int error = Marshal.GetLastWin32Error();
-                if (error != 1168) // ERROR_NOT_FOUND
+                return ToolResult.Fail($"cmdkey /list failed with exit code {process.ExitCode}: {error.Trim()}", "Credential target listing");
+            }
+
+            List<CredentialTargetRecord> results = new();
+
+            // cmdkey /list output blocks look like:
+            //     Target: Domain:target=TERMSRV/host
+            //     Type: Domain Password
+            //     User: DOMAIN\user
+            string[] blocks = output.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries);
+            foreach (string block in blocks)
+            {
+                string? target = null;
+                string? user = null;
+                string? type = null;
+
+                foreach (string rawLine in block.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries))
                 {
-                    return ToolResult.Fail($"Credential enumeration failed with error {error}");
+                    string line = rawLine.Trim();
+                    if (line.StartsWith("Target:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        target = line["Target:".Length..].Trim();
+                    }
+                    else if (line.StartsWith("User:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        user = line["User:".Length..].Trim();
+                    }
+                    else if (line.StartsWith("Type:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        type = line["Type:".Length..].Trim();
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(target))
+                {
+                    results.Add(new CredentialTargetRecord(target, user ?? string.Empty, type ?? string.Empty));
                 }
             }
 
-            sb.Insert(0, $"CredentialCount={count}\n");
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(results, $"Enumerated {results.Count} credential target(s).");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Credential target listing failed.");
+            return ToolResult.Fail(ex.Message, "Credential target listing");
         }
-    }
-
-
-
-
-
-
-
-
-    private static class NativeMethods
-    {
-        private const string Advapi32 = "advapi32.dll";
-
-
-
-
-
-
-
-
-        [DllImport(Advapi32, SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool CredEnumerate(string? filter, int flags, out int count, out IntPtr credentials);
-
-
-
-
-
-
-
-
-        [DllImport(Advapi32, SetLastError = false)]
-        public static extern void CredFree(IntPtr buffer);
     }
 }

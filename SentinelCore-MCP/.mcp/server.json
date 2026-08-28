@@ -1,13 +1,13 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "description": "SentinelCore-MCP is a Model Context Protocol (MCP) server that provides a standardized interface for interacting with AI Tools.",
+  "description": "SentinelCore-MCP is a MCP server that provides an interface for interacting with AI Tools.",
   "name": "io.github.kylec69/SentinelCoreMCP",
-  "version": "0.1.0-beta",
+  "version": "1.0.0",
   "packages": [
     {
       "registryType": "nuget",
       "identifier": "SentinelCoreMCP",
-      "version": "0.1.0-beta",
+      "version": "1.0.0",
       "transport": {
         "type": "stdio"
       },
@@ -17,7 +17,7 @@
     {
       "registryType": "nuget",
       "identifier": "SentinelCoreMCP",
-      "version": "0.1.0-beta",
+      "version": "1.0.0",
       "transport": {
         "type": "streamable-http",
         "url": "http://localhost:5000/mcp"
@@ -29,7 +29,7 @@
           "value": "http"
         },
         {
-          "name": "ASPNETCORE_URLS",
+          "name": "SENTINELCOREMCP",
           "value": "http://localhost:5000"
         }
       ]

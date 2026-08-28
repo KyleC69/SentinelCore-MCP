@@ -10,8 +10,6 @@ using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
-using System.Text;
-using System.Text.Json;
 
 
 
@@ -40,7 +38,7 @@ public sealed class SystemReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "System_Read_Info", ReadOnly = true, Destructive = false)]
     [Description("Reads system information including OS version, build, architecture, uptime, and hostname.")]
-    public static ToolResult SystemReadInfo()
+    public async Task<ToolResult> SystemReadInfoAsync()
     {
         try
         {
@@ -61,12 +59,11 @@ public sealed class SystemReadTool
                 CurrentDirectory = Environment.CurrentDirectory
             };
 
-            string json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(result, "SystemReadTool");
         }
         catch
         {
-            return ToolResult.Fail("System info read failed.");
+            return ToolResult.Fail("System info read failed.", "SystemReadTool");
         }
     }
 
@@ -80,7 +77,7 @@ public sealed class SystemReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "System_Read_TimeZone", ReadOnly = true, Destructive = false)]
     [Description("Reads the system time zone information for timeline correlation.")]
-    public static ToolResult SystemReadTimeZone()
+    public async Task<ToolResult> SystemReadTimeZoneAsync()
     {
         try
         {
@@ -96,12 +93,11 @@ public sealed class SystemReadTool
                 CurrentUtcOffset = tz.GetUtcOffset(DateTimeOffset.Now).ToString()
             };
 
-            string json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            return ToolResult.Ok(json);
+            return ToolResult.Ok(result, "SystemReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Time zone read failed.");
+            return ToolResult.Fail("Time zone read failed.", "SystemReadTool");
         }
     }
 }

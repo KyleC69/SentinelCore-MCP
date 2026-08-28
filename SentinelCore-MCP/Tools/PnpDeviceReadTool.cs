@@ -8,6 +8,7 @@
 
 
 using ModelContextProtocol.Server;
+using System.Runtime.Versioning;
 
 using System.ComponentModel;
 using System.Diagnostics;
@@ -27,6 +28,7 @@ namespace SentinelCoreMCP.Tools;
 ///     Only non-destructive pnputil options are permitted; any disallowed option is rejected.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class PnpDeviceReadTool
 {
 
@@ -137,14 +139,14 @@ public sealed class PnpDeviceReadTool
         using Process? process = Process.Start(startInfo);
         if (process is null)
         {
-            return ToolResult.Fail("Unable to start pnputil.exe.");
+            return ToolResult.Fail("Unable to start pnputil.exe.", "PnpDeviceReadTool");
         }
 
         output = process.StandardOutput.ReadToEnd();
         string error = process.StandardError.ReadToEnd();
         process.WaitForExit();
 
-        return process.ExitCode != 0 ? string.IsNullOrWhiteSpace(error) ? ToolResult.Fail($"pnputil exited with code {process.ExitCode}.") : ToolResult.Fail($"pnputil exited with code {process.ExitCode}: {error.Trim()}") : null;
+        return process.ExitCode != 0 ? string.IsNullOrWhiteSpace(error) ? ToolResult.Fail($"pnputil exited with code {process.ExitCode}.", "PnpDeviceReadTool") : ToolResult.Fail($"pnputil exited with code {process.ExitCode}: {error.Trim()}", "PnpDeviceReadTool") : null;
 
     }
 
@@ -162,12 +164,12 @@ public sealed class PnpDeviceReadTool
             {
                 if (DisallowedOptions.Contains(arg))
                 {
-                    return ToolResult.Fail($"PnP option '{arg}' is not allowed because it is destructive or state-changing.");
+                    return ToolResult.Fail($"PnP option '{arg}' is not allowed because it is destructive or state-changing.", "PnpDeviceReadTool");
                 }
 
                 if (!AllowedOptions.Contains(arg))
                 {
-                    return ToolResult.Fail($"PnP option '{arg}' is not in the allowed whitelist.");
+                    return ToolResult.Fail($"PnP option '{arg}' is not in the allowed whitelist.", "PnpDeviceReadTool");
                 }
             }
 
@@ -183,7 +185,7 @@ public sealed class PnpDeviceReadTool
 
     [McpServerTool(Name = "PnpListDevices", ReadOnly = true, Destructive = false)]
     [Description("Lists PnP devices using the pnputil /enum-devices command. Optional class and status filters are applied when provided. Results are limited to maxRecords.")]
-    public static ToolResult PnpListDevices([Description("Optional class filter for the PnP devices.")] string className = "", [Description("Optional status filter for the PnP devices.")] string status = "", [Description("Maximum number of device records to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> PnpListDevicesAsync([Description("Optional class filter for the PnP devices.")] string className = "", [Description("Optional status filter for the PnP devices.")] string status = "", [Description("Maximum number of device records to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -220,11 +222,11 @@ public sealed class PnpDeviceReadTool
             }
 
             string limited = LimitOutput(output, maxRecords);
-            return ToolResult.Ok(limited);
+            return ToolResult.Ok(limited, "PnpDeviceReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"PnP device listing failed: {ex.Message}");
+            return ToolResult.Fail($"PnP device listing failed: {ex.Message}", "PnpDeviceReadTool");
         }
     }
 
@@ -237,14 +239,14 @@ public sealed class PnpDeviceReadTool
 
     [McpServerTool(Name = "Pnp_Read_Device", ReadOnly = true, Destructive = false)]
     [Description("Reads detailed properties for a specific PnP device using the pnputil /device-info command.")]
-    public static ToolResult PnpReadDevice([Description("The ID of the PnP device to read.")] string deviceId)
+    public async Task<ToolResult> PnpReadDeviceAsync([Description("The ID of the PnP device to read.")] string deviceId)
     {
 
         try
         {
             if (string.IsNullOrWhiteSpace(deviceId))
             {
-                return ToolResult.Fail("deviceId is required.");
+                return ToolResult.Fail("deviceId is required.", "PnpDeviceReadTool");
             }
 
             List<string> args = new() { "/device-info", deviceId };
@@ -255,11 +257,11 @@ public sealed class PnpDeviceReadTool
             }
 
             ToolResult? err = RunPnputil(args, out string result);
-            return err ?? ToolResult.Ok(result);
+            return err ?? ToolResult.Ok(result, "PnpDeviceReadTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail($"PnP device read failed: {ex.Message}");
+            return ToolResult.Fail($"PnP device read failed: {ex.Message}", "PnpDeviceReadTool");
         }
     }
 }

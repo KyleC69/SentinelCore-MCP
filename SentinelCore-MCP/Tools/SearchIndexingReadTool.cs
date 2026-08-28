@@ -42,7 +42,7 @@ public sealed class SearchIndexingReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Search_Indexing_List_Scopes", ReadOnly = true, Destructive = false)]
     [Description("Lists indexed locations from the Windows Search crawl scope registry.")]
-    public ToolResult searchIndexingListScopes()
+    public async Task<ToolResult> searchIndexingListScopesAsync()
     {
         try
         {
@@ -50,7 +50,7 @@ public sealed class SearchIndexingReadTool
             using RegistryKey? key = Registry.LocalMachine.OpenSubKey(CrawlScopeKey, false);
             if (key is null)
             {
-                return ToolResult.Fail($"Crawl scope registry key not found: {CrawlScopeKey}");
+                return ToolResult.Fail($"Crawl scope registry key not found: {CrawlScopeKey}", "SearchIndexingReadTool");
             }
 
             sb.AppendLine($"[{CrawlScopeKey}]");
@@ -58,11 +58,11 @@ public sealed class SearchIndexingReadTool
 
             foreach (string valueName in key.GetValueNames()) sb.AppendLine($"  {valueName}={key.GetValue(valueName)}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "SearchIndexingReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Search indexing scope listing failed.");
+            return ToolResult.Fail("Search indexing scope listing failed.", "SearchIndexingReadTool");
         }
     }
 
@@ -76,7 +76,7 @@ public sealed class SearchIndexingReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Search_Indexing_Read_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads Windows Search service configuration from the registry.")]
-    public ToolResult searchIndexingReadSettings()
+    public async Task<ToolResult> searchIndexingReadSettingsAsync()
     {
         try
         {
@@ -84,17 +84,17 @@ public sealed class SearchIndexingReadTool
             using RegistryKey? key = Registry.LocalMachine.OpenSubKey(WindowsSearchKey, false);
             if (key is null)
             {
-                return ToolResult.Fail($"Windows Search registry key not found: {WindowsSearchKey}");
+                return ToolResult.Fail($"Windows Search registry key not found: {WindowsSearchKey}", "SearchIndexingReadTool");
             }
 
             sb.AppendLine($"[{WindowsSearchKey}]");
             foreach (string valueName in key.GetValueNames()) sb.AppendLine($"  {valueName}={key.GetValue(valueName)}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "SearchIndexingReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Search indexing settings read failed.");
+            return ToolResult.Fail("Search indexing settings read failed.", "SearchIndexingReadTool");
         }
     }
 }

@@ -47,13 +47,13 @@ public sealed class GroupPolicyReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Group_Policy_List", ReadOnly = true, Destructive = false)]
     [Description("Lists local group policy keys and values under a policy root path.")]
-    public static ToolResult GroupPolicyList([Description("The policy key path under the policy root, e.g. Microsoft\\Windows.")] string keyPath)
+    public async Task<ToolResult> GroupPolicyListAsync([Description("The policy key path under the policy root, e.g. Microsoft\\Windows.")] string keyPath)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(keyPath))
             {
-                return ToolResult.Fail("keyPath is required.");
+                return ToolResult.Fail("keyPath is required.", "GroupPolicyReadTool");
             }
 
             StringBuilder sb = new();
@@ -76,12 +76,12 @@ public sealed class GroupPolicyReadTool
                 foreach (string subKey in key.GetSubKeyNames()) sb.AppendLine($"  [SubKey] {subKey}");
             }
 
-            return sb.Length == 0 ? ToolResult.Fail($"No group policy keys found under {keyPath}") : ToolResult.Ok(sb.ToString());
+            return sb.Length == 0 ? ToolResult.Fail($"No group policy keys found under {keyPath}", "GroupPolicyReadTool") : ToolResult.Ok(sb.ToString(), "GroupPolicyReadTool");
 
         }
         catch
         {
-            return ToolResult.Fail("Group policy listing failed.");
+            return ToolResult.Fail("Group policy listing failed.", "GroupPolicyReadTool");
         }
     }
 
@@ -95,13 +95,13 @@ public sealed class GroupPolicyReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Group_Policy_Read_Value", ReadOnly = true, Destructive = false)]
     [Description("Reads a local group policy registry value from HKLM policy hives.")]
-    public static ToolResult GroupPolicyReadValue([Description("The policy key path under the policy root, e.g. Microsoft\\Windows\\WindowsUpdate.")] string keyPath, [Description("The value name to read.")] string valueName)
+    public async Task<ToolResult> GroupPolicyReadValueAsync([Description("The policy key path under the policy root, e.g. Microsoft\\Windows\\WindowsUpdate.")] string keyPath, [Description("The value name to read.")] string valueName)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(keyPath) || string.IsNullOrWhiteSpace(valueName))
             {
-                return ToolResult.Fail("keyPath and valueName are required.");
+                return ToolResult.Fail("keyPath and valueName are required.", "GroupPolicyReadTool");
             }
 
             foreach (string root in SPolicyRoots)
@@ -113,16 +113,16 @@ public sealed class GroupPolicyReadTool
                     object? value = key.GetValue(valueName);
                     if (value is not null)
                     {
-                        return ToolResult.Ok($"Key={fullPath}, ValueName={valueName}, Value={value}");
+                        return ToolResult.Ok($"Key={fullPath}, ValueName={valueName}, Value={value}", "GroupPolicyReadTool");
                     }
                 }
             }
 
-            return ToolResult.Fail($"Group policy value not found: {keyPath}\\{valueName}");
+            return ToolResult.Fail($"Group policy value not found: {keyPath}\\{valueName}", "GroupPolicyReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Group policy read failed.");
+            return ToolResult.Fail("Group policy read failed.", "GroupPolicyReadTool");
         }
     }
 }

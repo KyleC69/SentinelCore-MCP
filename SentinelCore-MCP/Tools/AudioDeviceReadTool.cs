@@ -7,11 +7,12 @@
 
 
 
-using SentinelCoreMCP.Tools.Interop;
+using Microsoft.Win32;
 
 using ModelContextProtocol.Server;
+
 using System.ComponentModel;
-using System.Runtime.InteropServices;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
 
@@ -25,42 +26,54 @@ namespace SentinelCoreMCP.Tools;
 
 
 /// <summary>
-///     Read-only tool for querying multimedia and audio device settings via the Core Audio MMDevice API.
+///     Read-only tool for querying multimedia and audio device settings using pnputil and the
+///     Windows registry instead of the Core Audio MMDevice COM API.
 /// </summary>
 [McpServerToolType]
 public sealed class AudioDeviceReadTool
 {
 
-    private const int DeviceStateActive = 0x00000001;
-    private const int EDataFlowCapture = 1;
-    private const int EDataFlowRender = 0;
-    private static readonly Guid MmDeviceEnumeratorClsid = new("BCDE0395-E52F-467C-8E3D-C4579291692E");
 
 
 
 
 
-
-
-
+    /// <summary>
+    ///     Runs pnputil with the specified arguments and returns the standard output,
+    ///     or a failure result if the process cannot start or returns a non-zero exit code.
+    /// </summary>
     [SupportedOSPlatform("windows")]
-    private static void AppendDevicesForFlow(StringBuilder sb, IMMDeviceEnumerator enumerator, int dataFlow, string flowLabel)
+    private static ToolResult RunPnputil(string arguments)
     {
-        int hr = enumerator.EnumAudioEndpoints(dataFlow, DeviceStateActive, out IMMDeviceCollection collection);
-        if (hr < 0)
+        try
         {
-            return;
-        }
+            ProcessStartInfo startInfo = new()
+            {
+                FileName = "pnputil",
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
 
-        using MarshalReleaseScope collectionScope = new(collection);
-        collection.GetCount(out int count);
-        for (int i = 0; i < count; i++)
+            using Process? process = Process.Start(startInfo);
+            if (process is null)
+            {
+                return ToolResult.Fail("Failed to start pnputil.", "AudioDeviceReadTool");
+            }
+
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            return process.ExitCode != 0
+                ? ToolResult.Fail($"pnputil failed: {stderr}", "AudioDeviceReadTool")
+                : ToolResult.Ok(stdout, "AudioDeviceReadTool");
+        }
+        catch
         {
-            collection.Item(i, out IMMDevice device);
-            using MarshalReleaseScope deviceScope = new(device);
-            device.GetId(out string id);
-            device.GetState(out int state);
-            sb.AppendLine($"Flow={flowLabel} Id={id} State={state}");
+            return ToolResult.Fail("pnputil execution failed.", "AudioDeviceReadTool");
         }
     }
 
@@ -71,28 +84,119 @@ public sealed class AudioDeviceReadTool
 
 
 
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Audio_List_Devices", ReadOnly = true, Destructive = false)]
-    [Description("Lists active audio playback and recording devices using the Core Audio MMDevice API.")]
-    public ToolResult audioListDevices()
+    /// <summary>
+    ///     Reads the friendly name for an audio endpoint from the MMDevices registry key.
+    /// </summary>
+    private static string? GetEndpointFriendlyName(string endpointId)
     {
         try
         {
-            StringBuilder sb = new();
-            using SafeComObject com = new(MmDeviceEnumeratorClsid);
-            if (com.Instance is not IMMDeviceEnumerator enumerator)
+            string keyPath = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\{endpointId}\Properties";
+            using RegistryKey? key = Registry.LocalMachine.OpenSubKey(keyPath, false);
+            if (key is null)
             {
-                return ToolResult.Fail("Unable to create MMDeviceEnumerator.");
+                return null;
             }
 
-            AppendDevicesForFlow(sb, enumerator, EDataFlowRender, "Render");
-            AppendDevicesForFlow(sb, enumerator, EDataFlowCapture, "Capture");
-
-            return ToolResult.Ok(sb.ToString());
+            // The friendly name is stored in the {a45c254e-df1c-4efd-8020-67d146a850e0},2 value (DEVPKEY_Device_FriendlyName)
+            object? val = key.GetValue("{a45c254e-df1c-4efd-8020-67d146a850e0},2");
+            return val?.ToString();
         }
         catch
         {
-            return ToolResult.Fail("Audio device listing failed.");
+            return null;
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Reads the device state for an audio endpoint from the MMDevices registry key.
+    ///     State values: 1 = Active, 2 = Disabled, 4 = Not present, 8 = Unplugged.
+    /// </summary>
+    private static int? GetEndpointState(string endpointId)
+    {
+        try
+        {
+            string keyPath = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render\{endpointId}";
+            using RegistryKey? key = Registry.LocalMachine.OpenSubKey(keyPath, false);
+            if (key is null)
+            {
+                return null;
+            }
+
+            object? val = key.GetValue("DeviceState");
+            return val is int state ? state : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Converts a device state value to a human-readable string.
+    /// </summary>
+    private static string StateToString(int state) => state switch
+    {
+        1 => "Active",
+        2 => "Disabled",
+        4 => "NotPresent",
+        8 => "Unplugged",
+        _ => $"Unknown({state})"
+    };
+
+
+
+
+
+
+
+
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Audio_List_Devices", ReadOnly = true, Destructive = false)]
+    [Description("Lists active audio playback and recording devices using pnputil and the registry.")]
+    public async Task<ToolResult> audioListDevicesAsync()
+    {
+        try
+        {
+            // List connected audio endpoints (speakers, microphones, etc.)
+            ToolResult endpointsResult = RunPnputil("/enum-devices /class AudioEndpoint /connected");
+            if (!endpointsResult.Success)
+            {
+                return endpointsResult;
+            }
+
+            // List connected audio driver devices (sound cards)
+            ToolResult mediaResult = RunPnputil("/enum-devices /class MEDIA /connected");
+            if (!mediaResult.Success)
+            {
+                return mediaResult;
+            }
+
+            StringBuilder sb = new();
+            sb.AppendLine("=== Audio Endpoints (Connected) ===");
+            sb.AppendLine(endpointsResult.Results?.ToString() ?? string.Empty);
+            sb.AppendLine("=== Audio Devices (Connected) ===");
+            sb.AppendLine(mediaResult.Results?.ToString() ?? string.Empty);
+
+            return ToolResult.Ok(sb.ToString(), "AudioDeviceReadTool");
+        }
+        catch
+        {
+            return ToolResult.Fail("Audio device listing failed.", "AudioDeviceReadTool");
         }
     }
 
@@ -105,151 +209,57 @@ public sealed class AudioDeviceReadTool
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Audio_Read_Default_Device", ReadOnly = true, Destructive = false)]
-    [Description("Reads the default audio playback device using the Core Audio MMDevice API.")]
-    public ToolResult audioReadDefaultDevice()
+    [Description("Reads the default audio playback device from the registry.")]
+    public async Task<ToolResult> audioReadDefaultDeviceAsync()
     {
         try
         {
-            using SafeComObject com = new(MmDeviceEnumeratorClsid);
-            if (com.Instance is not IMMDeviceEnumerator enumerator)
+            // Read the default audio render endpoint from the MMDevices registry.
+            // Active endpoints have DeviceState = 1 (DEVICE_STATE_ACTIVE).
+            // The default device is identified by checking the MMDevices\Audio\Render subkeys.
+            string renderKeyPath = @"SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render";
+            using RegistryKey? renderKey = Registry.LocalMachine.OpenSubKey(renderKeyPath, false);
+            if (renderKey is null)
             {
-                return ToolResult.Fail("Unable to create MMDeviceEnumerator.");
+                return ToolResult.Fail("MMDevices Audio Render registry key not found.", "AudioDeviceReadTool");
             }
 
-            int hr = enumerator.GetDefaultAudioEndpoint(EDataFlowRender, 0 /* eConsole */, out IMMDevice device);
-            if (hr < 0)
+            StringBuilder sb = new();
+            sb.AppendLine("Active Render Endpoints:");
+
+            foreach (string endpointId in renderKey.GetSubKeyNames())
             {
-                return ToolResult.Fail("No default render endpoint found.");
+                int? state = GetEndpointState(endpointId);
+                if (state != 1) // Only show active devices
+                {
+                    continue;
+                }
+
+                string? friendlyName = GetEndpointFriendlyName(endpointId);
+                sb.AppendLine($"  Id={endpointId} Name={friendlyName ?? "(unknown)"} State={StateToString(state ?? 0)}");
             }
 
-            using MarshalReleaseScope deviceCom = new(device);
-            device.GetId(out string id);
-            device.GetState(out int state);
-            return ToolResult.Ok($"DefaultRenderEndpoint Id={id} State={state}");
+            // Also check the Sound Mapper key for the default playback device
+            string? defaultDevice = null;
+            using (RegistryKey? soundMapper = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Multimedia\Sound Mapper", false))
+            {
+                if (soundMapper is not null)
+                {
+                    object? playback = soundMapper.GetValue("Playback");
+                    defaultDevice = playback?.ToString();
+                }
+            }
+
+            if (defaultDevice is not null)
+            {
+                sb.AppendLine($"DefaultPlayback={defaultDevice}");
+            }
+
+            return ToolResult.Ok(sb.ToString(), "AudioDeviceReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Default audio device read failed.");
-        }
-    }
-
-
-
-
-
-
-
-
-    [ComImport]
-    [Guid("A95664D2-9614-4F35-A746-DE8DB63617E6")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IMMDeviceEnumerator
-    {
-        [PreserveSig]
-        int EnumAudioEndpoints(int dataFlow, int dwStateMask, out IMMDeviceCollection ppDevices);
-
-
-
-
-
-
-
-
-        [PreserveSig]
-        int GetDefaultAudioEndpoint(int dataFlow, int role, out IMMDevice ppEndpoint);
-    }
-
-
-
-
-
-    [ComImport]
-    [Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IMMDeviceCollection
-    {
-        [PreserveSig]
-        int GetCount(out int pcDevices);
-
-
-
-
-
-
-
-
-        [PreserveSig]
-        int Item(int nDevice, out IMMDevice ppDevice);
-    }
-
-
-
-
-
-    [ComImport]
-    [Guid("D666063F-1587-4E43-81F1-B948E807363F")]
-    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IMMDevice
-    {
-        [PreserveSig]
-        int Activate(ref Guid iid, int dwClsCtx, IntPtr pActivationParams, [MarshalAs(UnmanagedType.IUnknown)] out object ppInterface);
-
-
-
-
-
-
-
-
-        [PreserveSig]
-        int GetId([MarshalAs(UnmanagedType.LPWStr)] out string ppstrId);
-
-
-
-
-
-
-
-
-        [PreserveSig]
-        int GetState(out int pdwState);
-    }
-
-
-
-
-
-    private sealed class MarshalReleaseScope : IDisposable
-    {
-        private object? _obj;
-
-
-
-
-
-
-
-
-        public MarshalReleaseScope(object obj)
-        {
-            _obj = obj;
-        }
-
-
-
-
-
-
-
-
-        [SupportedOSPlatform("windows")]
-        public void Dispose()
-        {
-            if (_obj is not null)
-            {
-                Marshal.ReleaseComObject(_obj);
-                _obj = null;
-            }
+            return ToolResult.Fail("Default audio device read failed.", "AudioDeviceReadTool");
         }
     }
 }

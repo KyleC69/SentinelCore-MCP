@@ -1,12 +1,14 @@
 # SentinelCore-MCP
 
+![SentinelMCP](..\assets\sentinelmcp.png)
+
 A Windows security and configuration reconnaissance server implementing the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). SentinelCore-MCP exposes **70+ read-only tools** that allow AI assistants and MCP clients to inspect Windows system state — firewall rules, Defender status, registry keys, services, processes, certificates, and much more — without modifying anything on the host.
 
-This server is a tool module for the Sentinel Core Investigation Platform. The tools are universal and could be used elsewhere if appropriate. 
+This server is a tool module for the Sentinel Core Forensic Investigation Platform. The tools are universal and could be used elsewhere if appropriate.
 All tools are read-only and are designed only for Windows 10-11 Operating Systems. Server implements the MCP protocol over stdio and HTTP transports, and is discoverable by MCP clients.
 Server can run alongside Sentinel Core or be placed on a separate host for remote inspection of Windows systems. Ideal for enterprise environments where AI agents need to inspect Windows hosts without installing additional software or agents.
 
-> **Windows only.** This server uses Windows-specific APIs (WMI, CIM, Registry, COM, P/Invoke) and is marked `<UnsupportedOSPlatform>linux;osx</UnsupportedOSPlatform>`.
+> **Windows only.** This server uses Windows-specific APIs (WMI, CIM, Registry, COM, Sysinternal tools) and is marked `<UnsupportedOSPlatform>linux;osx</UnsupportedOSPlatform>`.
 
 ---
 
@@ -26,303 +28,350 @@ Server can run alongside Sentinel Core or be placed on a separate host for remot
 
 ### Accessibility
 
-| Tool | Description |
-| ------ | ------------- |
-| `Accessibility_Read` | Reads specific ease-of-access feature configuration |
-| `Accessibility_Read_Settings` | Reads all accessibility settings |
-| `Accessibility_Read_UIA_Root` | Reads the root UI Automation element |
+| Tool                          | Description                                         |
+| ----------------------------- | --------------------------------------------------- |
+| `Accessibility_Read`          | Reads specific ease-of-access feature configuration |
+| `Accessibility_Read_Settings` | Reads all accessibility settings                    |
+| `Accessibility_Read_UIA_Root` | Reads the root UI Automation element                |
 
 ### AppLocker
 
-| Tool | Description |
-|------|-------------|
-| `AppLocker_Get_Effective_Policy` | Retrieves the effective AppLocker policy as XML |
-| `AppLocker_List_Rule_Collections` | Lists AppLocker rule collections |
+| Tool                              | Description                                     |
+| --------------------------------- | ----------------------------------------------- |
+| `AppLocker_Get_Effective_Policy`  | Retrieves the effective AppLocker policy as XML |
+| `AppLocker_List_Rule_Collections` | Lists AppLocker rule collections                |
 
 ### Audio
 
-| Tool | Description |
-|------|-------------|
-| `Audio_List_Devices` | Lists active audio playback and recording devices |
-| `Audio_Read_Default_Device` | Reads the default audio playback device |
+| Tool                        | Description                                       |
+| --------------------------- | ------------------------------------------------- |
+| `Audio_List_Devices`        | Lists active audio playback and recording devices |
+| `Audio_Read_Default_Device` | Reads the default audio playback device           |
 
 ### Auditing
 
-| Tool | Description |
-|------|-------------|
+| Tool       | Description              |
+| ---------- | ------------------------ |
 | `Auditing` | Gets the auditing policy |
 
 ### Battery & Power
 
-| Tool | Description |
-| ------ | ------------- |
-| `Battery_List` | Lists battery status using Win32_Battery |
-| `Battery_Read_Power_Settings` | Reads power plan settings related to battery |
-| `Power_List_Plans` | Lists active and available power plans |
-| `Power_List_Settings` | Lists power settings for the active power plan |
+| Tool                          | Description                                    |
+| ----------------------------- | ---------------------------------------------- |
+| `Battery_List`                | Lists battery status using Win32_Battery       |
+| `Battery_Read_Power_Settings` | Reads power plan settings related to battery   |
+| `Power_List_Plans`            | Lists active and available power plans         |
+| `Power_List_Settings`         | Lists power settings for the active power plan |
 
 ### BitLocker
 
-| Tool | Description |
-|------|-------------|
-| `Bitlocker_List_Volumes` | Lists BitLocker-protected volumes |
-| `Bitlocker_Read_Volume` | Reads BitLocker volume metadata and key protector types |
+| Tool                     | Description                                             |
+| ------------------------ | ------------------------------------------------------- |
+| `Bitlocker_List_Volumes` | Lists BitLocker-protected volumes                       |
+| `Bitlocker_Read_Volume`  | Reads BitLocker volume metadata and key protector types |
 
 ### Boot Configuration
 
-| Tool | Description |
-|------|-------------|
+| Tool                              | Description                                |
+| --------------------------------- | ------------------------------------------ |
 | `Boot_Configuration_Read_Current` | Returns the GUID of the current boot entry |
-| `Boot_Configuration_Enum` | Enumerates all active BCD entries |
+| `Boot_Configuration_Enum`         | Enumerates all active BCD entries          |
 
 ### Browser Configuration
 
-| Tool | Description |
-| ------ | ------------- |
+| Tool                                  | Description                                          |
+| ------------------------------------- | ---------------------------------------------------- |
 | `Browser_Config_Read_Chrome_Policies` | Reads Google Chrome policy entries from the registry |
-| `Browser_Config_Read_Default` | Reads the default browser ProgId from the registry |
-| `Browser_Config_Read_IE_Settings` | Reads Internet Explorer zone and security settings |
+| `Browser_Config_Read_Default`         | Reads the default browser ProgId from the registry   |
+| `Browser_Config_Read_IE_Settings`     | Reads Internet Explorer zone and security settings   |
 
 ### Certificates
 
-| Tool | Description |
-|------|-------------|
+| Tool               | Description                             |
+| ------------------ | --------------------------------------- |
 | `Certificate_List` | Lists certificates in a specified store |
 | `Certificate_Read` | Reads certificate details by thumbprint |
 
 ### Credentials
 
-| Tool | Description |
-|------|-------------|
+| Tool                       | Description                                            |
+| -------------------------- | ------------------------------------------------------ |
 | `Credentials_List_Targets` | Lists stored Windows credential targets (no passwords) |
 
 ### DCOM
 
-| Tool | Description |
-|------|-------------|
-| `DCOM_List_Applications` | Lists registered DCOM application IDs |
-| `DCOM_Read_AppId_Settings` | Reads DCOM application settings |
+| Tool                       | Description                           |
+| -------------------------- | ------------------------------------- |
+| `DCOM_List_Applications`   | Lists registered DCOM application IDs |
+| `DCOM_Read_AppId_Settings` | Reads DCOM application settings       |
 
 ### Defender
 
-| Tool | Description |
-|------|-------------|
+| Tool                            | Description                                                 |
+| ------------------------------- | ----------------------------------------------------------- |
 | `Defender_Read_Registry_Config` | Reads Defender exclusion and configuration registry entries |
-| `Defender_Read_Status` | Reads Microsoft Defender antivirus status via WMI |
+| `Defender_Read_Status`          | Reads Microsoft Defender antivirus status via WMI           |
 
 ### Display
 
-| Tool | Description |
-|------|-------------|
-| `Display_List_Monitors` | Lists connected monitors |
+| Tool                          | Description                   |
+| ----------------------------- | ----------------------------- |
+| `Display_List_Monitors`       | Lists connected monitors      |
 | `Display_Read_Virtual_Screen` | Reads virtual screen geometry |
 
 ### Drivers
 
-| Tool | Description |
-|------|-------------|
+| Tool          | Description                          |
+| ------------- | ------------------------------------ |
 | `Driver_List` | Lists kernel and file-system drivers |
 
 ### Environment Variables
 
-| Tool | Description |
-|------|-------------|
-| `Environment_Variables_List` | Lists all environment variables |
+| Tool                               | Description                           |
+| ---------------------------------- | ------------------------------------- |
+| `Environment_Variables_List`       | Lists all environment variables       |
 | `Environment_Variables_Read_Value` | Reads a specific environment variable |
 
 ### Event Log
 
-| Tool | Description |
-| ------ | ------------- |
-| `Event_Log_List_Channels` | Lists event log channels |
-| `Event_Log_Query` | Queries events from a specific channel |
-| `Event_Log_Read_Configuration` | Reads event log channel configuration |
+| Tool                           | Description                            |
+| ------------------------------ | -------------------------------------- |
+| `Event_Log_List_Channels`      | Lists event log channels               |
+| `Event_Log_Query`              | Queries events from a specific channel |
+| `Event_Log_Read_Configuration` | Reads event log channel configuration  |
 
 ### File System
 
-| Tool | Description |
-| ------ | ------------- |
-| `File_System_List_Directory` | Lists files and directories in a path |
-| `File_System_Read_Acl` | Reads NTFS ACL for a file or directory |
-| `File_System_Read_Metadata` | Reads file or directory metadata and attributes |
+| Tool                         | Description                                     |
+| ---------------------------- | ----------------------------------------------- |
+| `File_System_List_Directory` | Lists files and directories in a path           |
+| `File_System_Read_Acl`       | Reads NTFS ACL for a file or directory          |
+| `File_System_Read_Metadata`  | Reads file or directory metadata and attributes |
 
 ### Firewall
 
-| Tool | Description |
-|------|-------------|
-| `Firewall_List_Rules` | Lists Windows Firewall rules with optional filters |
-| `Firewall_Read_Profiles` | Reads current firewall profile settings |
+| Tool                     | Description                                        |
+| ------------------------ | -------------------------------------------------- |
+| `Firewall_List_Rules`    | Lists Windows Firewall rules with optional filters |
+| `Firewall_Read_Profiles` | Reads current firewall profile settings            |
 
 ### Group Policy
 
-| Tool | Description |
-|------|-------------|
-| `Group_Policy_List` | Lists local group policy keys and values |
-| `Group_Policy_Read_Value` | Reads a specific group policy value |
+| Tool                      | Description                              |
+| ------------------------- | ---------------------------------------- |
+| `Group_Policy_List`       | Lists local group policy keys and values |
+| `Group_Policy_Read_Value` | Reads a specific group policy value      |
 
 ### Hyper-V
 
-| Tool | Description |
-| ------ | ------------- |
-| `HyperV_List_Switches` | Lists Hyper-V virtual switches |
-| `HyperV_List_VMs` | Lists Hyper-V virtual machines |
-| `HyperV_Read_VM` | Reads detailed VM configuration |
+| Tool                   | Description                     |
+| ---------------------- | ------------------------------- |
+| `HyperV_List_Switches` | Lists Hyper-V virtual switches  |
+| `HyperV_List_VMs`      | Lists Hyper-V virtual machines  |
+| `HyperV_Read_VM`       | Reads detailed VM configuration |
 
 ### Installed Applications
 
-| Tool | Description |
-|------|-------------|
-| `Installed_Apps_List` | Lists installed applications from Add/Remove Programs |
-| `Installed_Apps_MSI_List` | Lists MSI-installed applications |
+| Tool                      | Description                                           |
+| ------------------------- | ----------------------------------------------------- |
+| `Installed_Apps_List`     | Lists installed applications from Add/Remove Programs |
+| `Installed_Apps_MSI_List` | Lists MSI-installed applications                      |
 
 ### Local Accounts
 
-| Tool | Description |
-|------|-------------|
+| Tool                         | Description                         |
+| ---------------------------- | ----------------------------------- |
 | `Local_Accounts_List_Groups` | Lists local groups with memberships |
-| `Local_Accounts_List_Users` | Lists local user accounts |
+| `Local_Accounts_List_Users`  | Lists local user accounts           |
 
 ### Network
 
-| Tool | Description |
-| ------ | ------------- |
-| `Network_List_Interfaces` | Lists network interfaces |
-| `Network_List_Tcp_Connections` | Lists active TCP connections |
-| `Network_Read_IP_Config` | Reads IP configuration |
-| `Network_Resolve_DNS` | Resolves a hostname to IP addresses |
+| Tool                           | Description                         |
+| ------------------------------ | ----------------------------------- |
+| `Network_List_Interfaces`      | Lists network interfaces            |
+| `Network_List_Tcp_Connections` | Lists active TCP connections        |
+| `Network_Read_IP_Config`       | Reads IP configuration              |
+| `Network_Resolve_DNS`          | Resolves a hostname to IP addresses |
 
 ### Notifications
 
-| Tool | Description |
-|------|-------------|
-| `Notification_List_Apps` | Lists notification settings and app entries |
-| `Notification_Read_Quiet_Hours` | Reads quiet hours / do-not-disturb state |
+| Tool                            | Description                                 |
+| ------------------------------- | ------------------------------------------- |
+| `Notification_List_Apps`        | Lists notification settings and app entries |
+| `Notification_Read_Quiet_Hours` | Reads quiet hours / do-not-disturb state    |
 
 ### Performance Counters
 
-| Tool | Description |
-| ------ | ------------- |
-| `Performance_List_Categories` | Lists performance counter categories |
-| `Performance_List_Counters` | Lists counters in a category |
-| `Performance_Read_Counter` | Reads the current value of a performance counter |
+| Tool                          | Description                                      |
+| ----------------------------- | ------------------------------------------------ |
+| `Performance_List_Categories` | Lists performance counter categories             |
+| `Performance_List_Counters`   | Lists counters in a category                     |
+| `Performance_Read_Counter`    | Reads the current value of a performance counter |
 
 ### PnP Devices
 
-| Tool | Description |
-|------|-------------|
-| `PnpListDevices` | Lists PnP devices using pnputil |
+| Tool              | Description                                |
+| ----------------- | ------------------------------------------ |
+| `PnpListDevices`  | Lists PnP devices using pnputil            |
 | `Pnp_Read_Device` | Reads properties for a specific PnP device |
 
 ### Printers
 
-| Tool | Description |
-|------|-------------|
+| Tool           | Description                               |
+| -------------- | ----------------------------------------- |
 | `Printer_List` | Lists installed printers and queue status |
-| `Printer_Read` | Reads details of a specific printer |
+| `Printer_Read` | Reads details of a specific printer       |
 
 ### Processes
 
-| Tool | Description |
-|------|-------------|
+| Tool           | Description                                          |
+| -------------- | ---------------------------------------------------- |
 | `Process_List` | Lists running processes with PID, name, and metadata |
-| `Process_Read` | Reads details for a specific process by PID |
+| `Process_Read` | Reads details for a specific process by PID          |
 
 ### Proxy
 
-| Tool | Description |
-|------|-------------|
-| `Proxy_Read_System` | Reads system proxy configuration from the registry |
-| `Proxy_Read_WinHTTP` | Reads WinHTTP proxy configuration via netsh |
+| Tool                 | Description                                        |
+| -------------------- | -------------------------------------------------- |
+| `Proxy_Read_System`  | Reads system proxy configuration from the registry |
+| `Proxy_Read_WinHTTP` | Reads WinHTTP proxy configuration via netsh        |
 
 ### Random Number
 
-| Tool | Description |
-|------|-------------|
+| Tool                | Description                                   |
+| ------------------- | --------------------------------------------- |
 | `Random_Get_Number` | Generates a random number between min and max |
 
 ### Registry
 
-| Tool | Description |
-|------|-------------|
-| `Registry_List_Key` | Lists subkey names and value names under a registry key |
-| `Registry_Read_Value` | Reads a registry value from a specified key path |
+| Tool                  | Description                                             |
+| --------------------- | ------------------------------------------------------- |
+| `Registry_List_Key`   | Lists subkey names and value names under a registry key |
+| `Registry_Read_Value` | Reads a registry value from a specified key path        |
 
 ### Remote Desktop
 
-| Tool | Description |
-|------|-------------|
-| `RDP_Read_Listener_Config` | Reads RDP listener port and security layer settings |
-| `RDP_Read_Settings` | Reads Remote Desktop configuration from the registry |
+| Tool                       | Description                                          |
+| -------------------------- | ---------------------------------------------------- |
+| `RDP_Read_Listener_Config` | Reads RDP listener port and security layer settings  |
+| `RDP_Read_Settings`        | Reads Remote Desktop configuration from the registry |
 
 ### Scheduled Tasks
 
-| Tool | Description |
-|------|-------------|
-| `Scheduled_Task_List` | Lists scheduled tasks |
+| Tool                  | Description                        |
+| --------------------- | ---------------------------------- |
+| `Scheduled_Task_List` | Lists scheduled tasks              |
 | `Scheduled_Task_Read` | Reads scheduled task configuration |
 
 ### Search Indexing
 
-| Tool | Description |
-|------|-------------|
-| `Search_Indexing_List_Scopes` | Lists indexed locations from the Windows Search crawl scope |
-| `Search_Indexing_Read_Settings` | Reads Windows Search service configuration |
+| Tool                            | Description                                                 |
+| ------------------------------- | ----------------------------------------------------------- |
+| `Search_Indexing_List_Scopes`   | Lists indexed locations from the Windows Search crawl scope |
+| `Search_Indexing_Read_Settings` | Reads Windows Search service configuration                  |
 
 ### Sensors
 
-| Tool | Description |
-|------|-------------|
-| `Sensor_List_Devices` | Lists sensor devices via CIM |
+| Tool                           | Description                   |
+| ------------------------------ | ----------------------------- |
+| `Sensor_List_Devices`          | Lists sensor devices via CIM  |
 | `Sensor_Read_Location_Service` | Reads location service status |
 
 ### Shell & Explorer
 
-| Tool | Description |
-|------|-------------|
+| Tool                           | Description                                                   |
+| ------------------------------ | ------------------------------------------------------------- |
 | `Shell_Explorer_Read_Settings` | Reads Explorer settings (hidden files, file extensions, etc.) |
-| `Shell_Taskbar_Pinned_List` | Lists pinned taskbar items |
+| `Shell_Taskbar_Pinned_List`    | Lists pinned taskbar items                                    |
 
 ### UAC
 
-| Tool | Description |
-|------|-------------|
-| `UAC_Read_Settings` | Reads UAC policy settings from the registry |
+| Tool                       | Description                                           |
+| -------------------------- | ----------------------------------------------------- |
+| `UAC_Read_Settings`        | Reads UAC policy settings from the registry           |
 | `UAC_Read_Token_Elevation` | Reports whether the current process token is elevated |
 
 ### VPN
 
-| Tool | Description |
-|------|-------------|
-| `VPN_List_Connections` | Lists configured VPN/RAS connections |
+| Tool                        | Description                                  |
+| --------------------------- | -------------------------------------------- |
+| `VPN_List_Connections`      | Lists configured VPN/RAS connections         |
 | `VPN_Read_Phonebook_Status` | Reads phonebook directory path and existence |
 
 ### Windows Services
 
-| Tool | Description |
-|------|-------------|
-| `Service_List` | Lists installed Windows services and their status |
+| Tool           | Description                                         |
+| -------------- | --------------------------------------------------- |
+| `Service_List` | Lists installed Windows services and their status   |
 | `Service_Read` | Reads detailed information about a specific service |
 
 ### Windows Update
 
-| Tool | Description |
-|------|-------------|
-| `Windows_Update_List_History` | Lists installed Windows update history |
+| Tool                           | Description                                            |
+| ------------------------------ | ------------------------------------------------------ |
+| `Windows_Update_List_History`  | Lists installed Windows update history                 |
 | `Windows_Update_Read_Settings` | Reads Windows Update policy settings from the registry |
 
 ### Wireless
 
-| Tool | Description |
-|------|-------------|
-| `Wireless_List_Interfaces` | Lists wireless network interfaces |
-| `Wireless_List_Profiles` | Lists saved Wi-Fi profiles via netsh |
+| Tool                       | Description                          |
+| -------------------------- | ------------------------------------ |
+| `Wireless_List_Interfaces` | Lists wireless network interfaces    |
+| `Wireless_List_Profiles`   | Lists saved Wi-Fi profiles via netsh |
 
 ### WMI / CIM Queries
 
-| Tool | Description |
-|------|-------------|
-| `WMI_List_Classes` | Lists CIM class names in a namespace |
-| `WMI_Query` | Executes a read-only CIM WQL query and returns JSON |
+| Tool               | Description                                         |
+| ------------------ | --------------------------------------------------- |
+| `WMI_List_Classes` | Lists CIM class names in a namespace                |
+| `WMI_Query`        | Executes a read-only CIM WQL query and returns JSON |
+
+### Sysinternals
+
+Read-only wrappers around the [Sysinternals](https://learn.microsoft.com/sysinternals/) diagnostic suite. Sysinternals binaries are optional; every tool probes availability first and fails gracefully with a structured error when a binary is not installed. GUI-only tools expose an availability probe only.
+
+| Tool                                        | Description                                                                       |
+| ------------------------------------------- | --------------------------------------------------------------------------------- |
+| `Sysinternals_AccessChk_Availability`       | Checks whether AccessChk is installed                                             |
+| `Sysinternals_AccessChk_Read_Permissions`   | Audits effective permissions on files, registry keys, services, or processes      |
+| `Sysinternals_AccessEnum_Availability`      | Checks whether AccessEnum is installed (GUI-only)                                 |
+| `Sysinternals_AD_Availability`              | Reports whether the host is joined to an Active Directory domain                  |
+| `Sysinternals_AD_Browse_Container`          | Browses an AD container and lists child objects (ADExplorer-style)                |
+| `Sysinternals_ADInsight_Availability`       | Checks whether ADInsight is installed (GUI-only)                                  |
+| `Sysinternals_CoreInfo_Availability`        | Checks whether Coreinfo is installed                                              |
+| `Sysinternals_CoreInfo_Read_System`         | Enumerates CPU topology, cache, NUMA, and virtualization support                  |
+| `Sysinternals_Handle_Availability`          | Checks whether Handle is installed                                                |
+| `Sysinternals_Handle_List`                  | Lists open file and kernel object handles                                         |
+| `Sysinternals_ListDlls_Availability`        | Checks whether ListDLLs is installed                                              |
+| `Sysinternals_ListDlls_List_Loaded`         | Lists DLLs loaded by processes                                                    |
+| `Sysinternals_LogonSessions_Availability`   | Checks whether LogonSessions is installed                                         |
+| `Sysinternals_LogonSessions_List_Active`    | Lists active logon sessions with authentication details                           |
+| `Sysinternals_NtfsInfo_Availability`        | Checks whether NTFSInfo is installed                                              |
+| `Sysinternals_NtfsInfo_Read_Volume`         | Reports NTFS volume geometry and metadata                                         |
+| `Sysinternals_PendMoves_Availability`       | Checks whether PendMoves is installed                                             |
+| `Sysinternals_PendMoves_List_Pending`       | Lists file operations scheduled for the next reboot (managed read)                |
+| `Sysinternals_PipeList_Availability`        | Checks whether PipeList is installed                                              |
+| `Sysinternals_PipeList_List_Pipes`          | Lists named pipes with instance counts                                            |
+| `Sysinternals_ProcDump_Availability`        | Checks whether ProcDump is installed                                              |
+| `Sysinternals_ProcDump_Capture_Dump`        | Captures a full process dump to a specified path (writes a file; not read-only)   |
+| `Sysinternals_ProcessExplorer_Availability` | Checks whether ProcessExplorer is installed (GUI-only)                            |
+| `Sysinternals_PsInfo_Availability`          | Checks whether PsInfo is installed                                                |
+| `Sysinternals_PsInfo_Read_System`           | Reports OS version, kernel, install date, and hotfixes                            |
+| `Sysinternals_PsList_Availability`          | Checks whether PsList is installed                                                |
+| `Sysinternals_PsList_List_Processes`        | Lists processes with CPU and memory statistics                                    |
+| `Sysinternals_PsLogList_Availability`       | Checks whether PsLogList is installed                                             |
+| `Sysinternals_PsLogList_Dump_Events`        | Dumps recent event log records                                                    |
+| `Sysinternals_PsService_Availability`       | Checks whether PsService is installed                                             |
+| `Sysinternals_PsService_List_Services`      | Lists services and their configuration                                            |
+| `Sysinternals_PsTools_List_Suite`           | Reports which PsTools suite members are installed (inventory only)                |
+| `Sysinternals_RegDelNull_Availability`      | Checks whether RegDelNull is installed                                            |
+| `Sysinternals_RegDelNull_Scan_Nulls`        | Scans a registry subtree for embedded-null values (detection only; never deletes) |
+| `Sysinternals_ShareEnum_Availability`       | Checks whether ShareEnum is installed (GUI-only)                                  |
+| `Sysinternals_SigCheck_Availability`        | Checks whether SigCheck is installed                                              |
+| `Sysinternals_SigCheck_Verify_File`         | Verifies a file's digital signature and certificate details                       |
+| `Sysinternals_TcpView_Availability`         | Checks whether Tcpvcon is installed                                               |
+| `Sysinternals_TcpView_List_Endpoints`       | Lists TCP/UDP endpoints with owning process attribution                           |
+| `Sysinternals_WinObj_Availability`          | Checks whether WinObj is installed (GUI-only)                                     |
 
 ---
 
@@ -349,11 +398,7 @@ Add to your `.vscode/mcp.json` or VS Code settings:
     "SentinelCore-MCP": {
       "type": "stdio",
       "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "<PATH-TO-SENTINELCORE-MCP>"
-      ]
+      "args": ["run", "--project", "<PATH-TO-SENTINELCORE-MCP>"]
     }
   }
 }
@@ -369,11 +414,7 @@ Create a `.mcp.json` file in your solution directory:
     "SentinelCore-MCP": {
       "type": "stdio",
       "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "<PATH-TO-SENTINELCORE-MCP>"
-      ]
+      "args": ["run", "--project", "<PATH-TO-SENTINELCORE-MCP>"]
     }
   }
 }
@@ -393,12 +434,7 @@ Then configure your MCP client:
     "SentinelCore-MCP": {
       "type": "stdio",
       "command": "dnx",
-      "args": [
-        "SentinelCore-MCP",
-        "--version",
-        "0.1.0-beta",
-        "--yes"
-      ]
+      "args": ["SentinelCore-MCP", "--version", "0.1.0-beta", "--yes"]
     }
   }
 }

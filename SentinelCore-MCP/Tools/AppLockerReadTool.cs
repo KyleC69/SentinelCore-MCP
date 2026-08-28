@@ -9,6 +9,7 @@
 using JetBrains.Annotations;
 
 using ModelContextProtocol.Server;
+using System.Runtime.Versioning;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -28,6 +29,7 @@ namespace SentinelCoreMCP.Tools;
 ///     Read-only tool for querying AppLocker policy.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class AppLockerReadTool
 {
 
@@ -41,7 +43,7 @@ public sealed class AppLockerReadTool
     [McpServerTool(Name = "AppLocker_Get_Effective_Policy", ReadOnly = true, Destructive = false)]
     [Description("Retrieves the effective AppLocker policy as XML.")]
     [UsedImplicitly]
-    public static ToolResult ApplockerGetEffectivePolicy()
+    public async Task<ToolResult> ApplockerGetEffectivePolicyAsync()
     {
         try
         {
@@ -52,16 +54,16 @@ public sealed class AppLockerReadTool
             if (powerShell.HadErrors)
             {
                 string errors = string.Join("; ", powerShell.Streams.Error.Select(e => e.ToString()));
-                return ToolResult.Fail($"PowerShell AppLocker query failed: {errors}");
+                return ToolResult.Fail($"PowerShell AppLocker query failed: {errors}", "AppLockerReadTool");
             }
 
             foreach (PSObject result in results) sb.AppendLine(result.ToString());
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "AppLockerReadTool");
         }
         catch
         {
-            return ToolResult.Fail("AppLocker policy query failed.");
+            return ToolResult.Fail("AppLocker policy query failed.", "AppLockerReadTool");
         }
     }
 
@@ -75,7 +77,7 @@ public sealed class AppLockerReadTool
     [McpServerTool(Name = "AppLocker_List_Rule_Collections", ReadOnly = true, Destructive = false)]
     [Description("Retrieves AppLocker rule collections from the effective policy.")]
     [UsedImplicitly]
-    public static ToolResult ApplockerListRuleCollections()
+    public async Task<ToolResult> ApplockerListRuleCollectionsAsync()
     {
         try
         {
@@ -86,16 +88,16 @@ public sealed class AppLockerReadTool
             if (powerShell.HadErrors)
             {
                 string errors = string.Join("; ", powerShell.Streams.Error.Select(e => e.ToString()));
-                return ToolResult.Fail($"PowerShell AppLocker rule listing failed: {errors}");
+                return ToolResult.Fail($"PowerShell AppLocker rule listing failed: {errors}", "AppLockerReadTool");
             }
 
             foreach (PSObject result in results) sb.AppendLine(result.ToString());
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "AppLockerReadTool");
         }
         catch
         {
-            return ToolResult.Fail("AppLocker rule collection listing failed.");
+            return ToolResult.Fail("AppLocker rule collection listing failed.", "AppLockerReadTool");
         }
     }
 }

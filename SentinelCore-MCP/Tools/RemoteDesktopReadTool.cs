@@ -69,18 +69,18 @@ public sealed class RemoteDesktopReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "RDP_Read_Listener_Config", ReadOnly = true, Destructive = false)]
     [Description("Reads RDP listener port and security layer settings.")]
-    public ToolResult rdpReadListenerConfig()
+    public async Task<ToolResult> rdpReadListenerConfigAsync()
     {
         try
         {
             StringBuilder sb = new();
             ReadKeyValues(Registry.LocalMachine, RdpTcpKey, sb, ["PortNumber", "SecurityLayer", "MinEncryptionLevel", "UserAuthentication", "SSLCertificateSHA1Hash"]);
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "RemoteDesktopReadTool");
         }
         catch
         {
-            return ToolResult.Fail("RDP listener config read failed.");
+            return ToolResult.Fail("RDP listener config read failed.", "RemoteDesktopReadTool");
         }
     }
 
@@ -94,7 +94,7 @@ public sealed class RemoteDesktopReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "RDP_Read_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads Remote Desktop configuration from the registry.")]
-    public ToolResult rdpReadSettings()
+    public async Task<ToolResult> rdpReadSettingsAsync()
     {
         try
         {
@@ -102,11 +102,11 @@ public sealed class RemoteDesktopReadTool
             ReadKeyValues(Registry.LocalMachine, TerminalServerKey, sb, ["fDenyTSConnections", "fSingleSessionPerUser", "UserAuthentication"]);
             ReadKeyValues(Registry.LocalMachine, RdpTcpKey, sb, ["PortNumber", "MinEncryptionLevel", "SecurityLayer", "UserAuthentication"]);
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "RemoteDesktopReadTool");
         }
         catch
         {
-            return ToolResult.Fail("RDP settings read failed.");
+            return ToolResult.Fail("RDP settings read failed.", "RemoteDesktopReadTool");
         }
     }
 }

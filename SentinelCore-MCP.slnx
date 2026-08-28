@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="SentinelCore-MCP/SentinelCore-MCP.csproj" />
+  <Project Path="SentinelCoreMCP.Tests/SentinelCoreMCP.Tests.csproj" />
 </Solution>

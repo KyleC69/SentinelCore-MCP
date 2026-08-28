@@ -7,6 +7,7 @@
 
 
 using ModelContextProtocol.Server;
+using System.Runtime.Versioning;
 
 using System.ComponentModel;
 using System.Security.Cryptography.X509Certificates;
@@ -25,6 +26,7 @@ namespace SentinelCoreMCP.Tools;
 ///     Read-only tool for querying Windows certificate stores.
 /// </summary>
 [McpServerToolType]
+[SupportedOSPlatform("windows")]
 public sealed class CertificateStoreReadTool
 {
 
@@ -37,13 +39,13 @@ public sealed class CertificateStoreReadTool
 
     [McpServerTool(Name = "Certificate_List", ReadOnly = true, Destructive = false)]
     [Description("Lists certificates in the specified store and location.")]
-    public static ToolResult CertificateList([Description("The store name, e.g. My, Root, TrustedPublisher.")] string storeName, [Description("The store location: CurrentUser or LocalMachine. Defaults to LocalMachine.")] StoreLocation location = StoreLocation.LocalMachine, [Description("Maximum number of certificates to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> CertificateListAsync([Description("The store name, e.g. My, Root, TrustedPublisher.")] string storeName, [Description("The store location: CurrentUser or LocalMachine. Defaults to LocalMachine.")] StoreLocation location = StoreLocation.LocalMachine, [Description("Maximum number of certificates to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(storeName))
             {
-                return ToolResult.Fail("storeName is required.");
+                return ToolResult.Fail("storeName is required.", "CertificateStoreReadTool");
             }
 
             StringBuilder sb = new();
@@ -61,11 +63,11 @@ public sealed class CertificateStoreReadTool
                 count++;
             }
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "CertificateStoreReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Certificate store listing failed.");
+            return ToolResult.Fail("Certificate store listing failed.", "CertificateStoreReadTool");
         }
     }
 
@@ -78,13 +80,13 @@ public sealed class CertificateStoreReadTool
 
     [McpServerTool(Name = "Certificate_Read", ReadOnly = true, Destructive = false)]
     [Description("Reads details of a specific certificate by thumbprint.")]
-    public static ToolResult CertificateRead([Description("The certificate thumbprint.")] string thumbprint, [Description("The store name, e.g. My, Root.")] string storeName, [Description("The store location: CurrentUser or LocalMachine. Defaults to LocalMachine.")] StoreLocation location = StoreLocation.LocalMachine)
+    public async Task<ToolResult> CertificateReadAsync([Description("The certificate thumbprint.")] string thumbprint, [Description("The store name, e.g. My, Root.")] string storeName, [Description("The store location: CurrentUser or LocalMachine. Defaults to LocalMachine.")] StoreLocation location = StoreLocation.LocalMachine)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(thumbprint) || string.IsNullOrWhiteSpace(storeName))
             {
-                return ToolResult.Fail("thumbprint and storeName are required.");
+                return ToolResult.Fail("thumbprint and storeName are required.", "CertificateStoreReadTool");
             }
 
             using X509Store store = new(storeName, location);
@@ -92,7 +94,7 @@ public sealed class CertificateStoreReadTool
             X509Certificate2? cert = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false).FirstOrDefault();
             if (cert is null)
             {
-                return ToolResult.Fail($"Certificate not found: {thumbprint} in {location}\\{storeName}");
+                return ToolResult.Fail($"Certificate not found: {thumbprint} in {location}\\{storeName}", "CertificateStoreReadTool");
             }
 
             StringBuilder sb = new();
@@ -107,11 +109,11 @@ public sealed class CertificateStoreReadTool
             sb.AppendLine($"SignatureAlgorithm={cert.SignatureAlgorithm.FriendlyName}");
             sb.AppendLine($"Version={cert.Version}");
 
-            return ToolResult.Ok(sb.ToString());
+            return ToolResult.Ok(sb.ToString(), "CertificateStoreReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Certificate read failed.");
+            return ToolResult.Fail("Certificate read failed.", "CertificateStoreReadTool");
         }
     }
 }
