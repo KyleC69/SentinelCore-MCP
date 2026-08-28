@@ -1,21 +1,22 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         WindowsUpdateExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Management;
 using System.Runtime.Versioning;
 
+using ModelContextProtocol.Server;
+
 
 
 
 namespace SentinelCoreMCP.Tools;
+
 
 
 
@@ -56,13 +57,7 @@ public sealed class WindowsUpdateExtendedReadTool
                     break;
                 }
 
-                results.Add(new
-                {
-                    HotFixID = hotfix["HotFixID"]?.ToString() ?? string.Empty,
-                    Description = hotfix["Description"]?.ToString() ?? string.Empty,
-                    InstalledOn = hotfix["InstalledOn"]?.ToString() ?? string.Empty,
-                    InstalledBy = hotfix["InstalledBy"]?.ToString() ?? string.Empty
-                });
+                results.Add(new { HotFixID = hotfix["HotFixID"]?.ToString() ?? string.Empty, Description = hotfix["Description"]?.ToString() ?? string.Empty, InstalledOn = hotfix["InstalledOn"]?.ToString() ?? string.Empty, InstalledBy = hotfix["InstalledBy"]?.ToString() ?? string.Empty });
             }
 
             return ToolResult.Ok(results, "WindowsUpdateExtendedReadTool");

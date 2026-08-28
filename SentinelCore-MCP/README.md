@@ -1,6 +1,6 @@
 # SentinelCore-MCP
 
-![SentinelMCP](..\assets\sentinelmcp.png)
+![SentinelCore-MCP project banner displaying the project name SentinelMCP in large lettering, representing a Windows security and configuration reconnaissance server built on the Model Context Protocol. The clean, professional design sets a technical tone for the documentation that follows.](SentinelCore-MCP/assets/sentinelmcp.png)
 
 A Windows security and configuration reconnaissance server implementing the [Model Context Protocol (MCP)](https://modelcontextprotocol.io/). SentinelCore-MCP exposes **70+ read-only tools** that allow AI assistants and MCP clients to inspect Windows system state — firewall rules, Defender status, registry keys, services, processes, certificates, and much more — without modifying anything on the host.
 

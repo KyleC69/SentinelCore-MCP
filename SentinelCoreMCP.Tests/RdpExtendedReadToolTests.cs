@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         RdpExtendedReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="RdpExtendedReadTool" /> covering RDP session enumeration
@@ -18,19 +28,49 @@ public sealed class RdpExtendedReadToolTests
 {
     private readonly RdpExtendedReadTool _tool = new();
 
-    #region RDP_List_Sessions tests
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task RdpListSessions_ReturnsSuccessfulToolResult()
+    public async Task RdpListSessions_NullErrorDetailsOnSuccess()
     {
         ToolResult result = await _tool.RdpListSessionsAsync();
 
-        // The WTS API works on all Windows systems
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task RdpListSessions_RespectsMaxRecords()
+    {
+        const int maxRecords = 3;
+        ToolResult result = await _tool.RdpListSessionsAsync(maxRecords: maxRecords);
+
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -45,17 +85,31 @@ public sealed class RdpExtendedReadToolTests
         Assert.IsAssignableFrom<System.Collections.IEnumerable>(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task RdpListSessions_RespectsMaxRecords()
+    public async Task RdpListSessions_ReturnsSuccessfulToolResult()
     {
-        const int maxRecords = 3;
-        ToolResult result = await _tool.RdpListSessionsAsync(maxRecords: maxRecords);
+        ToolResult result = await _tool.RdpListSessionsAsync();
 
+        // The WTS API works on all Windows systems
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     public async Task RdpListSessions_ZeroMaxRecords_ReturnsFailure()
@@ -65,17 +119,4 @@ public sealed class RdpExtendedReadToolTests
         Assert.False(result.Success);
         Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task RdpListSessions_NullErrorDetailsOnSuccess()
-    {
-        ToolResult result = await _tool.RdpListSessionsAsync();
-
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
-    }
-
-    #endregion
 }

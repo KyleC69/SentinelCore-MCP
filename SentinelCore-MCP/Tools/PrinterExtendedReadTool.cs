@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PrinterExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
 
@@ -14,7 +14,9 @@ using ModelContextProtocol.Server;
 
 
 
+
 namespace SentinelCoreMCP.Tools;
+
 
 
 
@@ -27,19 +29,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PrinterExtendedReadTool
 {
-
-    /// <summary>
-    ///     A single print spooler job record.
-    /// </summary>
-    /// <param name="JobId">The spooler job identifier.</param>
-    /// <param name="PrinterName">The printer the job is queued on.</param>
-    /// <param name="Document">The document name.</param>
-    /// <param name="UserName">The user who submitted the job.</param>
-    /// <param name="Status">The job status.</param>
-    /// <param name="TotalPages">Total pages in the job.</param>
-    /// <param name="PagesPrinted">Pages printed so far.</param>
-    /// <param name="SubmittedAt">When the job was submitted.</param>
-    public sealed record PrintJobRecord(uint JobId, string PrinterName, string Document, string UserName, string Status, uint TotalPages, uint PagesPrinted, string SubmittedAt);
 
     /// <summary>
     ///     Lists current print spooler jobs for print spooler vulnerability investigation.
@@ -60,33 +49,26 @@ public sealed class PrinterExtendedReadTool
             }
 
             List<PrintJobRecord> results = await Task.Run(() =>
-            {
-                List<PrintJobRecord> records = new();
-                using ManagementObjectSearcher searcher = new("root\\cimv2", "SELECT JobId, Name, Document, Owner, Status, TotalPages, PagesPrinted, TimeSubmitted FROM Win32_PrintJob");
-                foreach (ManagementObject job in searcher.Get())
-                {
-                    if (records.Count >= maxRecords)
                     {
-                        break;
-                    }
+                        List<PrintJobRecord> records = new();
+                        using ManagementObjectSearcher searcher = new("root\\cimv2", "SELECT JobId, Name, Document, Owner, Status, TotalPages, PagesPrinted, TimeSubmitted FROM Win32_PrintJob");
+                        foreach (ManagementObject job in searcher.Get())
+                        {
+                            if (records.Count >= maxRecords)
+                            {
+                                break;
+                            }
 
-                    // Win32_PrintJob.Name is "PrinterName,JobId"
-                    string fullName = job["Name"]?.ToString() ?? string.Empty;
-                    string printerName = fullName.Contains(',') ? fullName.Split(',')[0] : fullName;
+                            // Win32_PrintJob.Name is "PrinterName,JobId"
+                            string fullName = job["Name"]?.ToString() ?? string.Empty;
+                            string printerName = fullName.Contains(',') ? fullName.Split(',')[0] : fullName;
 
-                    records.Add(new PrintJobRecord(
-                        JobId: job["JobId"] is uint id ? id : 0,
-                        PrinterName: printerName,
-                        Document: job["Document"]?.ToString() ?? string.Empty,
-                        UserName: job["Owner"]?.ToString() ?? string.Empty,
-                        Status: job["Status"]?.ToString() ?? string.Empty,
-                        TotalPages: job["TotalPages"] is uint tp ? tp : 0,
-                        PagesPrinted: job["PagesPrinted"] is uint pp ? pp : 0,
-                        SubmittedAt: job["TimeSubmitted"] is DateTime dt ? dt.ToString("O") : string.Empty));
-                }
+                            records.Add(new PrintJobRecord(JobId: job["JobId"] is uint id ? id : 0, PrinterName: printerName, Document: job["Document"]?.ToString() ?? string.Empty, UserName: job["Owner"]?.ToString() ?? string.Empty, Status: job["Status"]?.ToString() ?? string.Empty, TotalPages: job["TotalPages"] is uint tp ? tp : 0, PagesPrinted: job["PagesPrinted"] is uint pp ? pp : 0, SubmittedAt: job["TimeSubmitted"] is DateTime dt ? dt.ToString("O") : string.Empty));
+                        }
 
-                return records;
-            }).ConfigureAwait(false);
+                        return records;
+                    })
+                    .ConfigureAwait(false);
 
             return ToolResult.Ok(results, $"Enumerated {results.Count} print job(s).");
         }
@@ -95,4 +77,24 @@ public sealed class PrinterExtendedReadTool
             return ToolResult.Fail(ex.Message, "Print job listing");
         }
     }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     A single print spooler job record.
+    /// </summary>
+    /// <param name="JobId">The spooler job identifier.</param>
+    /// <param name="PrinterName">The printer the job is queued on.</param>
+    /// <param name="Document">The document name.</param>
+    /// <param name="UserName">The user who submitted the job.</param>
+    /// <param name="Status">The job status.</param>
+    /// <param name="TotalPages">Total pages in the job.</param>
+    /// <param name="PagesPrinted">Pages printed so far.</param>
+    /// <param name="SubmittedAt">When the job was submitted.</param>
+    public sealed record PrintJobRecord(uint JobId, string PrinterName, string Document, string UserName, string Status, uint TotalPages, uint PagesPrinted, string SubmittedAt);
 }

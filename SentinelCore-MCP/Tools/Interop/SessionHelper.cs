@@ -1,15 +1,22 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         SessionHelper.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
 using System.Diagnostics;
 using System.Runtime.Versioning;
 
+
+
+
 namespace SentinelCoreMCP.Tools.Interop;
+
+
+
+
 
 /// <summary>
 ///     Shared utility for enumerating Windows terminal sessions.
@@ -19,16 +26,6 @@ namespace SentinelCoreMCP.Tools.Interop;
 [SupportedOSPlatform("windows")]
 internal static class SessionHelper
 {
-
-    /// <summary>
-    ///     A single terminal session record.
-    /// </summary>
-    /// <param name="SessionName">The session name (e.g., console, rdp-tcp#0).</param>
-    /// <param name="UserName">The user logged into the session, if any.</param>
-    /// <param name="SessionId">The numeric session identifier.</param>
-    /// <param name="State">The session state (Active, Disconnected, Listen, etc.).</param>
-    /// <param name="Type">The session type.</param>
-    public sealed record SessionRecord(string SessionName, string UserName, string SessionId, string State, string Type);
 
     /// <summary>
     ///     Enumerates active terminal sessions on the local machine using the built-in
@@ -44,12 +41,12 @@ internal static class SessionHelper
 
             ProcessStartInfo psi = new()
             {
-                FileName = "query.exe",
-                Arguments = "session",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                    FileName = "query.exe",
+                    Arguments = "session",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
             };
 
             using Process process = new() { StartInfo = psi };
@@ -85,8 +82,7 @@ internal static class SessionHelper
                 string trimmed = line.Trim();
 
                 // Skip header and separator lines
-                if (trimmed.StartsWith("SESSIONNAME", StringComparison.OrdinalIgnoreCase) ||
-                    trimmed.StartsWith("====", StringComparison.OrdinalIgnoreCase))
+                if (trimmed.StartsWith("SESSIONNAME", StringComparison.OrdinalIgnoreCase) || trimmed.StartsWith("====", StringComparison.OrdinalIgnoreCase))
                 {
                     continue;
                 }
@@ -113,12 +109,7 @@ internal static class SessionHelper
                     continue;
                 }
 
-                results.Add(new SessionRecord(
-                    SessionName: idIndex > 0 ? parts[0] : string.Empty,
-                    UserName: idIndex > 1 ? string.Join(" ", parts[1..idIndex]) : string.Empty,
-                    SessionId: parts[idIndex],
-                    State: idIndex + 1 < parts.Length ? parts[idIndex + 1] : string.Empty,
-                    Type: idIndex + 2 < parts.Length ? parts[idIndex + 2] : string.Empty));
+                results.Add(new SessionRecord(SessionName: idIndex > 0 ? parts[0] : string.Empty, UserName: idIndex > 1 ? string.Join(" ", parts[1..idIndex]) : string.Empty, SessionId: parts[idIndex], State: idIndex + 1 < parts.Length ? parts[idIndex + 1] : string.Empty, Type: idIndex + 2 < parts.Length ? parts[idIndex + 2] : string.Empty));
             }
 
             return ToolResult.Ok(results, $"Enumerated {results.Count} session(s).");
@@ -128,4 +119,21 @@ internal static class SessionHelper
             return ToolResult.Fail(ex.Message, "Session enumeration");
         }
     }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     A single terminal session record.
+    /// </summary>
+    /// <param name="SessionName">The session name (e.g., console, rdp-tcp#0).</param>
+    /// <param name="UserName">The user logged into the session, if any.</param>
+    /// <param name="SessionId">The numeric session identifier.</param>
+    /// <param name="State">The session state (Active, Disconnected, Listen, etc.).</param>
+    /// <param name="Type">The session type.</param>
+    public sealed record SessionRecord(string SessionName, string UserName, string SessionId, string State, string Type);
 }

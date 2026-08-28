@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         NetworkExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -30,13 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class NetworkExtendedReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_List_Listening_Ports", ReadOnly = true, Destructive = false)]
@@ -58,26 +51,14 @@ public sealed class NetworkExtendedReadTool
             foreach (IPEndPoint endpoint in properties.GetActiveTcpListeners())
             {
                 if (results.Count >= maxRecords) break;
-                results.Add(new
-                {
-                    Protocol = "TCP",
-                    endpoint.Address,
-                    Port = endpoint.Port,
-                    State = "Listen"
-                });
+                results.Add(new { Protocol = "TCP", endpoint.Address, endpoint.Port, State = "Listen" });
             }
 
             // UDP listeners
             foreach (IPEndPoint endpoint in properties.GetActiveUdpListeners())
             {
                 if (results.Count >= maxRecords) break;
-                results.Add(new
-                {
-                    Protocol = "UDP",
-                    endpoint.Address,
-                    Port = endpoint.Port,
-                    State = "Listen"
-                });
+                results.Add(new { Protocol = "UDP", endpoint.Address, endpoint.Port, State = "Listen" });
             }
 
             return ToolResult.Ok(results, "NetworkExtendedReadTool");
@@ -85,6 +66,125 @@ public sealed class NetworkExtendedReadTool
         catch (Exception ex)
         {
             return ToolResult.Fail(ex.Message, "Listening port listing");
+        }
+    }
+
+
+
+
+
+
+
+
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Network_List_Shares", ReadOnly = true, Destructive = false)]
+    [Description("Lists network shares on the local machine.")]
+    public async Task<ToolResult> NetworkListSharesAsync([Description("Maximum number of shares to return. Defaults to 50.")] int maxRecords = 50)
+    {
+        try
+        {
+            List<object> results = new();
+            System.Diagnostics.ProcessStartInfo psi = new()
+            {
+                    FileName = "net",
+                    Arguments = "share",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
+            if (process is null)
+            {
+                return ToolResult.Fail("Unable to start net share.", "NetworkExtendedReadTool");
+            }
+
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            string[] lines = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                if (results.Count >= maxRecords) break;
+                string trimmed = line.Trim();
+                // Skip header and separator lines
+                if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith("-") || trimmed.StartsWith("Share", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string[] parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 1)
+                {
+                    results.Add(new { ShareName = parts[0], Resource = parts.Length >= 2 ? parts[1] : "", Remark = parts.Length >= 3 ? string.Join(" ", parts[2..]) : "" });
+                }
+            }
+
+            return ToolResult.Ok(results, "NetworkExtendedReadTool");
+        }
+        catch
+        {
+            return ToolResult.Fail("Network share listing failed.", "NetworkExtendedReadTool");
+        }
+    }
+
+
+
+
+
+
+
+
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Network_Read_ARP_Table", ReadOnly = true, Destructive = false)]
+    [Description("Reads the ARP cache table mapping IP addresses to physical addresses.")]
+    public async Task<ToolResult> NetworkReadArpTableAsync([Description("Maximum number of entries to return. Defaults to 50.")] int maxRecords = 50)
+    {
+        try
+        {
+            List<object> results = new();
+            System.Diagnostics.ProcessStartInfo psi = new()
+            {
+                    FileName = "arp",
+                    Arguments = "-a",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
+            if (process is null)
+            {
+                return ToolResult.Fail("Unable to start arp.", "NetworkExtendedReadTool");
+            }
+
+            string output = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+
+            // Parse arp -a output
+            string[] lines = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                if (results.Count >= maxRecords) break;
+                string trimmed = line.Trim();
+                // Lines with IP/MAC look like: 192.168.1.1   00-11-22-33-44-55   dynamic
+                if (trimmed.Length > 0 && char.IsDigit(trimmed[0]))
+                {
+                    string[] parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 2)
+                    {
+                        results.Add(new { IPAddress = parts[0], PhysicalAddress = parts[1], Type = parts.Length >= 3 ? parts[2] : "" });
+                    }
+                }
+            }
+
+            return ToolResult.Ok(results, "NetworkExtendedReadTool");
+        }
+        catch
+        {
+            return ToolResult.Fail("ARP table read failed.", "NetworkExtendedReadTool");
         }
     }
 
@@ -113,12 +213,12 @@ public sealed class NetworkExtendedReadTool
             StringBuilder sb = new();
             System.Diagnostics.ProcessStartInfo psi = new()
             {
-                FileName = "ipconfig",
-                Arguments = "/displaydns",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                    FileName = "ipconfig",
+                    Arguments = "/displaydns",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
             };
 
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
@@ -157,8 +257,7 @@ public sealed class NetworkExtendedReadTool
                 {
                     currentType = line.Substring(line.IndexOf('.') + 1).Trim();
                 }
-                else if (line.StartsWith("A (Host) Record", StringComparison.OrdinalIgnoreCase) ||
-                         line.StartsWith("Data", StringComparison.OrdinalIgnoreCase))
+                else if (line.StartsWith("A (Host) Record", StringComparison.OrdinalIgnoreCase) || line.StartsWith("Data", StringComparison.OrdinalIgnoreCase))
                 {
                     currentData = line.Substring(line.IndexOf('.') + 1).Trim();
                 }
@@ -186,70 +285,6 @@ public sealed class NetworkExtendedReadTool
 
 
     [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Network_Read_ARP_Table", ReadOnly = true, Destructive = false)]
-    [Description("Reads the ARP cache table mapping IP addresses to physical addresses.")]
-    public async Task<ToolResult> NetworkReadArpTableAsync([Description("Maximum number of entries to return. Defaults to 50.")] int maxRecords = 50)
-    {
-        try
-        {
-            List<object> results = new();
-            System.Diagnostics.ProcessStartInfo psi = new()
-            {
-                FileName = "arp",
-                Arguments = "-a",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
-            if (process is null)
-            {
-                return ToolResult.Fail("Unable to start arp.", "NetworkExtendedReadTool");
-            }
-
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-
-            // Parse arp -a output
-            string[] lines = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
-            {
-                if (results.Count >= maxRecords) break;
-                string trimmed = line.Trim();
-                // Lines with IP/MAC look like: 192.168.1.1   00-11-22-33-44-55   dynamic
-                if (trimmed.Length > 0 && char.IsDigit(trimmed[0]))
-                {
-                    string[] parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                    if (parts.Length >= 2)
-                    {
-                        results.Add(new
-                        {
-                            IPAddress = parts[0],
-                            PhysicalAddress = parts[1],
-                            Type = parts.Length >= 3 ? parts[2] : ""
-                        });
-                    }
-                }
-            }
-
-            return ToolResult.Ok(results, "NetworkExtendedReadTool");
-        }
-        catch
-        {
-            return ToolResult.Fail("ARP table read failed.", "NetworkExtendedReadTool");
-        }
-    }
-
-
-
-
-
-
-
-
-    [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_Read_Routing_Table", ReadOnly = true, Destructive = false)]
     [Description("Reads the IPv4 routing table.")]
     public async Task<ToolResult> NetworkReadRoutingTableAsync([Description("Maximum number of routes to return. Defaults to 50.")] int maxRecords = 50)
@@ -259,12 +294,12 @@ public sealed class NetworkExtendedReadTool
             List<object> results = new();
             System.Diagnostics.ProcessStartInfo psi = new()
             {
-                FileName = "route",
-                Arguments = "print -4",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                    FileName = "route",
+                    Arguments = "print -4",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
             };
 
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
@@ -283,8 +318,7 @@ public sealed class NetworkExtendedReadTool
             {
                 if (results.Count >= maxRecords) break;
                 string trimmed = line.Trim();
-                if (trimmed.StartsWith("Network Destination", StringComparison.OrdinalIgnoreCase) ||
-                    trimmed.StartsWith("====", StringComparison.OrdinalIgnoreCase))
+                if (trimmed.StartsWith("Network Destination", StringComparison.OrdinalIgnoreCase) || trimmed.StartsWith("====", StringComparison.OrdinalIgnoreCase))
                 {
                     inRoutes = true;
                     continue;
@@ -297,11 +331,11 @@ public sealed class NetworkExtendedReadTool
                     {
                         results.Add(new
                         {
-                            NetworkDestination = parts[0],
-                            Netmask = parts[1],
-                            Gateway = parts[2],
-                            Interface = parts[3],
-                            Metric = parts.Length >= 5 ? parts[4] : ""
+                                NetworkDestination = parts[0],
+                                Netmask = parts[1],
+                                Gateway = parts[2],
+                                Interface = parts[3],
+                                Metric = parts.Length >= 5 ? parts[4] : ""
                         });
                     }
                 }
@@ -312,73 +346,6 @@ public sealed class NetworkExtendedReadTool
         catch
         {
             return ToolResult.Fail("Routing table read failed.", "NetworkExtendedReadTool");
-        }
-    }
-
-
-
-
-
-
-
-
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Network_List_Shares", ReadOnly = true, Destructive = false)]
-    [Description("Lists network shares on the local machine.")]
-    public async Task<ToolResult> NetworkListSharesAsync([Description("Maximum number of shares to return. Defaults to 50.")] int maxRecords = 50)
-    {
-        try
-        {
-            List<object> results = new();
-            System.Diagnostics.ProcessStartInfo psi = new()
-            {
-                FileName = "net",
-                Arguments = "share",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
-            if (process is null)
-            {
-                return ToolResult.Fail("Unable to start net share.", "NetworkExtendedReadTool");
-            }
-
-            string output = process.StandardOutput.ReadToEnd();
-            process.WaitForExit();
-
-            string[] lines = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
-            {
-                if (results.Count >= maxRecords) break;
-                string trimmed = line.Trim();
-                // Skip header and separator lines
-                if (string.IsNullOrWhiteSpace(trimmed) ||
-                    trimmed.StartsWith("-") ||
-                    trimmed.StartsWith("Share", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                string[] parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 1)
-                {
-                    results.Add(new
-                    {
-                        ShareName = parts[0],
-                        Resource = parts.Length >= 2 ? parts[1] : "",
-                        Remark = parts.Length >= 3 ? string.Join(" ", parts[2..]) : ""
-                    });
-                }
-            }
-
-            return ToolResult.Ok(results, "NetworkExtendedReadTool");
-        }
-        catch
-        {
-            return ToolResult.Fail("Network share listing failed.", "NetworkExtendedReadTool");
         }
     }
 }

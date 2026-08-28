@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         PowerShellReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="PowerShellReadTool" /> covering command validation
@@ -16,7 +26,216 @@ namespace SentinelCoreMCP.Tests;
 [SupportedOSPlatform("windows")]
 public sealed class PowerShellReadToolTests
 {
-    #region ValidateCommand — Whitelist acceptance tests
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task PowerShellListAllowedCommands_DoesNotContainForbiddenCommands()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellListAllowedCommandsAsync();
+
+        Assert.True(result.Success);
+        string output = (string)result.Results!;
+        Assert.DoesNotContain("Remove-Item", output);
+        Assert.DoesNotContain("Invoke-Expression", output);
+        Assert.DoesNotContain("Start-Process", output);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task PowerShellListAllowedCommands_ReturnsSuccessfulToolResult()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellListAllowedCommandsAsync();
+
+        Assert.True(result.Success);
+        Assert.NotNull(result.Results);
+        Assert.Contains("Get-Process", (string)result.Results!);
+        Assert.Contains("Get-Service", (string)result.Results);
+        Assert.Contains("Get-CimInstance", (string)result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task PowerShellQuery_EmptyCommand_ReturnsFailure()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellQueryAsync("");
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task PowerShellQuery_ForbiddenCommand_ReturnsFailure()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellQueryAsync("Remove-Item C:\\test");
+
+        Assert.False(result.Success);
+        Assert.NotNull(result.ErrorDetails);
+        Assert.Contains("forbidden", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    [Trait("Category", "RequiresPowerShell")]
+    public async Task PowerShellQuery_GetComputerInfo_ReturnsSuccessfulToolResult()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellQueryAsync("Get-ComputerInfo");
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    [Trait("Category", "RequiresPowerShell")]
+    public async Task PowerShellQuery_GetDate_ReturnsSuccessfulToolResult()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellQueryAsync("Get-Date");
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    [Trait("Category", "RequiresPowerShell")]
+    public async Task PowerShellQuery_GetProcess_ReturnsSuccessfulToolResult()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellQueryAsync("Get-Process -Name explorer");
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task PowerShellQuery_InjectionAttempt_ReturnsFailure()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellQueryAsync("Get-Process ; whoami");
+
+        Assert.False(result.Success);
+        Assert.Contains("forbidden pattern", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    [Trait("Category", "RequiresPowerShell")]
+    public async Task PowerShellQuery_MaxResultsParameter_RespectsLimit()
+    {
+        PowerShellReadTool tool = new();
+        ToolResult result = await tool.powershellQueryAsync("Get-Service", maxResults: 3);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public void ValidateCommand_AllowedCommandWithMultipleParameters_ReturnsNull()
+    {
+        string? result = PowerShellReadTool.ValidateCommand("Get-CimInstance -ClassName Win32_OperatingSystem");
+        Assert.Null(result);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public void ValidateCommand_AllowedCommandWithParameters_ReturnsNull()
+    {
+        string? result = PowerShellReadTool.ValidateCommand("Get-Process -Name explorer");
+        Assert.Null(result);
+    }
+
+
+
+
+
+
+
 
     [Theory]
     [InlineData("Get-Process")]
@@ -59,9 +278,27 @@ public sealed class PowerShellReadToolTests
         Assert.Null(result);
     }
 
-    #endregion
 
-    #region ValidateCommand — Blacklist rejection tests
+
+
+
+
+
+
+    [Fact]
+    public void ValidateCommand_EmptyCommand_ReturnsRequiredError()
+    {
+        string? result = PowerShellReadTool.ValidateCommand("");
+        Assert.NotNull(result);
+        Assert.Contains("required", result, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Theory]
     [InlineData("Set-Content")]
@@ -105,9 +342,12 @@ public sealed class PowerShellReadToolTests
         Assert.Contains("forbidden", result, StringComparison.OrdinalIgnoreCase);
     }
 
-    #endregion
 
-    #region ValidateCommand — Injection pattern rejection tests
+
+
+
+
+
 
     [Theory]
     [InlineData("Get-Process | Stop-Process")]
@@ -127,9 +367,12 @@ public sealed class PowerShellReadToolTests
         Assert.Contains("forbidden pattern", result, StringComparison.OrdinalIgnoreCase);
     }
 
-    #endregion
 
-    #region ValidateCommand — Edge case tests
+
+
+
+
+
 
     [Fact]
     public void ValidateCommand_NullCommand_ReturnsRequiredError()
@@ -139,21 +382,12 @@ public sealed class PowerShellReadToolTests
         Assert.Contains("required", result, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public void ValidateCommand_EmptyCommand_ReturnsRequiredError()
-    {
-        string? result = PowerShellReadTool.ValidateCommand("");
-        Assert.NotNull(result);
-        Assert.Contains("required", result, StringComparison.OrdinalIgnoreCase);
-    }
 
-    [Fact]
-    public void ValidateCommand_WhitespaceCommand_ReturnsRequiredError()
-    {
-        string? result = PowerShellReadTool.ValidateCommand("   ");
-        Assert.NotNull(result);
-        Assert.Contains("required", result, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
+
 
     [Fact]
     public void ValidateCommand_UnknownCmdlet_ReturnsNotAllowedError()
@@ -163,146 +397,18 @@ public sealed class PowerShellReadToolTests
         Assert.Contains("not in the allowed list", result, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public void ValidateCommand_AllowedCommandWithParameters_ReturnsNull()
-    {
-        string? result = PowerShellReadTool.ValidateCommand("Get-Process -Name explorer");
-        Assert.Null(result);
-    }
+
+
+
+
+
+
 
     [Fact]
-    public void ValidateCommand_AllowedCommandWithMultipleParameters_ReturnsNull()
+    public void ValidateCommand_WhitespaceCommand_ReturnsRequiredError()
     {
-        string? result = PowerShellReadTool.ValidateCommand("Get-CimInstance -ClassName Win32_OperatingSystem");
-        Assert.Null(result);
+        string? result = PowerShellReadTool.ValidateCommand("   ");
+        Assert.NotNull(result);
+        Assert.Contains("required", result, StringComparison.OrdinalIgnoreCase);
     }
-
-    #endregion
-
-    #region PowerShell_Query integration tests
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    [Trait("Category", "RequiresPowerShell")]
-    public async Task PowerShellQuery_GetDate_ReturnsSuccessfulToolResult()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-Date");
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    [Trait("Category", "RequiresPowerShell")]
-    public async Task PowerShellQuery_GetProcess_ReturnsSuccessfulToolResult()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-Process -Name explorer");
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    [Trait("Category", "RequiresPowerShell")]
-    public async Task PowerShellQuery_GetComputerInfo_ReturnsSuccessfulToolResult()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-ComputerInfo");
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task PowerShellQuery_ForbiddenCommand_ReturnsFailure()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Remove-Item C:\\test");
-
-        Assert.False(result.Success);
-        Assert.NotNull(result.ErrorDetails);
-        Assert.Contains("forbidden", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task PowerShellQuery_InjectionAttempt_ReturnsFailure()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-Process ; whoami");
-
-        Assert.False(result.Success);
-        Assert.Contains("forbidden pattern", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    [Trait("Category", "RequiresPowerShell")]
-    public async Task PowerShellQuery_MaxResultsParameter_RespectsLimit()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-Service", maxResults: 3);
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task PowerShellQuery_EmptyCommand_ReturnsFailure()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("");
-
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    #endregion
-
-    #region PowerShell_List_Allowed_Commands tests
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task PowerShellListAllowedCommands_ReturnsSuccessfulToolResult()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellListAllowedCommandsAsync();
-
-        Assert.True(result.Success);
-        Assert.NotNull(result.Results);
-        Assert.Contains("Get-Process", (string)result.Results!);
-        Assert.Contains("Get-Service", (string)result.Results);
-        Assert.Contains("Get-CimInstance", (string)result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task PowerShellListAllowedCommands_DoesNotContainForbiddenCommands()
-    {
-        PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellListAllowedCommandsAsync();
-
-        Assert.True(result.Success);
-        string output = (string)result.Results!;
-        Assert.DoesNotContain("Remove-Item", output);
-        Assert.DoesNotContain("Invoke-Expression", output);
-        Assert.DoesNotContain("Start-Process", output);
-    }
-
-    #endregion
 }

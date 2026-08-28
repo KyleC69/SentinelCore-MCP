@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         InstalledAppsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using Microsoft.Win32;
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Management;
 using System.Runtime.Versioning;
+
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -78,12 +78,12 @@ public sealed class InstalledAppsReadTool
 
                 results.Add(new Dictionary<string, string?>
                 {
-                    ["DisplayName"] = displayName,
-                    ["Publisher"] = subKey.GetValue("Publisher")?.ToString(),
-                    ["Version"] = subKey.GetValue("DisplayVersion")?.ToString(),
-                    ["InstallDate"] = subKey.GetValue("InstallDate")?.ToString(),
-                    ["UninstallString"] = subKey.GetValue("UninstallString")?.ToString(),
-                    ["RegistryPath"] = $"{hive}\\{keyPath}\\{subKeyName}"
+                        ["DisplayName"] = displayName,
+                        ["Publisher"] = subKey.GetValue("Publisher")?.ToString(),
+                        ["Version"] = subKey.GetValue("DisplayVersion")?.ToString(),
+                        ["InstallDate"] = subKey.GetValue("InstallDate")?.ToString(),
+                        ["UninstallString"] = subKey.GetValue("UninstallString")?.ToString(),
+                        ["RegistryPath"] = $"{hive}\\{keyPath}\\{subKeyName}"
                 });
             }
             catch
@@ -151,11 +151,11 @@ public sealed class InstalledAppsReadTool
 
                 results.Add(new
                 {
-                    Name = name,
-                    Version = product["Version"]?.ToString(),
-                    Vendor = product["Vendor"]?.ToString(),
-                    InstallDate = product["InstallDate"]?.ToString(),
-                    IdentifyingNumber = product["IdentifyingNumber"]?.ToString()
+                        Name = name,
+                        Version = product["Version"]?.ToString(),
+                        Vendor = product["Vendor"]?.ToString(),
+                        InstallDate = product["InstallDate"]?.ToString(),
+                        IdentifyingNumber = product["IdentifyingNumber"]?.ToString()
                 });
             }
 

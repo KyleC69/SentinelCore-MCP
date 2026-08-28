@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         FileSystemReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="FileSystemReadTool" /> covering directory listing,
@@ -16,9 +26,16 @@ namespace SentinelCoreMCP.Tests;
 [SupportedOSPlatform("windows")]
 public sealed class FileSystemReadToolTests : IDisposable
 {
-    private readonly FileSystemReadTool _tool = new();
     private readonly string _tempDir;
     private readonly string _tempFile;
+    private readonly FileSystemReadTool _tool = new();
+
+
+
+
+
+
+
 
     public FileSystemReadToolTests()
     {
@@ -28,6 +45,13 @@ public sealed class FileSystemReadToolTests : IDisposable
         _tempFile = Path.Combine(_tempDir, "test.txt");
         File.WriteAllLines(_tempFile, ["line one", "line two", "line three", "line four", "line five"]);
     }
+
+
+
+
+
+
+
 
     public void Dispose()
     {
@@ -41,7 +65,12 @@ public sealed class FileSystemReadToolTests : IDisposable
         }
     }
 
-    #region File_System_List_Directory tests
+
+
+
+
+
+
 
     [Fact]
     public async Task FileSystemListDirectory_EmptyPath_ReturnsFailure()
@@ -52,14 +81,12 @@ public sealed class FileSystemReadToolTests : IDisposable
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public async Task FileSystemListDirectory_NullPath_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemListDirectoryAsync(null!);
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -71,6 +98,51 @@ public sealed class FileSystemReadToolTests : IDisposable
         Assert.False(result.Success);
         Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task FileSystemListDirectory_NullPath_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemListDirectoryAsync(null!);
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemListDirectory_RespectsMaxRecords()
+    {
+        const int maxRecords = 1;
+        ToolResult result = await _tool.FileSystemListDirectoryAsync(_tempDir, maxRecords: maxRecords);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        string output = (string)result.Results!;
+        // With maxRecords=1, only one entry (the subdirectory) should be listed
+        int entryCount = output.Split('\n').Count(l => l.StartsWith("  "));
+        Assert.True(entryCount <= maxRecords, $"Expected at most {maxRecords} entries but got {entryCount}");
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -85,25 +157,12 @@ public sealed class FileSystemReadToolTests : IDisposable
         Assert.Contains("Files:", output);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemListDirectory_RespectsMaxRecords()
-    {
-        const int maxRecords = 1;
-        ToolResult result = await _tool.FileSystemListDirectoryAsync(_tempDir, maxRecords: maxRecords);
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        string output = (string)result.Results!;
-        // With maxRecords=1, only one entry (the subdirectory) should be listed
-        int entryCount = output.Split('\n').Count(l => l.StartsWith("  "));
-        Assert.True(entryCount <= maxRecords,
-            $"Expected at most {maxRecords} entries but got {entryCount}");
-    }
 
-    #endregion
 
-    #region File_System_Read_Acl tests
+
+
+
 
     [Fact]
     public async Task FileSystemReadAcl_EmptyPath_ReturnsFailure()
@@ -113,6 +172,31 @@ public sealed class FileSystemReadToolTests : IDisposable
         Assert.False(result.Success);
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadAcl_NonExistentPath_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemReadAclAsync(Path.Combine(_tempDir, "DoesNotExist"));
+
+        Assert.False(result.Success);
+        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -127,6 +211,13 @@ public sealed class FileSystemReadToolTests : IDisposable
         Assert.Contains("AccessRules:", output);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -139,142 +230,12 @@ public sealed class FileSystemReadToolTests : IDisposable
         Assert.Contains("Owner=", output);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadAcl_NonExistentPath_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemReadAclAsync(Path.Combine(_tempDir, "DoesNotExist"));
 
-        Assert.False(result.Success);
-        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
 
-    #endregion
 
-    #region File_System_Read_Metadata tests
 
-    [Fact]
-    public async Task FileSystemReadMetadata_EmptyPath_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemReadMetadataAsync("");
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadMetadata_TempFile_ReturnsTypedMetadata()
-    {
-        ToolResult result = await _tool.FileSystemReadMetadataAsync(_tempFile);
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        object payload = result.Results!;
-        Assert.NotNull(payload.GetType().GetProperty("Path"));
-        Assert.NotNull(payload.GetType().GetProperty("IsDirectory"));
-        Assert.NotNull(payload.GetType().GetProperty("Length"));
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadMetadata_Directory_ReturnsIsDirectoryTrue()
-    {
-        ToolResult result = await _tool.FileSystemReadMetadataAsync(_tempDir);
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        object payload = result.Results!;
-        bool isDirectory = (bool)payload.GetType().GetProperty("IsDirectory")!.GetValue(payload)!;
-        Assert.True(isDirectory, "Expected IsDirectory=true for a directory path");
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadMetadata_NonExistentPath_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemReadMetadataAsync(Path.Combine(_tempDir, "DoesNotExist"));
-
-        Assert.False(result.Success);
-        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    #endregion
-
-    #region File_System_Read_Content tests
-
-    [Fact]
-    public async Task FileSystemReadContent_EmptyPath_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemReadContentAsync("");
-
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadContent_TempFile_ReturnsContent()
-    {
-        ToolResult result = await _tool.FileSystemReadContentAsync(_tempFile);
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        string output = (string)result.Results!;
-        Assert.Contains("line two", output);
-        Assert.Contains("Total lines: 5", output);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadContent_WithLineRange_ReturnsSubset()
-    {
-        ToolResult result = await _tool.FileSystemReadContentAsync(_tempFile, startLine: 2, lineCount: 2);
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        string output = (string)result.Results!;
-        Assert.Contains("line two", output);
-        Assert.Contains("line three", output);
-        Assert.DoesNotContain("line one", output);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadContent_StartLineBeyondEnd_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemReadContentAsync(_tempFile, startLine: 100);
-
-        Assert.False(result.Success);
-        Assert.Contains("exceeds total line count", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadContent_NonExistentFile_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemReadContentAsync(Path.Combine(_tempDir, "DoesNotExist.txt"));
-
-        Assert.False(result.Success);
-        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadContent_DirectoryPath_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemReadContentAsync(_tempDir);
-
-        // The tool checks FileInfo.Exists first; a directory path fails as "not found"
-        // or as "is a directory" depending on which check fires first
-        Assert.False(result.Success);
-        Assert.NotNull(result.ErrorDetails);
-    }
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -290,6 +251,105 @@ public sealed class FileSystemReadToolTests : IDisposable
         Assert.Contains("binary", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadContent_DirectoryPath_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemReadContentAsync(_tempDir);
+
+        // The tool checks FileInfo.Exists first; a directory path fails as "not found"
+        // or as "is a directory" depending on which check fires first
+        Assert.False(result.Success);
+        Assert.NotNull(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task FileSystemReadContent_EmptyPath_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemReadContentAsync("");
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadContent_NonExistentFile_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemReadContentAsync(Path.Combine(_tempDir, "DoesNotExist.txt"));
+
+        Assert.False(result.Success);
+        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadContent_StartLineBeyondEnd_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemReadContentAsync(_tempFile, startLine: 100);
+
+        Assert.False(result.Success);
+        Assert.Contains("exceeds total line count", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadContent_TempFile_ReturnsContent()
+    {
+        ToolResult result = await _tool.FileSystemReadContentAsync(_tempFile);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        string output = (string)result.Results!;
+        Assert.Contains("line two", output);
+        Assert.Contains("Total lines: 5", output);
+    }
+
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -301,5 +361,99 @@ public sealed class FileSystemReadToolTests : IDisposable
         Assert.Contains("encoding", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadContent_WithLineRange_ReturnsSubset()
+    {
+        ToolResult result = await _tool.FileSystemReadContentAsync(_tempFile, startLine: 2, lineCount: 2);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        string output = (string)result.Results!;
+        Assert.Contains("line two", output);
+        Assert.Contains("line three", output);
+        Assert.DoesNotContain("line one", output);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadMetadata_Directory_ReturnsIsDirectoryTrue()
+    {
+        ToolResult result = await _tool.FileSystemReadMetadataAsync(_tempDir);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        object payload = result.Results!;
+        bool isDirectory = (bool)payload.GetType().GetProperty("IsDirectory")!.GetValue(payload)!;
+        Assert.True(isDirectory, "Expected IsDirectory=true for a directory path");
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task FileSystemReadMetadata_EmptyPath_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemReadMetadataAsync("");
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadMetadata_NonExistentPath_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemReadMetadataAsync(Path.Combine(_tempDir, "DoesNotExist"));
+
+        Assert.False(result.Success);
+        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadMetadata_TempFile_ReturnsTypedMetadata()
+    {
+        ToolResult result = await _tool.FileSystemReadMetadataAsync(_tempFile);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        object payload = result.Results!;
+        Assert.NotNull(payload.GetType().GetProperty("Path"));
+        Assert.NotNull(payload.GetType().GetProperty("IsDirectory"));
+        Assert.NotNull(payload.GetType().GetProperty("Length"));
+    }
 }

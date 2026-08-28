@@ -1,22 +1,22 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         CredentialsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 
 using ModelContextProtocol.Server;
 
-using System.ComponentModel;
-
 
 
 
 namespace SentinelCoreMCP.Tools;
+
 
 
 
@@ -32,15 +32,6 @@ public sealed class CredentialsReadTool
 {
 
     /// <summary>
-    ///     A single stored credential record (metadata only, no secrets).
-    /// </summary>
-    /// <param name="Target">The credential target name.</param>
-    /// <param name="UserName">The stored user name, if present.</param>
-    /// <param name="Type">The credential type (e.g., Domain, Generic).</param>
-    public sealed record CredentialTargetRecord(string Target, string UserName, string Type);
-
-
-    /// <summary>
     ///     Lists the names (targets) of stored Windows credentials without reading passwords.
     /// </summary>
     /// <returns>A <see cref="ToolResult" /> containing typed credential target records.</returns>
@@ -53,12 +44,12 @@ public sealed class CredentialsReadTool
         {
             ProcessStartInfo psi = new()
             {
-                FileName = "cmdkey.exe",
-                Arguments = "/list",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                    FileName = "cmdkey.exe",
+                    Arguments = "/list",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
             };
 
             using Process process = new() { StartInfo = psi };
@@ -125,4 +116,19 @@ public sealed class CredentialsReadTool
             return ToolResult.Fail(ex.Message, "Credential target listing");
         }
     }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     A single stored credential record (metadata only, no secrets).
+    /// </summary>
+    /// <param name="Target">The credential target name.</param>
+    /// <param name="UserName">The stored user name, if present.</param>
+    /// <param name="Type">The credential type (e.g., Domain, Generic).</param>
+    public sealed record CredentialTargetRecord(string Target, string UserName, string Type);
 }

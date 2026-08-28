@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         ActiveDirectoryReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -22,6 +22,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tools for Active Directory reconnaissance, mirroring the
 ///     Sysinternals ADExplorer and ADInsight workflows.
@@ -33,6 +34,137 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class ActiveDirectoryReadTool
 {
+
+    /// <summary>
+    ///     Reports the availability of the Sysinternals ADInsight utility. ADInsight
+    ///     is a GUI application with no supported command-line interface, so only an
+    ///     availability probe is exposed.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Sysinternals_ADInsight_Availability", ReadOnly = true, Destructive = false)]
+    [Description("Checks whether the Sysinternals ADInsight utility is installed and reports its version and path. ADInsight is GUI-only, so no automated tracing is available.")]
+    public async Task<ToolResult> ADInsightAvailabilityAsync()
+    {
+        return await Task.Run(() => Interop.SysinternalsHelper.ProbeAvailability("adinsight")).ConfigureAwait(false);
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Reports whether the host is joined to an Active Directory domain and, when
+    ///     it is, returns the domain context that ADExplorer would browse.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing the domain availability record.</returns>
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Sysinternals_AD_Availability", ReadOnly = true, Destructive = false)]
+    [Description("Checks whether this host is joined to an Active Directory domain. ADExplorer and ADInsight require a domain-joined host with reachable domain controllers.")]
+    public async Task<ToolResult> ActiveDirectoryAvailabilityAsync()
+    {
+        return await Task.Run(() =>
+                {
+                    if (!TryGetDomain(out Domain? domain))
+                    {
+                        return ToolResult.Fail("This host is not joined to an Active Directory domain. ADExplorer and ADInsight require domain membership and a reachable domain controller.", "Active Directory availability");
+                    }
+
+                    var result = new { DomainJoined = true, domain!.Name, ForestName = domain.Forest.Name, DomainControllers = domain.DomainControllers.OfType<DomainController>().Take(10).Select(dc => dc.Name).ToList() };
+
+                    return ToolResult.Ok(result, "Active Directory domain detected.");
+                })
+                .ConfigureAwait(false);
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Browses an Active Directory container and lists its child objects,
+    ///     mirroring the ADExplorer tree view in a read-only manner.
+    /// </summary>
+    /// <param name="ldapPath">
+    ///     The LDAP path of the container to browse, e.g. LDAP://DC=contoso,DC=com. Defaults to the root
+    ///     naming context.
+    /// </param>
+    /// <param name="maxRecords">Maximum number of child objects to return. Defaults to 50.</param>
+    /// <returns>A <see cref="ToolResult" /> containing the child object listing.</returns>
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Sysinternals_AD_Browse_Container", ReadOnly = true, Destructive = false)]
+    [Description("Browses an Active Directory container and lists child objects (ADExplorer-style tree read). Requires a domain-joined host.")]
+    public async Task<ToolResult> ActiveDirectoryBrowseContainerAsync([Description("The LDAP path of the container to browse, e.g. LDAP://DC=contoso,DC=com. Defaults to the root naming context.")] string? ldapPath = null, [Description("Maximum number of child objects to return. Defaults to 50.")] int maxRecords = 50)
+    {
+        ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxRecords);
+        if (maxValidation is not null)
+        {
+            return maxValidation;
+        }
+
+        if (ldapPath is not null && !ldapPath.StartsWith("LDAP://", StringComparison.OrdinalIgnoreCase) && !ldapPath.StartsWith("GC://", StringComparison.OrdinalIgnoreCase))
+        {
+            return ToolResult.Fail("ldapPath must start with LDAP:// or GC://.", "Active Directory browse");
+        }
+
+        if (!TryGetDomain(out Domain? domain))
+        {
+            return ToolResult.Fail("This host is not joined to an Active Directory domain. AD browsing is unavailable.", "Active Directory browse");
+        }
+
+        return await Task.Run(() =>
+                {
+                    try
+                    {
+                        string path = string.IsNullOrWhiteSpace(ldapPath) ? $"LDAP://{domain!.Name}" : ldapPath;
+
+                        using DirectoryEntry container = new(path);
+                        StringBuilder sb = new();
+                        sb.AppendLine($"Container: {path}");
+                        sb.AppendLine($"Name: {container.Name}");
+                        sb.AppendLine();
+
+                        int count = 0;
+                        foreach (DirectoryEntry child in container.Children)
+                        {
+                            using (child)
+                            {
+                                if (count >= maxRecords)
+                                {
+                                    break;
+                                }
+
+                                sb.AppendLine($"  {child.SchemaClassName}: {child.Name}");
+                                count++;
+                            }
+                        }
+
+                        sb.AppendLine();
+                        sb.AppendLine($"Child objects returned: {count}");
+
+                        return ToolResult.Ok(sb.ToString(), "Active Directory container browse complete.");
+                    }
+                    catch (DirectoryServicesCOMException ex)
+                    {
+                        return ToolResult.Fail($"Active Directory browse failed: {ex.Message}", "Active Directory browse");
+                    }
+                    catch (Exception ex)
+                    {
+                        return ToolResult.Fail(ex.Message, "Active Directory browse");
+                    }
+                })
+                .ConfigureAwait(false);
+    }
+
+
+
+
 
 
 
@@ -71,146 +203,5 @@ public sealed class ActiveDirectoryReadTool
 
         domain = null;
         return false;
-    }
-
-
-
-
-
-
-    /// <summary>
-    ///     Reports whether the host is joined to an Active Directory domain and, when
-    ///     it is, returns the domain context that ADExplorer would browse.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the domain availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_AD_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether this host is joined to an Active Directory domain. ADExplorer and ADInsight require a domain-joined host with reachable domain controllers.")]
-    public async Task<ToolResult> ActiveDirectoryAvailabilityAsync()
-    {
-        return await Task.Run(() =>
-        {
-            if (!TryGetDomain(out Domain? domain))
-            {
-                return ToolResult.Fail(
-                    "This host is not joined to an Active Directory domain. ADExplorer and ADInsight require domain membership and a reachable domain controller.",
-                    "Active Directory availability");
-            }
-
-            var result = new
-            {
-                DomainJoined = true,
-                domain!.Name,
-                ForestName = domain.Forest.Name,
-                DomainControllers = domain.DomainControllers
-                    .OfType<DomainController>()
-                    .Take(10)
-                    .Select(dc => dc.Name)
-                    .ToList()
-            };
-
-            return ToolResult.Ok(result, "Active Directory domain detected.");
-        }).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-    /// <summary>
-    ///     Browses an Active Directory container and lists its child objects,
-    ///     mirroring the ADExplorer tree view in a read-only manner.
-    /// </summary>
-    /// <param name="ldapPath">The LDAP path of the container to browse, e.g. LDAP://DC=contoso,DC=com. Defaults to the root naming context.</param>
-    /// <param name="maxRecords">Maximum number of child objects to return. Defaults to 50.</param>
-    /// <returns>A <see cref="ToolResult" /> containing the child object listing.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_AD_Browse_Container", ReadOnly = true, Destructive = false)]
-    [Description("Browses an Active Directory container and lists child objects (ADExplorer-style tree read). Requires a domain-joined host.")]
-    public async Task<ToolResult> ActiveDirectoryBrowseContainerAsync(
-        [Description("The LDAP path of the container to browse, e.g. LDAP://DC=contoso,DC=com. Defaults to the root naming context.")] string? ldapPath = null,
-        [Description("Maximum number of child objects to return. Defaults to 50.")] int maxRecords = 50)
-    {
-        ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxRecords);
-        if (maxValidation is not null)
-        {
-            return maxValidation;
-        }
-
-        if (ldapPath is not null && !ldapPath.StartsWith("LDAP://", StringComparison.OrdinalIgnoreCase) && !ldapPath.StartsWith("GC://", StringComparison.OrdinalIgnoreCase))
-        {
-            return ToolResult.Fail("ldapPath must start with LDAP:// or GC://.", "Active Directory browse");
-        }
-
-        if (!TryGetDomain(out Domain? domain))
-        {
-            return ToolResult.Fail(
-                "This host is not joined to an Active Directory domain. AD browsing is unavailable.",
-                "Active Directory browse");
-        }
-
-        return await Task.Run(() =>
-        {
-            try
-            {
-                string path = string.IsNullOrWhiteSpace(ldapPath)
-                    ? $"LDAP://{domain!.Name}"
-                    : ldapPath;
-
-                using DirectoryEntry container = new(path);
-                StringBuilder sb = new();
-                sb.AppendLine($"Container: {path}");
-                sb.AppendLine($"Name: {container.Name}");
-                sb.AppendLine();
-
-                int count = 0;
-                foreach (DirectoryEntry child in container.Children)
-                {
-                    using (child)
-                    {
-                        if (count >= maxRecords)
-                        {
-                            break;
-                        }
-
-                        sb.AppendLine($"  {child.SchemaClassName}: {child.Name}");
-                        count++;
-                    }
-                }
-
-                sb.AppendLine();
-                sb.AppendLine($"Child objects returned: {count}");
-
-                return ToolResult.Ok(sb.ToString(), "Active Directory container browse complete.");
-            }
-            catch (DirectoryServicesCOMException ex)
-            {
-                return ToolResult.Fail($"Active Directory browse failed: {ex.Message}", "Active Directory browse");
-            }
-            catch (Exception ex)
-            {
-                return ToolResult.Fail(ex.Message, "Active Directory browse");
-            }
-        }).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-    /// <summary>
-    ///     Reports the availability of the Sysinternals ADInsight utility. ADInsight
-    ///     is a GUI application with no supported command-line interface, so only an
-    ///     availability probe is exposed.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_ADInsight_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals ADInsight utility is installed and reports its version and path. ADInsight is GUI-only, so no automated tracing is available.")]
-    public async Task<ToolResult> ADInsightAvailabilityAsync()
-    {
-        return await Task.Run(() => Interop.SysinternalsHelper.ProbeAvailability("adinsight")).ConfigureAwait(false);
     }
 }

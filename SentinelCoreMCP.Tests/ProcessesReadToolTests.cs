@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         ProcessesReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="ProcessesReadTool" /> covering process listing and reading.
@@ -17,7 +27,12 @@ public sealed class ProcessesReadToolTests
 {
     private readonly ProcessesReadTool _tool = new();
 
-    #region Process_List tests
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -29,6 +44,51 @@ public sealed class ProcessesReadToolTests
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ProcessList_NullErrorDetailsOnSuccess()
+    {
+        ToolResult result = await _tool.ProcessListAsync();
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ProcessList_RespectsMaxRecords()
+    {
+        const int maxRecords = 5;
+        ToolResult result = await _tool.ProcessListAsync(maxRecords: maxRecords);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        List<object> processes = Assert.IsType<List<object>>(result.Results);
+        Assert.True(processes.Count <= maxRecords, $"Expected at most {maxRecords} processes but got {processes.Count}");
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -42,6 +102,13 @@ public sealed class ProcessesReadToolTests
         Assert.NotEmpty(processes);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -53,46 +120,12 @@ public sealed class ProcessesReadToolTests
         Assert.NotNull(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ProcessList_RespectsMaxRecords()
-    {
-        const int maxRecords = 5;
-        ToolResult result = await _tool.ProcessListAsync(maxRecords: maxRecords);
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        List<object> processes = Assert.IsType<List<object>>(result.Results);
-        Assert.True(processes.Count <= maxRecords,
-            $"Expected at most {maxRecords} processes but got {processes.Count}");
-    }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ProcessList_NullErrorDetailsOnSuccess()
-    {
-        ToolResult result = await _tool.ProcessListAsync();
 
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
-    }
 
-    #endregion
 
-    #region Process_Read tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ProcessRead_CurrentProcess_ReturnsSuccessfulToolResult()
-    {
-        int currentPid = Environment.ProcessId;
-        ToolResult result = await _tool.ProcessReadAsync(currentPid);
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -111,6 +144,32 @@ public sealed class ProcessesReadToolTests
         Assert.Equal(currentPid, (int)idProperty.GetValue(processInfo)!);
     }
 
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ProcessRead_CurrentProcess_ReturnsSuccessfulToolResult()
+    {
+        int currentPid = Environment.ProcessId;
+        ToolResult result = await _tool.ProcessReadAsync(currentPid);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -122,7 +181,4 @@ public sealed class ProcessesReadToolTests
         Assert.False(result.Success);
         Assert.NotNull(result.ErrorDetails);
     }
-
-    #endregion
 }
-

@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         AccessEnumReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for reporting the availability of the Sysinternals AccessEnum
 ///     utility. AccessEnum is a GUI application with no supported command-line
@@ -31,9 +32,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class AccessEnumReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals AccessEnum is installed and reports its version.

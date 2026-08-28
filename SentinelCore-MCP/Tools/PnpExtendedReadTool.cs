@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PnpExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
 
 using Microsoft.Win32;
 
 using ModelContextProtocol.Server;
-
-using System.ComponentModel;
-using System.Runtime.Versioning;
 
 
 
@@ -29,13 +29,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class PnpExtendedReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Pnp_List_USB_History", ReadOnly = true, Destructive = false)]
@@ -73,12 +66,12 @@ public sealed class PnpExtendedReadTool
 
                             results.Add(new
                             {
-                                DeviceClass = deviceClass,
-                                DeviceId = deviceId,
-                                FriendlyName = friendlyName?.ToString() ?? "",
-                                ClassGuid = classGuid?.ToString() ?? "",
-                                Driver = driver?.ToString() ?? "",
-                                Service = service?.ToString() ?? ""
+                                    DeviceClass = deviceClass,
+                                    DeviceId = deviceId,
+                                    FriendlyName = friendlyName?.ToString() ?? "",
+                                    ClassGuid = classGuid?.ToString() ?? "",
+                                    Driver = driver?.ToString() ?? "",
+                                    Service = service?.ToString() ?? ""
                             });
                         }
                     }
@@ -108,11 +101,11 @@ public sealed class PnpExtendedReadTool
 
                             results.Add(new
                             {
-                                DeviceClass = "USB",
-                                DeviceId = $"{vendorProduct}\\{instanceId}",
-                                FriendlyName = friendlyName?.ToString() ?? "",
-                                ClassGuid = classGuid?.ToString() ?? "",
-                                Service = service?.ToString() ?? ""
+                                    DeviceClass = "USB",
+                                    DeviceId = $"{vendorProduct}\\{instanceId}",
+                                    FriendlyName = friendlyName?.ToString() ?? "",
+                                    ClassGuid = classGuid?.ToString() ?? "",
+                                    Service = service?.ToString() ?? ""
                             });
                         }
                     }

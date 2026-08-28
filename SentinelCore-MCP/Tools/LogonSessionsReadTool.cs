@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         LogonSessionsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating active logon sessions and the processes
 ///     running in them using the Sysinternals LogonSessions utility.
@@ -29,9 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class LogonSessionsReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals LogonSessions is installed and reports its version.
@@ -50,6 +48,8 @@ public sealed class LogonSessionsReadTool
 
 
 
+
+
     /// <summary>
     ///     Lists active logon sessions with their authentication package, SID, and
     ///     associated processes.
@@ -59,8 +59,7 @@ public sealed class LogonSessionsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_LogonSessions_List_Active", ReadOnly = true, Destructive = false)]
     [Description("Lists active logon sessions with authentication details using Sysinternals LogonSessions. Requires LogonSessions to be installed.")]
-    public async Task<ToolResult> LogonSessionsListActiveAsync(
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> LogonSessionsListActiveAsync([Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
         if (maxValidation is not null)

@@ -1,20 +1,23 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         RegistryReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
-using Microsoft.Win32;
-using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Runtime.Versioning;
+
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
 
 
 
 
 namespace SentinelCoreMCP.Tools;
+
 
 
 
@@ -28,25 +31,6 @@ public sealed class RegistryReadTool
 {
 
     /// <summary>
-    ///     A single registry subkey/value listing record.
-    /// </summary>
-    /// <param name="Hive">The hive abbreviation.</param>
-    /// <param name="Path">The key path within the hive.</param>
-    /// <param name="SubKeys">The subkey names.</param>
-    /// <param name="Values">The value names.</param>
-    public sealed record RegistryKeyListingRecord(string Hive, string Path, IReadOnlyList<string> SubKeys, IReadOnlyList<string> Values);
-
-    /// <summary>
-    ///     A single registry value read record.
-    /// </summary>
-    /// <param name="Hive">The hive abbreviation.</param>
-    /// <param name="Path">The key path within the hive.</param>
-    /// <param name="ValueName">The value name, or "(Default)".</param>
-    /// <param name="Kind">The registry value kind.</param>
-    /// <param name="Value">The formatted value data.</param>
-    public sealed record RegistryValueReadRecord(string Hive, string Path, string ValueName, string Kind, string Value);
-
-    /// <summary>
     ///     Lists the subkey names and value names under the specified registry key path.
     /// </summary>
     /// <param name="hive">Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).</param>
@@ -56,10 +40,7 @@ public sealed class RegistryReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Registry_List_Key", ReadOnly = true, Destructive = false)]
     [Description("Queries the registry and returns Lists subkey names and value names under the specified registry key path.")]
-    public async Task<ToolResult> RegistryListKeyAsync(
-        [Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive,
-        [Description("The key path within the hive.")] string keyPath,
-        [Description("Maximum number of subkeys and values to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> RegistryListKeyAsync([Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive, [Description("The key path within the hive.")] string keyPath, [Description("Maximum number of subkeys and values to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {
@@ -88,21 +69,19 @@ public sealed class RegistryReadTool
             }
 
             RegistryKeyListingRecord? listing = await Task.Run(() =>
-            {
-                using RegistryKey? key = root.OpenSubKey(keyPath, false);
-                if (key is null)
-                {
-                    return null;
-                }
+                    {
+                        using RegistryKey? key = root.OpenSubKey(keyPath, false);
+                        if (key is null)
+                        {
+                            return null;
+                        }
 
-                List<string> subkeys = key.GetSubKeyNames().Take(maxRecords).ToList();
-                List<string> values = key.GetValueNames()
-                    .Select(v => string.IsNullOrEmpty(v) ? "(Default)" : v)
-                    .Take(maxRecords)
-                    .ToList();
+                        List<string> subkeys = key.GetSubKeyNames().Take(maxRecords).ToList();
+                        List<string> values = key.GetValueNames().Select(v => string.IsNullOrEmpty(v) ? "(Default)" : v).Take(maxRecords).ToList();
 
-                return new RegistryKeyListingRecord(hive, keyPath, subkeys, values);
-            }).ConfigureAwait(false);
+                        return new RegistryKeyListingRecord(hive, keyPath, subkeys, values);
+                    })
+                    .ConfigureAwait(false);
 
             if (listing is null)
             {
@@ -117,6 +96,13 @@ public sealed class RegistryReadTool
         }
     }
 
+
+
+
+
+
+
+
     /// <summary>
     ///     Reads a registry value from the specified key path.
     /// </summary>
@@ -127,10 +113,7 @@ public sealed class RegistryReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Registry_Read_Value", ReadOnly = true, Destructive = false)]
     [Description("Reads a registry value from the specified key path. Use hive names such as HKLM, HKCU, HKCR, HKU, HKCC.")]
-    public async Task<ToolResult> RegistryReadValueAsync(
-        [Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive,
-        [Description("The path within the hive to return values from, e.g. SOFTWARE\\Microsoft\\Windows\\CurrentVersion.")] string keyPath,
-        [Description("The name of the value to read.")] string? valueName = null)
+    public async Task<ToolResult> RegistryReadValueAsync([Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive, [Description("The path within the hive to return values from, e.g. SOFTWARE\\Microsoft\\Windows\\CurrentVersion.")] string keyPath, [Description("The name of the value to read.")] string? valueName = null)
     {
         try
         {
@@ -153,24 +136,25 @@ public sealed class RegistryReadTool
             }
 
             RegistryValueReadRecord? record = await Task.Run(() =>
-            {
-                using RegistryKey? key = root.OpenSubKey(keyPath, false);
-                if (key is null)
-                {
-                    return null;
-                }
+                    {
+                        using RegistryKey? key = root.OpenSubKey(keyPath, false);
+                        if (key is null)
+                        {
+                            return null;
+                        }
 
-                string actualValueName = string.IsNullOrWhiteSpace(valueName) ? string.Empty : valueName;
-                object? value = key.GetValue(actualValueName);
-                if (value is null)
-                {
-                    return null;
-                }
+                        string actualValueName = string.IsNullOrWhiteSpace(valueName) ? string.Empty : valueName;
+                        object? value = key.GetValue(actualValueName);
+                        if (value is null)
+                        {
+                            return null;
+                        }
 
-                RegistryValueKind kind = key.GetValueKind(actualValueName);
-                string displayName = string.IsNullOrEmpty(actualValueName) ? "(Default)" : actualValueName;
-                return new RegistryValueReadRecord(hive, keyPath, displayName, kind.ToString(), RegistryHelper.FormatRegistryValue(value, kind));
-            }).ConfigureAwait(false);
+                        RegistryValueKind kind = key.GetValueKind(actualValueName);
+                        string displayName = string.IsNullOrEmpty(actualValueName) ? "(Default)" : actualValueName;
+                        return new RegistryValueReadRecord(hive, keyPath, displayName, kind.ToString(), RegistryHelper.FormatRegistryValue(value, kind));
+                    })
+                    .ConfigureAwait(false);
 
             if (record is null)
             {
@@ -184,4 +168,34 @@ public sealed class RegistryReadTool
             return ToolResult.Fail(ex.Message, $"Registry read value for {hive}\\{keyPath}");
         }
     }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     A single registry subkey/value listing record.
+    /// </summary>
+    /// <param name="Hive">The hive abbreviation.</param>
+    /// <param name="Path">The key path within the hive.</param>
+    /// <param name="SubKeys">The subkey names.</param>
+    /// <param name="Values">The value names.</param>
+    public sealed record RegistryKeyListingRecord(string Hive, string Path, IReadOnlyList<string> SubKeys, IReadOnlyList<string> Values);
+
+
+
+
+
+    /// <summary>
+    ///     A single registry value read record.
+    /// </summary>
+    /// <param name="Hive">The hive abbreviation.</param>
+    /// <param name="Path">The key path within the hive.</param>
+    /// <param name="ValueName">The value name, or "(Default)".</param>
+    /// <param name="Kind">The registry value kind.</param>
+    /// <param name="Value">The formatted value data.</param>
+    public sealed record RegistryValueReadRecord(string Hive, string Path, string ValueName, string Kind, string Value);
 }

@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         AccessChkReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -22,6 +22,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for auditing effective permissions on files, registry keys,
 ///     services, and processes using the Sysinternals AccessChk utility.
@@ -31,9 +32,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class AccessChkReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals AccessChk is installed and reports its version.
@@ -52,11 +50,16 @@ public sealed class AccessChkReadTool
 
 
 
+
+
     /// <summary>
     ///     Audits effective permissions granted to a user or group on a file,
     ///     directory, registry key, service, or process.
     /// </summary>
-    /// <param name="target">The object to inspect: a file/directory path, registry key path (prefixed with hklm\ or hkcu\), service name (prefixed with "service:"), or process name.</param>
+    /// <param name="target">
+    ///     The object to inspect: a file/directory path, registry key path (prefixed with hklm\ or hkcu\),
+    ///     service name (prefixed with "service:"), or process name.
+    /// </param>
     /// <param name="account">Optional account name to audit. Defaults to the current user.</param>
     /// <param name="recurse">Whether to recurse into sub-objects. Defaults to false.</param>
     /// <param name="maxLines">Maximum number of output lines to return. Defaults to 200.</param>
@@ -64,11 +67,7 @@ public sealed class AccessChkReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_AccessChk_Read_Permissions", ReadOnly = true, Destructive = false)]
     [Description("Audits effective permissions on files, registry keys, services, or processes using Sysinternals AccessChk. Requires AccessChk to be installed.")]
-    public async Task<ToolResult> AccessChkReadPermissionsAsync(
-        [Description("The object to inspect: file/directory path, registry key (hklm\\...), service (service:Name), or process name.")] string target,
-        [Description("Optional account name to audit. Defaults to the current user.")] string? account = null,
-        [Description("Whether to recurse into sub-objects. Defaults to false.")] bool recurse = false,
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> AccessChkReadPermissionsAsync([Description("The object to inspect: file/directory path, registry key (hklm\\...), service (service:Name), or process name.")] string target, [Description("Optional account name to audit. Defaults to the current user.")] string? account = null, [Description("Whether to recurse into sub-objects. Defaults to false.")] bool recurse = false, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         ToolResult? targetValidation = SysinternalsHelper.ValidateArgument(target, "target");
         if (targetValidation is not null)

@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         HyperVExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
 
 using Microsoft.Management.Infrastructure;
 
 using ModelContextProtocol.Server;
-
-using System.ComponentModel;
-using System.Runtime.Versioning;
 
 
 
@@ -29,13 +29,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class HyperVExtendedReadTool
 {
-
-
-
-
-
-
-
 
     private const string HyperVNamespace = @"root\virtualization\v2";
 
@@ -66,13 +59,7 @@ public sealed class HyperVExtendedReadTool
                 string? creationTime = checkpoint.CimInstanceProperties["CreationTime"]?.Value?.ToString();
                 string? vmName = checkpoint.CimInstanceProperties["VirtualSystemName"]?.Value?.ToString();
 
-                results.Add(new
-                {
-                    CheckpointName = elementName ?? "",
-                    Description = description ?? "",
-                    CreationTime = creationTime ?? "",
-                    VMName = vmName ?? ""
-                });
+                results.Add(new { CheckpointName = elementName ?? "", Description = description ?? "", CreationTime = creationTime ?? "", VMName = vmName ?? "" });
             }
 
             return ToolResult.Ok(results, "HyperVExtendedReadTool");

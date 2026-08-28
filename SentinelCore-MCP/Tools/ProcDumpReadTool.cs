@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         ProcDumpReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tooling surface for the Sysinternals ProcDump utility.
 ///     ProcDump writes dump files to disk, which is a state-changing side effect;
@@ -31,9 +32,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class ProcDumpReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals ProcDump is installed and reports its version.
@@ -52,6 +50,8 @@ public sealed class ProcDumpReadTool
 
 
 
+
+
     /// <summary>
     ///     Captures a full user-mode dump of a process to a caller-specified file
     ///     path. This operation writes a file and is therefore not read-only.
@@ -62,9 +62,7 @@ public sealed class ProcDumpReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_ProcDump_Capture_Dump", ReadOnly = false, Destructive = false)]
     [Description("Captures a full process dump to a specified file path using Sysinternals ProcDump. Writes a dump file; requires ProcDump to be installed and elevation for most processes.")]
-    public async Task<ToolResult> ProcDumpCaptureDumpAsync(
-        [Description("The numeric PID of the process to dump.")] int processId,
-        [Description("The absolute .dmp file path to write. The containing directory must exist.")] string dumpFilePath)
+    public async Task<ToolResult> ProcDumpCaptureDumpAsync([Description("The numeric PID of the process to dump.")] int processId, [Description("The absolute .dmp file path to write. The containing directory must exist.")] string dumpFilePath)
     {
         ToolResult? pidValidation = InputValidator.ValidatePositive(processId, "processId");
         if (pidValidation is not null)
@@ -90,11 +88,7 @@ public sealed class ProcDumpReadTool
         }
 
         // -ma captures full memory; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync(
-            "procdump",
-            $"-ma -accepteula {processId} \"{dumpFilePath}\"",
-            "ProcDump capture",
-            timeoutSeconds: 120).ConfigureAwait(false);
+        ToolResult result = await SysinternalsHelper.RunAsync("procdump", $"-ma -accepteula {processId} \"{dumpFilePath}\"", "ProcDump capture", timeoutSeconds: 120).ConfigureAwait(false);
         if (!result.Success)
         {
             return result;

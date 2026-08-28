@@ -1,22 +1,23 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         DriversReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.ServiceProcess;
 using System.Text;
 
+using ModelContextProtocol.Server;
+
 
 
 
 namespace SentinelCoreMCP.Tools;
+
 
 
 
@@ -29,31 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class DriversReadTool
 {
-
-    /// <summary>
-    ///     Classifies a driver service based on its actual <see cref="ServiceType" /> flags
-    ///     reported by the Service Control Manager, rather than name heuristics.
-    /// </summary>
-    /// <param name="serviceType">The service type flags from the SCM.</param>
-    /// <returns>A human-readable driver kind: "kernel", "filesystem", or "recognizer".</returns>
-    [SupportedOSPlatform("windows")]
-    private static string GetDriverKind(ServiceType serviceType)
-    {
-        if (serviceType.HasFlag(ServiceType.FileSystemDriver))
-        {
-            return "filesystem";
-        }
-
-        if (serviceType.HasFlag(ServiceType.RecognizerDriver))
-        {
-            return "recognizer";
-        }
-
-        return "kernel";
-    }
-
-
-
 
     /// <summary>
     ///     Lists installed kernel and file-system drivers via the Service Control Manager.
@@ -106,5 +82,34 @@ public sealed class DriversReadTool
         {
             return ToolResult.Fail(ex.Message, "Driver listing");
         }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Classifies a driver service based on its actual <see cref="ServiceType" /> flags
+    ///     reported by the Service Control Manager, rather than name heuristics.
+    /// </summary>
+    /// <param name="serviceType">The service type flags from the SCM.</param>
+    /// <returns>A human-readable driver kind: "kernel", "filesystem", or "recognizer".</returns>
+    [SupportedOSPlatform("windows")]
+    private static string GetDriverKind(ServiceType serviceType)
+    {
+        if (serviceType.HasFlag(ServiceType.FileSystemDriver))
+        {
+            return "filesystem";
+        }
+
+        if (serviceType.HasFlag(ServiceType.RecognizerDriver))
+        {
+            return "recognizer";
+        }
+
+        return "kernel";
     }
 }

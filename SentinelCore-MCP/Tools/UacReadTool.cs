@@ -1,18 +1,19 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         UacReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
+using System.Security.Principal;
+using System.Text;
 
 using Microsoft.Win32;
 
 using ModelContextProtocol.Server;
-using System.ComponentModel;
-using System.Security.Principal;
-using System.Text;
-using System.Runtime.Versioning;
 
 
 
@@ -29,13 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class UacReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "UAC_Read_Settings", ReadOnly = true, Destructive = false)]

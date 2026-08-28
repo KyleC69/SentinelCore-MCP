@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         WirelessExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
 
 using Microsoft.Win32;
 
 using ModelContextProtocol.Server;
-
-using System.ComponentModel;
-using System.Runtime.Versioning;
 
 
 
@@ -29,13 +29,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class WirelessExtendedReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Wireless_List_Connection_History", ReadOnly = true, Destructive = false)]
@@ -77,15 +70,15 @@ public sealed class WirelessExtendedReadTool
 
                         results.Add(new
                         {
-                            Guid = profileGuid,
-                            ProfileName = profileName?.ToString() ?? "",
-                            Description = description?.ToString() ?? "",
-                            Category = category?.ToString() ?? "",
-                            CategoryType = catType,
-                            DateCreated = dateCreated?.ToString() ?? "",
-                            DateLastConnected = dateLastConnected?.ToString() ?? "",
-                            Managed = managed?.ToString() ?? "",
-                            NameType = nameType?.ToString() ?? ""
+                                Guid = profileGuid,
+                                ProfileName = profileName?.ToString() ?? "",
+                                Description = description?.ToString() ?? "",
+                                Category = category?.ToString() ?? "",
+                                CategoryType = catType,
+                                DateCreated = dateCreated?.ToString() ?? "",
+                                DateLastConnected = dateLastConnected?.ToString() ?? "",
+                                Managed = managed?.ToString() ?? "",
+                                NameType = nameType?.ToString() ?? ""
                         });
                     }
                 }

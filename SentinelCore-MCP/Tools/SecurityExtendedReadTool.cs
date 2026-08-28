@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         SecurityExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using Microsoft.Win32;
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Text;
+
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -31,13 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class SecurityExtendedReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Security_Read_Credential_Guard", ReadOnly = true, Destructive = false)]
@@ -67,7 +60,7 @@ public sealed class SecurityExtendedReadTool
                     object? enableVirtualizationBasedSecurity = dgKey.GetValue("EnableVirtualizationBasedSecurity");
                     object? requirePlatformSecurityFeatures = dgKey.GetValue("RequirePlatformSecurityFeatures");
                     object? running = dgKey.GetValue("Running");
-                    sb.AppendLine($"[Device Guard]");
+                    sb.AppendLine("[Device Guard]");
                     sb.AppendLine($"EnableVirtualizationBasedSecurity={enableVirtualizationBasedSecurity}");
                     sb.AppendLine($"RequirePlatformSecurityFeatures={requirePlatformSecurityFeatures}");
                     sb.AppendLine($"Running={running}");
@@ -79,6 +72,83 @@ public sealed class SecurityExtendedReadTool
         catch (Exception ex)
         {
             return ToolResult.Fail(ex.Message, "Credential Guard read");
+        }
+    }
+
+
+
+
+
+
+
+
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Security_Read_Exploit_Protection", ReadOnly = true, Destructive = false)]
+    [Description("Reads Windows Defender Exploit Guard, DEP, ASLR, and Control Flow Guard settings from the registry.")]
+    public async Task<ToolResult> SecurityReadExploitProtectionAsync()
+    {
+        try
+        {
+            StringBuilder sb = new();
+
+            using (RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+            {
+                // DEP (Data Execution Prevention)
+                using RegistryKey? depKey = baseKey.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", false);
+                if (depKey is not null)
+                {
+                    sb.AppendLine("[Memory Management / DEP]");
+                    object? depEnable = depKey.GetValue("EnableDEP");
+                    object? depPolicy = depKey.GetValue("DEPFlags");
+                    sb.AppendLine($"  EnableDEP={depEnable}");
+                    sb.AppendLine($"  DEPFlags={depPolicy}");
+                }
+
+                // Exploit Protection system settings
+                using RegistryKey? epKey = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options", false);
+                if (epKey is not null)
+                {
+                    sb.AppendLine("[Image File Execution Options]");
+                    foreach (string subKeyName in epKey.GetSubKeyNames())
+                    {
+                        using RegistryKey? subKey = epKey.OpenSubKey(subKeyName, false);
+                        if (subKey is not null)
+                        {
+                            object? mitigationOptions = subKey.GetValue("MitigationOptions");
+                            if (mitigationOptions is not null)
+                            {
+                                sb.AppendLine($"  {subKeyName}: MitigationOptions present");
+                            }
+                        }
+                    }
+                }
+
+                // Exploit Guard settings
+                using RegistryKey? egKey = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows Defender\Windows Defender Exploit Guard", false);
+                if (egKey is not null)
+                {
+                    sb.AppendLine("[Windows Defender Exploit Guard]");
+                    foreach (string valueName in egKey.GetValueNames())
+                    {
+                        sb.AppendLine($"  {valueName}={egKey.GetValue(valueName)}");
+                    }
+                }
+
+                // ASLR
+                using RegistryKey? aslrKey = baseKey.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", false);
+                if (aslrKey is not null)
+                {
+                    object? moveImages = aslrKey.GetValue("MoveImages");
+                    sb.AppendLine("[ASLR]");
+                    sb.AppendLine($"  MoveImages={moveImages}");
+                }
+            }
+
+            return ToolResult.Ok(sb.ToString(), "SecurityExtendedReadTool");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "Exploit protection read");
         }
     }
 
@@ -132,9 +202,7 @@ public sealed class SecurityExtendedReadTool
                 uefiState = uefiKey?.GetValue("UEFISecureBootEnabled");
             }
 
-            sb.AppendLine(uefiState is not null
-                ? $"[UEFI State] SecureBootEnabled={uefiState}"
-                : "[UEFI State] Secure Boot state not available (system may not support UEFI Secure Boot).");
+            sb.AppendLine(uefiState is not null ? $"[UEFI State] SecureBootEnabled={uefiState}" : "[UEFI State] Secure Boot state not available (system may not support UEFI Secure Boot).");
 
             return ToolResult.Ok(sb.ToString(), "SecurityExtendedReadTool");
         }
@@ -210,83 +278,6 @@ public sealed class SecurityExtendedReadTool
         catch (Exception ex)
         {
             return ToolResult.Fail(ex.Message, "TPM read");
-        }
-    }
-
-
-
-
-
-
-
-
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Security_Read_Exploit_Protection", ReadOnly = true, Destructive = false)]
-    [Description("Reads Windows Defender Exploit Guard, DEP, ASLR, and Control Flow Guard settings from the registry.")]
-    public async Task<ToolResult> SecurityReadExploitProtectionAsync()
-    {
-        try
-        {
-            StringBuilder sb = new();
-
-            using (RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
-            {
-                // DEP (Data Execution Prevention)
-                using RegistryKey? depKey = baseKey.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", false);
-                if (depKey is not null)
-                {
-                    sb.AppendLine("[Memory Management / DEP]");
-                    object? depEnable = depKey.GetValue("EnableDEP");
-                    object? depPolicy = depKey.GetValue("DEPFlags");
-                    sb.AppendLine($"  EnableDEP={depEnable}");
-                    sb.AppendLine($"  DEPFlags={depPolicy}");
-                }
-
-                // Exploit Protection system settings
-                using RegistryKey? epKey = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options", false);
-                if (epKey is not null)
-                {
-                    sb.AppendLine("[Image File Execution Options]");
-                    foreach (string subKeyName in epKey.GetSubKeyNames())
-                    {
-                        using RegistryKey? subKey = epKey.OpenSubKey(subKeyName, false);
-                        if (subKey is not null)
-                        {
-                            object? mitigationOptions = subKey.GetValue("MitigationOptions");
-                            if (mitigationOptions is not null)
-                            {
-                                sb.AppendLine($"  {subKeyName}: MitigationOptions present");
-                            }
-                        }
-                    }
-                }
-
-                // Exploit Guard settings
-                using RegistryKey? egKey = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows Defender\Windows Defender Exploit Guard", false);
-                if (egKey is not null)
-                {
-                    sb.AppendLine("[Windows Defender Exploit Guard]");
-                    foreach (string valueName in egKey.GetValueNames())
-                    {
-                        sb.AppendLine($"  {valueName}={egKey.GetValue(valueName)}");
-                    }
-                }
-
-                // ASLR
-                using RegistryKey? aslrKey = baseKey.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", false);
-                if (aslrKey is not null)
-                {
-                    object? moveImages = aslrKey.GetValue("MoveImages");
-                    sb.AppendLine($"[ASLR]");
-                    sb.AppendLine($"  MoveImages={moveImages}");
-                }
-            }
-
-            return ToolResult.Ok(sb.ToString(), "SecurityExtendedReadTool");
-        }
-        catch (Exception ex)
-        {
-            return ToolResult.Fail(ex.Message, "Exploit protection read");
         }
     }
 }

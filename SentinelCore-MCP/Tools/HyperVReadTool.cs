@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         HyperVReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using Microsoft.Management.Infrastructure;
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Text;
+
+using Microsoft.Management.Infrastructure;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -125,8 +125,8 @@ public sealed class HyperVReadTool
                 foreach (CimProperty? property in vm.CimInstanceProperties)
                     record[property.Name] = property.Value switch
                     {
-                        Array array => string.Join("|", array.Cast<object>().Select(x => x != null ? x.ToString() != null ? x.ToString() : string.Empty : string.Empty)),
-                        _ => property.Value
+                            Array array => string.Join("|", array.Cast<object>().Select(x => x != null ? x.ToString() != null ? x.ToString() : string.Empty : string.Empty)),
+                            _ => property.Value
                     };
 
                 results.Add(record);

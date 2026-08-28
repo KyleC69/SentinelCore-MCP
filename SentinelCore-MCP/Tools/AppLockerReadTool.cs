@@ -1,20 +1,20 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         AppLockerReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using JetBrains.Annotations;
-
-using ModelContextProtocol.Server;
-using System.Runtime.Versioning;
 
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Management.Automation;
+using System.Runtime.Versioning;
 using System.Text;
+
+using JetBrains.Annotations;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -32,13 +32,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class AppLockerReadTool
 {
-
-
-
-
-
-
-
 
     [McpServerTool(Name = "AppLocker_Get_Effective_Policy", ReadOnly = true, Destructive = false)]
     [Description("Retrieves the effective AppLocker policy as XML.")]

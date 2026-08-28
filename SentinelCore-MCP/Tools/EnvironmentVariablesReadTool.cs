@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         EnvironmentVariablesReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
-using System.Runtime.Versioning;
 
 using System.Collections;
 using System.ComponentModel;
+using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -29,13 +29,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class EnvironmentVariablesReadTool
 {
-
-
-
-
-
-
-
 
     [McpServerTool(Name = "Environment_Variables_List", ReadOnly = true, Destructive = false)]
     [Description("Lists environment variables for the current process, user, or machine.")]

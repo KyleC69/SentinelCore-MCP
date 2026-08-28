@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         EnvironmentExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -31,6 +31,58 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class EnvironmentExtendedReadTool
 {
+
+    /// <summary>
+    ///     Reads and analyzes the system and user PATH environment variables for hijack detection.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing JSON-formatted PATH analysis.</returns>
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Environment_Read_Path", ReadOnly = true, Destructive = false)]
+    [Description("Reads and analyzes the system and user PATH environment variables for hijack detection.")]
+    public async Task<ToolResult> EnvironmentReadPathAsync()
+    {
+        try
+        {
+            List<object> results = new();
+            string[] systemPathEntries = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine)?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? [];
+            string[] userPathEntries = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User)?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? [];
+            string[] processPathEntries = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Process)?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? [];
+
+            foreach (string entry in systemPathEntries)
+            {
+                bool exists = Directory.Exists(entry);
+                bool isWritable = exists && IsDirectoryWritable(entry);
+
+                results.Add(new { Path = entry, Source = "System", Exists = exists, IsWritable = isWritable });
+            }
+
+            foreach (string entry in userPathEntries)
+            {
+                bool exists = Directory.Exists(entry);
+                bool isWritable = exists && IsDirectoryWritable(entry);
+
+                results.Add(new { Path = entry, Source = "User", Exists = exists, IsWritable = isWritable });
+            }
+
+            // Check for duplicates
+            var duplicates = processPathEntries.GroupBy(p => p, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+            var analysis = new { Entries = results, DuplicatePaths = duplicates, TotalSystemPaths = systemPathEntries.Length, TotalUserPaths = userPathEntries.Length };
+
+            return ToolResult.Ok(analysis, "PATH analysis complete.");
+
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "PATH analysis");
+        }
+    }
+
+
+
+
+
+
+
 
     /// <summary>
     ///     Determines whether the current user has write access to a directory by inspecting
@@ -59,9 +111,7 @@ public sealed class EnvironmentExtendedReadTool
                     return false;
                 }
 
-                if (rule.AccessControlType == AccessControlType.Allow &&
-                    (identity.User is not null && rule.IdentityReference.Value == identity.User.Value ||
-                     principal.IsInRole(WindowsBuiltInRole.Administrator) && rule.IdentityReference.Value.Contains("Administrators", StringComparison.OrdinalIgnoreCase)))
+                if (rule.AccessControlType == AccessControlType.Allow && (identity.User is not null && rule.IdentityReference.Value == identity.User.Value || principal.IsInRole(WindowsBuiltInRole.Administrator) && rule.IdentityReference.Value.Contains("Administrators", StringComparison.OrdinalIgnoreCase)))
                 {
                     return true;
                 }
@@ -72,75 +122,6 @@ public sealed class EnvironmentExtendedReadTool
         catch
         {
             return false;
-        }
-    }
-
-
-
-    /// <summary>
-    ///     Reads and analyzes the system and user PATH environment variables for hijack detection.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing JSON-formatted PATH analysis.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Environment_Read_Path", ReadOnly = true, Destructive = false)]
-    [Description("Reads and analyzes the system and user PATH environment variables for hijack detection.")]
-    public async Task<ToolResult> EnvironmentReadPathAsync()
-    {
-        try
-        {
-            List<object> results = new();
-            string[] systemPathEntries = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine)?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? [];
-            string[] userPathEntries = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User)?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? [];
-            string[] processPathEntries = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Process)?.Split(';', StringSplitOptions.RemoveEmptyEntries) ?? [];
-
-            foreach (string entry in systemPathEntries)
-            {
-                bool exists = Directory.Exists(entry);
-                bool isWritable = exists && IsDirectoryWritable(entry);
-
-                results.Add(new
-                {
-                    Path = entry,
-                    Source = "System",
-                    Exists = exists,
-                    IsWritable = isWritable
-                });
-            }
-
-            foreach (string entry in userPathEntries)
-            {
-                bool exists = Directory.Exists(entry);
-                bool isWritable = exists && IsDirectoryWritable(entry);
-
-                results.Add(new
-                {
-                    Path = entry,
-                    Source = "User",
-                    Exists = exists,
-                    IsWritable = isWritable
-                });
-            }
-
-            // Check for duplicates
-            var duplicates = processPathEntries
-                .GroupBy(p => p, StringComparer.OrdinalIgnoreCase)
-                .Where(g => g.Count() > 1)
-                .Select(g => g.Key)
-                .ToList();
-            var analysis = new
-            {
-                Entries = results,
-                DuplicatePaths = duplicates,
-                TotalSystemPaths = systemPathEntries.Length,
-                TotalUserPaths = userPathEntries.Length
-            };
-
-            return ToolResult.Ok(analysis, "PATH analysis complete.");
-
-        }
-        catch (Exception ex)
-        {
-            return ToolResult.Fail(ex.Message, "PATH analysis");
         }
     }
 }

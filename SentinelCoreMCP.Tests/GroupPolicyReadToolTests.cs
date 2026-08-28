@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         GroupPolicyReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="GroupPolicyReadTool" /> covering local group policy
@@ -18,7 +28,12 @@ public sealed class GroupPolicyReadToolTests
 {
     private readonly GroupPolicyReadTool _tool = new();
 
-    #region Group_Policy_List tests
+
+
+
+
+
+
 
     [Fact]
     public async Task GroupPolicyList_EmptyKeyPath_ReturnsFailure()
@@ -29,14 +44,30 @@ public sealed class GroupPolicyReadToolTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public async Task GroupPolicyList_NullKeyPath_ReturnsFailure()
-    {
-        ToolResult result = await _tool.GroupPolicyListAsync(null!);
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task GroupPolicyList_KnownPolicyPath_ReturnsSuccessfulOrGracefulFailure()
+    {
+        ToolResult result = await _tool.GroupPolicyListAsync("Microsoft\\Windows");
+
+        // The path may or may not have values depending on system configuration
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -50,21 +81,28 @@ public sealed class GroupPolicyReadToolTests
         Assert.Contains("No group policy keys found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task GroupPolicyList_KnownPolicyPath_ReturnsSuccessfulOrGracefulFailure()
-    {
-        ToolResult result = await _tool.GroupPolicyListAsync("Microsoft\\Windows");
 
-        // The path may or may not have values depending on system configuration
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+
+
+
+
+
+
+    [Fact]
+    public async Task GroupPolicyList_NullKeyPath_ReturnsFailure()
+    {
+        ToolResult result = await _tool.GroupPolicyListAsync(null!);
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    #endregion
 
-    #region Group_Policy_Read_Value tests
+
+
+
+
+
 
     [Fact]
     public async Task GroupPolicyReadValue_EmptyKeyPath_ReturnsFailure()
@@ -75,6 +113,13 @@ public sealed class GroupPolicyReadToolTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
     public async Task GroupPolicyReadValue_EmptyValueName_ReturnsFailure()
     {
@@ -83,6 +128,13 @@ public sealed class GroupPolicyReadToolTests
         Assert.False(result.Success);
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -94,6 +146,4 @@ public sealed class GroupPolicyReadToolTests
         Assert.False(result.Success);
         Assert.NotNull(result.ErrorDetails);
     }
-
-    #endregion
 }

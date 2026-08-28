@@ -1,17 +1,25 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         RegistryHelper.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
-using Microsoft.Win32;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 
+using Microsoft.Win32;
+
+
+
+
 namespace SentinelCoreMCP.Tools;
+
+
+
+
 
 /// <summary>
 ///     Shared utility for reading Windows registry keys and values.
@@ -24,31 +32,29 @@ internal static class RegistryHelper
 {
 
     /// <summary>
-    ///     A single registry value record returned by <see cref="ReadValuesAsync" />.
+    ///     Formats a registry value based on its <see cref="RegistryValueKind" />.
+    ///     MultiString values are joined with "|"; Binary values are hex-encoded;
+    ///     all others use <see cref="object.ToString" />.
     /// </summary>
-    /// <param name="Name">The value name, or "(Default)" for the default value.</param>
-    /// <param name="Value">The formatted value data.</param>
-    /// <param name="Kind">The registry value kind.</param>
-    public sealed record RegistryValueRecord(string Name, string Value, string Kind);
+    /// <param name="value">The raw registry value.</param>
+    /// <param name="kind">The registry value kind.</param>
+    /// <returns>A formatted string representation of the value.</returns>
+    internal static string FormatRegistryValue(object value, RegistryValueKind kind)
+    {
+        return kind switch
+        {
+                RegistryValueKind.MultiString => string.Join("|", (string[])value),
+                RegistryValueKind.Binary => Convert.ToHexString((byte[])value),
+                _ => value?.ToString() ?? string.Empty
+        };
+    }
 
-    /// <summary>
-    ///     A single registry access rule record returned by <see cref="ReadAclAsync" />.
-    /// </summary>
-    /// <param name="Identity">The account the rule applies to.</param>
-    /// <param name="Rights">The registry rights granted or denied.</param>
-    /// <param name="Type">Allow or Deny.</param>
-    /// <param name="Inheritance">Inheritance flags.</param>
-    /// <param name="Propagation">Propagation flags.</param>
-    public sealed record RegistryAccessRuleRecord(string Identity, string Rights, string Type, string Inheritance, string Propagation);
 
-    /// <summary>
-    ///     The ACL payload for a registry key.
-    /// </summary>
-    /// <param name="Path">The full hive-qualified key path.</param>
-    /// <param name="Owner">The key owner.</param>
-    /// <param name="Group">The key group.</param>
-    /// <param name="AccessRules">The access rules.</param>
-    public sealed record RegistryAclResult(string Path, string Owner, string Group, IReadOnlyList<RegistryAccessRuleRecord> AccessRules);
+
+
+
+
+
 
     /// <summary>
     ///     Maps a registry hive abbreviation (e.g., HKLM, HKCU) to the corresponding <see cref="RegistryKey" /> root.
@@ -59,14 +65,21 @@ internal static class RegistryHelper
     {
         return hive.ToUpperInvariant() switch
         {
-            "HKLM" => Registry.LocalMachine,
-            "HKCU" => Registry.CurrentUser,
-            "HKCR" => Registry.ClassesRoot,
-            "HKU" => Registry.Users,
-            "HKCC" => Registry.CurrentConfig,
-            _ => null
+                "HKLM" => Registry.LocalMachine,
+                "HKCU" => Registry.CurrentUser,
+                "HKCR" => Registry.ClassesRoot,
+                "HKU" => Registry.Users,
+                "HKCC" => Registry.CurrentConfig,
+                _ => null
         };
     }
+
+
+
+
+
+
+
 
     /// <summary>
     ///     Opens a registry key for reading using the specified hive abbreviation and key path.
@@ -85,34 +98,12 @@ internal static class RegistryHelper
         return root.OpenSubKey(keyPath, false);
     }
 
-    /// <summary>
-    ///     Reads all value names and their data from a registry key as typed records.
-    /// </summary>
-    /// <param name="key">The registry key to read values from.</param>
-    /// <returns>The list of value records.</returns>
-    internal static List<RegistryValueRecord> ReadValues(RegistryKey key)
-    {
-        List<RegistryValueRecord> records = new();
-        foreach (string valueName in key.GetValueNames())
-        {
-            string displayName = string.IsNullOrEmpty(valueName) ? "(Default)" : valueName;
-            object? value = key.GetValue(valueName);
-            RegistryValueKind kind = key.GetValueKind(valueName);
-            records.Add(new RegistryValueRecord(displayName, FormatRegistryValue(value ?? string.Empty, kind), kind.ToString()));
-        }
 
-        return records;
-    }
 
-    /// <summary>
-    ///     Reads all value names and their data from a registry key asynchronously as typed records.
-    /// </summary>
-    /// <param name="key">The registry key to read values from.</param>
-    /// <returns>A task producing the list of value records.</returns>
-    internal static Task<List<RegistryValueRecord>> ReadValuesAsync(RegistryKey key)
-    {
-        return Task.Run(() => ReadValues(key));
-    }
+
+
+
+
 
     /// <summary>
     ///     Reads the ACL (access control list) of a registry key using the .NET API.
@@ -143,30 +134,26 @@ internal static class RegistryHelper
             }
 
             RegistryAclResult? acl = await Task.Run(() =>
-            {
-                using RegistryKey? key = root.OpenSubKey(keyPath, RegistryKeyPermissionCheck.ReadSubTree);
-                if (key is null)
-                {
-                    return null;
-                }
+                    {
+                        using RegistryKey? key = root.OpenSubKey(keyPath, RegistryKeyPermissionCheck.ReadSubTree);
+                        if (key is null)
+                        {
+                            return null;
+                        }
 
-                RegistrySecurity security = key.GetAccessControl();
-                IdentityReference? owner = security.GetOwner(typeof(NTAccount));
-                IdentityReference? group = security.GetGroup(typeof(NTAccount));
+                        RegistrySecurity security = key.GetAccessControl();
+                        IdentityReference? owner = security.GetOwner(typeof(NTAccount));
+                        IdentityReference? group = security.GetGroup(typeof(NTAccount));
 
-                List<RegistryAccessRuleRecord> rules = new();
-                foreach (RegistryAccessRule rule in security.GetAccessRules(true, true, typeof(NTAccount)).Cast<RegistryAccessRule>())
-                {
-                    rules.Add(new RegistryAccessRuleRecord(
-                        rule.IdentityReference.Value,
-                        rule.RegistryRights.ToString(),
-                        rule.AccessControlType.ToString(),
-                        rule.InheritanceFlags.ToString(),
-                        rule.PropagationFlags.ToString()));
-                }
+                        List<RegistryAccessRuleRecord> rules = new();
+                        foreach (RegistryAccessRule rule in security.GetAccessRules(true, true, typeof(NTAccount)).Cast<RegistryAccessRule>())
+                        {
+                            rules.Add(new RegistryAccessRuleRecord(rule.IdentityReference.Value, rule.RegistryRights.ToString(), rule.AccessControlType.ToString(), rule.InheritanceFlags.ToString(), rule.PropagationFlags.ToString()));
+                        }
 
-                return new RegistryAclResult($"{hive}\\{keyPath}", owner?.Value ?? string.Empty, group?.Value ?? string.Empty, rules);
-            }).ConfigureAwait(false);
+                        return new RegistryAclResult($"{hive}\\{keyPath}", owner?.Value ?? string.Empty, group?.Value ?? string.Empty, rules);
+                    })
+                    .ConfigureAwait(false);
 
             if (acl is null)
             {
@@ -181,21 +168,88 @@ internal static class RegistryHelper
         }
     }
 
+
+
+
+
+
+
+
     /// <summary>
-    ///     Formats a registry value based on its <see cref="RegistryValueKind" />.
-    ///     MultiString values are joined with "|"; Binary values are hex-encoded;
-    ///     all others use <see cref="object.ToString" />.
+    ///     Reads all value names and their data from a registry key as typed records.
     /// </summary>
-    /// <param name="value">The raw registry value.</param>
-    /// <param name="kind">The registry value kind.</param>
-    /// <returns>A formatted string representation of the value.</returns>
-    internal static string FormatRegistryValue(object value, RegistryValueKind kind)
+    /// <param name="key">The registry key to read values from.</param>
+    /// <returns>The list of value records.</returns>
+    internal static List<RegistryValueRecord> ReadValues(RegistryKey key)
     {
-        return kind switch
+        List<RegistryValueRecord> records = new();
+        foreach (string valueName in key.GetValueNames())
         {
-            RegistryValueKind.MultiString => string.Join("|", (string[])value),
-            RegistryValueKind.Binary => Convert.ToHexString((byte[])value),
-            _ => value?.ToString() ?? string.Empty
-        };
+            string displayName = string.IsNullOrEmpty(valueName) ? "(Default)" : valueName;
+            object? value = key.GetValue(valueName);
+            RegistryValueKind kind = key.GetValueKind(valueName);
+            records.Add(new RegistryValueRecord(displayName, FormatRegistryValue(value ?? string.Empty, kind), kind.ToString()));
+        }
+
+        return records;
     }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Reads all value names and their data from a registry key asynchronously as typed records.
+    /// </summary>
+    /// <param name="key">The registry key to read values from.</param>
+    /// <returns>A task producing the list of value records.</returns>
+    internal static Task<List<RegistryValueRecord>> ReadValuesAsync(RegistryKey key)
+    {
+        return Task.Run(() => ReadValues(key));
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     A single registry value record returned by <see cref="ReadValuesAsync" />.
+    /// </summary>
+    /// <param name="Name">The value name, or "(Default)" for the default value.</param>
+    /// <param name="Value">The formatted value data.</param>
+    /// <param name="Kind">The registry value kind.</param>
+    public sealed record RegistryValueRecord(string Name, string Value, string Kind);
+
+
+
+
+
+    /// <summary>
+    ///     A single registry access rule record returned by <see cref="ReadAclAsync" />.
+    /// </summary>
+    /// <param name="Identity">The account the rule applies to.</param>
+    /// <param name="Rights">The registry rights granted or denied.</param>
+    /// <param name="Type">Allow or Deny.</param>
+    /// <param name="Inheritance">Inheritance flags.</param>
+    /// <param name="Propagation">Propagation flags.</param>
+    public sealed record RegistryAccessRuleRecord(string Identity, string Rights, string Type, string Inheritance, string Propagation);
+
+
+
+
+
+    /// <summary>
+    ///     The ACL payload for a registry key.
+    /// </summary>
+    /// <param name="Path">The full hive-qualified key path.</param>
+    /// <param name="Owner">The key owner.</param>
+    /// <param name="Group">The key group.</param>
+    /// <param name="AccessRules">The access rules.</param>
+    public sealed record RegistryAclResult(string Path, string Owner, string Group, IReadOnlyList<RegistryAccessRuleRecord> AccessRules);
 }

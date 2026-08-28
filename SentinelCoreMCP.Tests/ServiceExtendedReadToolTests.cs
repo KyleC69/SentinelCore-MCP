@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         ServiceExtendedReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="ServiceExtendedReadTool" /> covering service ACL reads
@@ -18,16 +28,12 @@ public sealed class ServiceExtendedReadToolTests
 {
     private readonly ServiceExtendedReadTool _tool = new();
 
-    #region Service_Read_Acl validation tests
 
-    [Fact]
-    public async Task ServiceReadAcl_NullServiceName_ReturnsFailure()
-    {
-        ToolResult result = await _tool.ServiceReadAclAsync(null!);
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
 
     [Fact]
     public async Task ServiceReadAcl_EmptyServiceName_ReturnsFailure()
@@ -38,14 +44,104 @@ public sealed class ServiceExtendedReadToolTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
-    public async Task ServiceReadAcl_WhitespaceServiceName_ReturnsFailure()
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ServiceReadAcl_KnownService_ContainsSddlAndConfig()
     {
-        ToolResult result = await _tool.ServiceReadAclAsync("   ");
+        ToolResult result = await _tool.ServiceReadAclAsync("EventLog");
+
+        Assert.True(result.Success);
+        string output = (string)result.Results!;
+        Assert.Contains("[Security Descriptor (SDDL)]", output);
+        Assert.Contains("[Service Configuration]", output);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ServiceReadAcl_KnownService_ReturnsSuccessfulToolResult()
+    {
+        // EventLog service exists on all Windows systems
+        ToolResult result = await _tool.ServiceReadAclAsync("EventLog");
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ServiceReadAcl_NonExistentService_ReturnsFailureOrEmptyAcl()
+    {
+        ToolResult result = await _tool.ServiceReadAclAsync("NonExistentService_12345");
+
+        // sc.exe sdshow returns exit code 1060 for unknown services but may still
+        // produce output; the tool either fails or reports no ACL available
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ServiceReadAcl_NullErrorDetailsOnSuccess()
+    {
+        ToolResult result = await _tool.ServiceReadAclAsync("EventLog");
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task ServiceReadAcl_NullServiceName_ReturnsFailure()
+    {
+        ToolResult result = await _tool.ServiceReadAclAsync(null!);
 
         Assert.False(result.Success);
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
+
+
+
+
+
+
+
 
     [Theory]
     [InlineData("EventLog\\Extra")]
@@ -68,58 +164,19 @@ public sealed class ServiceExtendedReadToolTests
         Assert.Contains("invalid characters", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    #endregion
 
-    #region Service_Read_Acl integration tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ServiceReadAcl_KnownService_ReturnsSuccessfulToolResult()
-    {
-        // EventLog service exists on all Windows systems
-        ToolResult result = await _tool.ServiceReadAclAsync("EventLog");
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
 
     [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ServiceReadAcl_KnownService_ContainsSddlAndConfig()
+    public async Task ServiceReadAcl_WhitespaceServiceName_ReturnsFailure()
     {
-        ToolResult result = await _tool.ServiceReadAclAsync("EventLog");
+        ToolResult result = await _tool.ServiceReadAclAsync("   ");
 
-        Assert.True(result.Success);
-        string output = (string)result.Results!;
-        Assert.Contains("[Security Descriptor (SDDL)]", output);
-        Assert.Contains("[Service Configuration]", output);
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ServiceReadAcl_NonExistentService_ReturnsFailureOrEmptyAcl()
-    {
-        ToolResult result = await _tool.ServiceReadAclAsync("NonExistentService_12345");
-
-        // sc.exe sdshow returns exit code 1060 for unknown services but may still
-        // produce output; the tool either fails or reports no ACL available
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ServiceReadAcl_NullErrorDetailsOnSuccess()
-    {
-        ToolResult result = await _tool.ServiceReadAclAsync("EventLog");
-
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
-    }
-
-    #endregion
 }

@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         NetworkDnsReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="NetworkDnsReadTool" /> covering DNS configuration
@@ -18,19 +28,12 @@ public sealed class NetworkDnsReadToolTests
 {
     private readonly NetworkDnsReadTool _tool = new();
 
-    #region Network_Read_DNS_Settings tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task NetworkReadDnsSettings_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.NetworkReadDnsSettingsAsync();
 
-        // The Dnscache parameters key exists on all Windows systems
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -44,6 +47,13 @@ public sealed class NetworkDnsReadToolTests
         Assert.Contains("[DNS Client Parameters]", output);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -55,5 +65,22 @@ public sealed class NetworkDnsReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task NetworkReadDnsSettings_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.NetworkReadDnsSettingsAsync();
+
+        // The Dnscache parameters key exists on all Windows systems
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
 }

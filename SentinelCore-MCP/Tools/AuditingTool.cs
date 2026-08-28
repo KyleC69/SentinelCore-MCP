@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         AuditingTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -25,13 +25,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class AuditingTool
 {
-
-
-
-
-
-
-
 
     [McpServerTool(Name = "Auditing", ReadOnly = true, Destructive = false)]
     [Description("Gets the auditing policy by running command auditpol.exe /get /category:*")]

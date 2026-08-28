@@ -1,14 +1,24 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         SystemReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Reflection;
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="SystemReadTool" /> covering system information queries.
@@ -18,18 +28,12 @@ public sealed class SystemReadToolTests
 {
     private readonly SystemReadTool _tool = new();
 
-    #region System_Read_Info tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task SystemReadInfo_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.SystemReadInfoAsync();
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -46,6 +50,13 @@ public sealed class SystemReadToolTests
         Assert.Equal(Environment.MachineName, (string)machineNameProperty.GetValue(info)!);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -60,6 +71,13 @@ public sealed class SystemReadToolTests
         Assert.False(string.IsNullOrEmpty((string)osVersionProperty.GetValue(info)!));
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -71,20 +89,30 @@ public sealed class SystemReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
 
-    #region System_Read_TimeZone tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task SystemReadTimeZone_ReturnsSuccessfulToolResult()
+    public async Task SystemReadInfo_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.SystemReadTimeZoneAsync();
+        ToolResult result = await _tool.SystemReadInfoAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -100,6 +128,13 @@ public sealed class SystemReadToolTests
         Assert.Equal(TimeZoneInfo.Local.Id, (string)idProperty.GetValue(info)!);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -111,6 +146,21 @@ public sealed class SystemReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
-}
 
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task SystemReadTimeZone_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.SystemReadTimeZoneAsync();
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+}

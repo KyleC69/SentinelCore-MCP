@@ -1,18 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PnpDeviceReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-
-using ModelContextProtocol.Server;
-using System.Runtime.Versioning;
 
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -71,6 +70,18 @@ public sealed class PnpDeviceReadTool
 
 
 
+    private static string EscapeArgument(string argument)
+    {
+        return argument.Contains(' ') || argument.Contains('\t') || argument.Contains('"') ? $"\"{argument.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"" : argument;
+
+    }
+
+
+
+
+
+
+
 
     private static string LimitOutput(string output, int maxRecords)
     {
@@ -103,77 +114,6 @@ public sealed class PnpDeviceReadTool
         }
 
         return sb.ToString().TrimEnd();
-    }
-
-
-
-
-
-
-    private static string EscapeArgument(string argument)
-    {
-        return argument.Contains(' ') || argument.Contains('\t') || argument.Contains('"') ? $"\"{argument.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"" : argument;
-
-    }
-
-
-
-
-
-
-
-
-    private static ToolResult? RunPnputil(List<string> arguments, out string output)
-    {
-        output = string.Empty;
-        ProcessStartInfo startInfo = new()
-        {
-            FileName = "pnputil.exe",
-            Arguments = string.Join(" ", arguments.Select(EscapeArgument)),
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using Process? process = Process.Start(startInfo);
-        if (process is null)
-        {
-            return ToolResult.Fail("Unable to start pnputil.exe.", "PnpDeviceReadTool");
-        }
-
-        output = process.StandardOutput.ReadToEnd();
-        string error = process.StandardError.ReadToEnd();
-        process.WaitForExit();
-
-        return process.ExitCode != 0 ? string.IsNullOrWhiteSpace(error) ? ToolResult.Fail($"pnputil exited with code {process.ExitCode}.", "PnpDeviceReadTool") : ToolResult.Fail($"pnputil exited with code {process.ExitCode}: {error.Trim()}", "PnpDeviceReadTool") : null;
-
-    }
-
-
-
-
-
-
-
-
-    private static ToolResult? ValidateArguments(IEnumerable<string> arguments)
-    {
-        foreach (string arg in arguments)
-            if (arg.StartsWith('/'))
-            {
-                if (DisallowedOptions.Contains(arg))
-                {
-                    return ToolResult.Fail($"PnP option '{arg}' is not allowed because it is destructive or state-changing.", "PnpDeviceReadTool");
-                }
-
-                if (!AllowedOptions.Contains(arg))
-                {
-                    return ToolResult.Fail($"PnP option '{arg}' is not in the allowed whitelist.", "PnpDeviceReadTool");
-                }
-            }
-
-        return null;
     }
 
 
@@ -263,5 +203,65 @@ public sealed class PnpDeviceReadTool
         {
             return ToolResult.Fail($"PnP device read failed: {ex.Message}", "PnpDeviceReadTool");
         }
+    }
+
+
+
+
+
+
+
+
+    private static ToolResult? RunPnputil(List<string> arguments, out string output)
+    {
+        output = string.Empty;
+        ProcessStartInfo startInfo = new()
+        {
+                FileName = "pnputil.exe",
+                Arguments = string.Join(" ", arguments.Select(EscapeArgument)),
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+        };
+
+        using Process? process = Process.Start(startInfo);
+        if (process is null)
+        {
+            return ToolResult.Fail("Unable to start pnputil.exe.", "PnpDeviceReadTool");
+        }
+
+        output = process.StandardOutput.ReadToEnd();
+        string error = process.StandardError.ReadToEnd();
+        process.WaitForExit();
+
+        return process.ExitCode != 0 ? string.IsNullOrWhiteSpace(error) ? ToolResult.Fail($"pnputil exited with code {process.ExitCode}.", "PnpDeviceReadTool") : ToolResult.Fail($"pnputil exited with code {process.ExitCode}: {error.Trim()}", "PnpDeviceReadTool") : null;
+
+    }
+
+
+
+
+
+
+
+
+    private static ToolResult? ValidateArguments(IEnumerable<string> arguments)
+    {
+        foreach (string arg in arguments)
+            if (arg.StartsWith('/'))
+            {
+                if (DisallowedOptions.Contains(arg))
+                {
+                    return ToolResult.Fail($"PnP option '{arg}' is not allowed because it is destructive or state-changing.", "PnpDeviceReadTool");
+                }
+
+                if (!AllowedOptions.Contains(arg))
+                {
+                    return ToolResult.Fail($"PnP option '{arg}' is not in the allowed whitelist.", "PnpDeviceReadTool");
+                }
+            }
+
+        return null;
     }
 }

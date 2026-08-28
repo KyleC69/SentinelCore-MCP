@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         WindowsUpdateReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="WindowsUpdateReadTool" /> covering Windows Update
@@ -18,19 +28,30 @@ public sealed class WindowsUpdateReadToolTests
 {
     private readonly WindowsUpdateReadTool _tool = new();
 
-    #region Windows_Update_Read_Settings tests
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task WindowsUpdateReadSettings_ReturnsSuccessfulToolResult()
+    public async Task WindowsUpdateReadSettings_NullErrorDetailsOnSuccess()
     {
         ToolResult result = await _tool.WindowsUpdateReadSettingsAsync();
 
-        // Succeeds even when no policy settings are configured
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -45,16 +66,22 @@ public sealed class WindowsUpdateReadToolTests
         Assert.False(string.IsNullOrWhiteSpace(output));
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task WindowsUpdateReadSettings_NullErrorDetailsOnSuccess()
+    public async Task WindowsUpdateReadSettings_ReturnsSuccessfulToolResult()
     {
         ToolResult result = await _tool.WindowsUpdateReadSettingsAsync();
 
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
+        // Succeeds even when no policy settings are configured
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
     }
-
-    #endregion
 }

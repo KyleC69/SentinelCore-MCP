@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         SessionsReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="SessionsReadTool" /> covering active session enumeration.
@@ -17,18 +27,12 @@ public sealed class SessionsReadToolTests
 {
     private readonly SessionsReadTool _tool = new();
 
-    #region Sessions_List_Active tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task SessionsListActive_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.SessionsListActiveAsync();
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -43,16 +47,12 @@ public sealed class SessionsReadToolTests
         Assert.IsAssignableFrom<System.Collections.IEnumerable>(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task SessionsListActive_RespectsMaxRecords()
-    {
-        ToolResult result = await _tool.SessionsListActiveAsync(maxRecords: 5);
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -65,5 +65,39 @@ public sealed class SessionsReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task SessionsListActive_RespectsMaxRecords()
+    {
+        ToolResult result = await _tool.SessionsListActiveAsync(maxRecords: 5);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task SessionsListActive_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.SessionsListActiveAsync();
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
 }

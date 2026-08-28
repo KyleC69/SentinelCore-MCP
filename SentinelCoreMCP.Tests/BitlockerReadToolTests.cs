@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         BitlockerReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="BitlockerReadTool" /> covering volume listing,
@@ -18,7 +28,34 @@ public sealed class BitlockerReadToolTests
 {
     private readonly BitlockerReadTool _tool = new();
 
-    #region Bitlocker_List_Volumes tests
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task BitlockerListVolumes_NullErrorDetailsOnSuccess()
+    {
+        ToolResult result = await _tool.BitlockerListVolumesAsync();
+
+        if (!result.Success)
+        {
+            return; // BitLocker WMI not available on this system
+        }
+
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -29,9 +66,15 @@ public sealed class BitlockerReadToolTests
 
         // BitLocker WMI namespace may not be available on all systems
         // The tool should either succeed or fail gracefully
-        Assert.True(result.Success || (result.ErrorDetails != null),
-            $"Expected success or graceful failure but got: Success={result.Success}, ErrorDetails={result.ErrorDetails}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}, ErrorDetails={result.ErrorDetails}");
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -51,33 +94,12 @@ public sealed class BitlockerReadToolTests
         Assert.IsType<List<object>>(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task BitlockerListVolumes_NullErrorDetailsOnSuccess()
-    {
-        ToolResult result = await _tool.BitlockerListVolumesAsync();
 
-        if (!result.Success)
-        {
-            return; // BitLocker WMI not available on this system
-        }
 
-        Assert.Null(result.ErrorDetails);
-    }
 
-    #endregion
 
-    #region Bitlocker_Read_Volume tests
 
-    [Fact]
-    public async Task BitlockerReadVolume_NullDeviceId_ReturnsFailure()
-    {
-        ToolResult result = await _tool.BitlockerReadVolumeAsync(null!);
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
 
     [Fact]
     public async Task BitlockerReadVolume_EmptyDeviceId_ReturnsFailure()
@@ -88,14 +110,12 @@ public sealed class BitlockerReadToolTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public async Task BitlockerReadVolume_WhitespaceDeviceId_ReturnsFailure()
-    {
-        ToolResult result = await _tool.BitlockerReadVolumeAsync("   ");
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -109,5 +129,35 @@ public sealed class BitlockerReadToolTests
         Assert.NotNull(result.ErrorDetails);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    public async Task BitlockerReadVolume_NullDeviceId_ReturnsFailure()
+    {
+        ToolResult result = await _tool.BitlockerReadVolumeAsync(null!);
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task BitlockerReadVolume_WhitespaceDeviceId_ReturnsFailure()
+    {
+        ToolResult result = await _tool.BitlockerReadVolumeAsync("   ");
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
 }

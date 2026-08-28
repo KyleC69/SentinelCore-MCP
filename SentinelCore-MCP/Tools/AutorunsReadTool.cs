@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         AutorunsReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using Microsoft.Win32;
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Text;
+
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -31,41 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class AutorunsReadTool
 {
-
-
-
-
-
-
-
-
-    [SupportedOSPlatform("windows")]
-    private static void ReadRunKey(RegistryHive hive, string keyPath, StringBuilder sb, string label)
-    {
-        using RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
-        using RegistryKey? key = baseKey.OpenSubKey(keyPath, false);
-        if (key is null)
-        {
-            return;
-        }
-
-        sb.AppendLine($"{label}:");
-        foreach (string valueName in key.GetValueNames())
-        {
-            object? value = key.GetValue(valueName);
-            if (value is not null)
-            {
-                sb.AppendLine($"  {valueName}={value}");
-            }
-        }
-    }
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Autoruns_List", ReadOnly = true, Destructive = false)]
@@ -253,6 +218,34 @@ public sealed class AutorunsReadTool
         catch
         {
             return ToolResult.Fail("IFEO listing failed.", "AutorunsReadTool");
+        }
+    }
+
+
+
+
+
+
+
+
+    [SupportedOSPlatform("windows")]
+    private static void ReadRunKey(RegistryHive hive, string keyPath, StringBuilder sb, string label)
+    {
+        using RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
+        using RegistryKey? key = baseKey.OpenSubKey(keyPath, false);
+        if (key is null)
+        {
+            return;
+        }
+
+        sb.AppendLine($"{label}:");
+        foreach (string valueName in key.GetValueNames())
+        {
+            object? value = key.GetValue(valueName);
+            if (value is not null)
+            {
+                sb.AppendLine($"  {valueName}={value}");
+            }
         }
     }
 }

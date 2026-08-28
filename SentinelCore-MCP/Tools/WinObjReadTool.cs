@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         WinObjReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for reporting the availability of the Sysinternals WinObj
 ///     utility. WinObj is a GUI application with no supported command-line
@@ -31,9 +32,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class WinObjReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals WinObj is installed and reports its version.

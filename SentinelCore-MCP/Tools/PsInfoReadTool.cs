@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PsInfoReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating system information (OS version, kernel,
 ///     install date, hotfixes) using the Sysinternals PsInfo utility.
@@ -29,9 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PsInfoReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals PsInfo is installed and reports its version.
@@ -50,6 +48,8 @@ public sealed class PsInfoReadTool
 
 
 
+
+
     /// <summary>
     ///     Reports operating system, kernel, install date, and hotfix information
     ///     using PsInfo.
@@ -59,8 +59,7 @@ public sealed class PsInfoReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_PsInfo_Read_System", ReadOnly = true, Destructive = false)]
     [Description("Reports OS version, kernel build, install date, and hotfixes using Sysinternals PsInfo. Requires PsInfo to be installed.")]
-    public async Task<ToolResult> PsInfoReadSystemAsync(
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> PsInfoReadSystemAsync([Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
         if (maxValidation is not null)

@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         BrowserConfigReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
+using System.Text;
 
 using Microsoft.Win32;
 
 using ModelContextProtocol.Server;
-
-using System.ComponentModel;
-using System.Text;
-using System.Runtime.Versioning;
 
 
 
@@ -30,34 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class BrowserConfigReadTool
 {
-
-
-
-
-
-
-
-
-    [SupportedOSPlatform("windows")]
-    private static void ReadRegistryValues(RegistryHive hive, string path, StringBuilder sb, string label)
-    {
-        using RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
-        using RegistryKey? key = baseKey.OpenSubKey(path, false);
-        if (key is null)
-        {
-            return;
-        }
-
-        sb.AppendLine($"{label}:");
-        foreach (string valueName in key.GetValueNames()) sb.AppendLine($"  {valueName}={key.GetValue(valueName)}");
-    }
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Browser_Config_Read_Chrome_Policies", ReadOnly = true, Destructive = false)]
@@ -152,5 +124,26 @@ public sealed class BrowserConfigReadTool
         {
             return ToolResult.Fail("IE/Edge browser settings read failed.", "BrowserConfigReadTool");
         }
+    }
+
+
+
+
+
+
+
+
+    [SupportedOSPlatform("windows")]
+    private static void ReadRegistryValues(RegistryHive hive, string path, StringBuilder sb, string label)
+    {
+        using RegistryKey baseKey = RegistryKey.OpenBaseKey(hive, RegistryView.Registry64);
+        using RegistryKey? key = baseKey.OpenSubKey(path, false);
+        if (key is null)
+        {
+            return;
+        }
+
+        sb.AppendLine($"{label}:");
+        foreach (string valueName in key.GetValueNames()) sb.AppendLine($"  {valueName}={key.GetValue(valueName)}");
     }
 }

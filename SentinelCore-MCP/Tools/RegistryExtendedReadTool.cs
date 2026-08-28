@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         RegistryExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
 
 using Microsoft.Win32;
 
 using ModelContextProtocol.Server;
-
-using System.ComponentModel;
-using System.Runtime.Versioning;
 
 
 
@@ -31,6 +31,79 @@ namespace SentinelCoreMCP.Tools;
 public sealed class RegistryExtendedReadTool
 {
 
+    /// <summary>
+    ///     Lists COM class registrations from the registry for COM hijacking detection.
+    /// </summary>
+    /// <param name="maxRecords">Maximum number of classes to return. Defaults to 50.</param>
+    /// <returns>A <see cref="ToolResult" /> containing typed COM class records.</returns>
+    [McpServerTool(Name = "COM_List_Classes", ReadOnly = true, Destructive = false)]
+    [Description("Lists COM class registrations from the registry for COM hijacking detection.")]
+    public async Task<ToolResult> ComListClassesAsync([Description("Maximum number of classes to return. Defaults to 50.")] int maxRecords = 50)
+    {
+        try
+        {
+            ToolResult? maxRecordsValidation = InputValidator.ValidateMaxRecords(maxRecords);
+            if (maxRecordsValidation is not null)
+            {
+                return maxRecordsValidation;
+            }
+
+            List<ComClassRecord> results = await Task.Run(() =>
+                    {
+                        List<ComClassRecord> records = new();
+                        using RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64);
+                        using RegistryKey? clsidKey = baseKey.OpenSubKey(@"CLSID", false);
+                        if (clsidKey is null)
+                        {
+                            return records;
+                        }
+
+                        foreach (string clsid in clsidKey.GetSubKeyNames())
+                        {
+                            if (records.Count >= maxRecords)
+                            {
+                                break;
+                            }
+
+                            using RegistryKey? classKey = clsidKey.OpenSubKey(clsid, false);
+                            if (classKey is null)
+                            {
+                                continue;
+                            }
+
+                            string? inprocPath = null;
+                            using (RegistryKey? inprocKey = classKey.OpenSubKey(@"InprocServer32", false))
+                            {
+                                inprocPath = inprocKey?.GetValue(null)?.ToString();
+                            }
+
+                            string? localServer = null;
+                            using (RegistryKey? localServerKey = classKey.OpenSubKey(@"LocalServer32", false))
+                            {
+                                localServer = localServerKey?.GetValue(null)?.ToString();
+                            }
+
+                            string? progId = null;
+                            using (RegistryKey? progIdKey = classKey.OpenSubKey(@"ProgID", false))
+                            {
+                                progId = progIdKey?.GetValue(null)?.ToString();
+                            }
+
+                            records.Add(new ComClassRecord(clsid, progId ?? string.Empty, inprocPath ?? string.Empty, localServer ?? string.Empty));
+                        }
+
+                        return records;
+                    })
+                    .ConfigureAwait(false);
+
+            return ToolResult.Ok(results, $"Enumerated {results.Count} COM class registration(s).");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "COM class listing");
+        }
+    }
+
 
 
 
@@ -46,9 +119,7 @@ public sealed class RegistryExtendedReadTool
     /// <returns>A <see cref="ToolResult" /> containing the typed ACL payload.</returns>
     [McpServerTool(Name = "Registry_Read_Acl", ReadOnly = true, Destructive = false)]
     [Description("Reads the ACL (access control list) of a registry key for permission auditing.")]
-    public async Task<ToolResult> RegistryReadAclAsync(
-        [Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive,
-        [Description("The key path within the hive.")] string keyPath)
+    public async Task<ToolResult> RegistryReadAclAsync([Description("Registry hive abbreviation (HKLM, HKCU, HKCR, HKU, HKCC).")] string hive, [Description("The key path within the hive.")] string keyPath)
     {
         try
         {
@@ -74,6 +145,11 @@ public sealed class RegistryExtendedReadTool
 
 
 
+
+
+
+
+
     /// <summary>
     ///     A single COM class registration record.
     /// </summary>
@@ -82,76 +158,4 @@ public sealed class RegistryExtendedReadTool
     /// <param name="InprocServer32">The in-process server path, if registered.</param>
     /// <param name="LocalServer32">The local server path, if registered.</param>
     public sealed record ComClassRecord(string Clsid, string ProgId, string InprocServer32, string LocalServer32);
-
-    /// <summary>
-    ///     Lists COM class registrations from the registry for COM hijacking detection.
-    /// </summary>
-    /// <param name="maxRecords">Maximum number of classes to return. Defaults to 50.</param>
-    /// <returns>A <see cref="ToolResult" /> containing typed COM class records.</returns>
-    [McpServerTool(Name = "COM_List_Classes", ReadOnly = true, Destructive = false)]
-    [Description("Lists COM class registrations from the registry for COM hijacking detection.")]
-    public async Task<ToolResult> ComListClassesAsync([Description("Maximum number of classes to return. Defaults to 50.")] int maxRecords = 50)
-    {
-        try
-        {
-            ToolResult? maxRecordsValidation = InputValidator.ValidateMaxRecords(maxRecords);
-            if (maxRecordsValidation is not null)
-            {
-                return maxRecordsValidation;
-            }
-
-            List<ComClassRecord> results = await Task.Run(() =>
-            {
-                List<ComClassRecord> records = new();
-                using RegistryKey baseKey = RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, RegistryView.Registry64);
-                using RegistryKey? clsidKey = baseKey.OpenSubKey(@"CLSID", false);
-                if (clsidKey is null)
-                {
-                    return records;
-                }
-
-                foreach (string clsid in clsidKey.GetSubKeyNames())
-                {
-                    if (records.Count >= maxRecords)
-                    {
-                        break;
-                    }
-
-                    using RegistryKey? classKey = clsidKey.OpenSubKey(clsid, false);
-                    if (classKey is null)
-                    {
-                        continue;
-                    }
-
-                    string? inprocPath = null;
-                    using (RegistryKey? inprocKey = classKey.OpenSubKey(@"InprocServer32", false))
-                    {
-                        inprocPath = inprocKey?.GetValue(null)?.ToString();
-                    }
-
-                    string? localServer = null;
-                    using (RegistryKey? localServerKey = classKey.OpenSubKey(@"LocalServer32", false))
-                    {
-                        localServer = localServerKey?.GetValue(null)?.ToString();
-                    }
-
-                    string? progId = null;
-                    using (RegistryKey? progIdKey = classKey.OpenSubKey(@"ProgID", false))
-                    {
-                        progId = progIdKey?.GetValue(null)?.ToString();
-                    }
-
-                    records.Add(new ComClassRecord(clsid, progId ?? string.Empty, inprocPath ?? string.Empty, localServer ?? string.Empty));
-                }
-
-                return records;
-            }).ConfigureAwait(false);
-
-            return ToolResult.Ok(results, $"Enumerated {results.Count} COM class registration(s).");
-        }
-        catch (Exception ex)
-        {
-            return ToolResult.Fail(ex.Message, "COM class listing");
-        }
-    }
 }

@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         ShellExplorerReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="ShellExplorerReadTool" /> covering Explorer settings
@@ -18,19 +28,12 @@ public sealed class ShellExplorerReadToolTests
 {
     private readonly ShellExplorerReadTool _tool = new();
 
-    #region Shell_Explorer_Read_Settings tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ShellExplorerReadSettings_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.shellExplorerReadSettingsAsync();
 
-        // The Explorer Advanced key exists on all Windows systems
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -44,6 +47,13 @@ public sealed class ShellExplorerReadToolTests
         Assert.Contains("Advanced", output);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -55,9 +65,31 @@ public sealed class ShellExplorerReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
 
-    #region Shell_Taskbar_Pinned_List tests
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ShellExplorerReadSettings_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.shellExplorerReadSettingsAsync();
+
+        // The Explorer Advanced key exists on all Windows systems
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -67,9 +99,15 @@ public sealed class ShellExplorerReadToolTests
         ToolResult result = await _tool.shellTaskbarPinnedListAsync();
 
         // The pinned path may not exist on all systems/profiles
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -78,10 +116,11 @@ public sealed class ShellExplorerReadToolTests
     {
         ToolResult result = await _tool.shellTaskbarPinnedListAsync();
 
-        if (!result.Success) { return; } // Skip if pinned path not present
+        if (!result.Success)
+        {
+            return;
+        } // Skip if pinned path not present
 
         Assert.NotNull(result.Results);
     }
-
-    #endregion
 }

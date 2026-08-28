@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         TcpViewReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating TCP/UDP endpoints using Tcpvcon, the
 ///     command-line companion of the Sysinternals TcpView utility. Endpoint
@@ -30,9 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class TcpViewReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals TcpView (Tcpvcon) is installed and reports its version.
@@ -51,6 +49,8 @@ public sealed class TcpViewReadTool
 
 
 
+
+
     /// <summary>
     ///     Lists active TCP/UDP endpoints with owning process attribution using
     ///     Tcpvcon.
@@ -61,9 +61,7 @@ public sealed class TcpViewReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_TcpView_List_Endpoints", ReadOnly = true, Destructive = false)]
     [Description("Lists active TCP/UDP endpoints with owning process attribution using Sysinternals Tcpvcon. Requires Tcpvcon to be installed; process attribution requires elevation.")]
-    public async Task<ToolResult> TcpViewListEndpointsAsync(
-        [Description("Whether to include UDP endpoints. Defaults to true.")] bool includeUdp = true,
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> TcpViewListEndpointsAsync([Description("Whether to include UDP endpoints. Defaults to true.")] bool includeUdp = true, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
         if (maxValidation is not null)
@@ -73,9 +71,7 @@ public sealed class TcpViewReadTool
 
         // -a includes all endpoint states, -c renders CSV, -n resolves addresses;
         // -accepteula suppresses the EULA prompt.
-        string arguments = includeUdp
-            ? "-a -c -n -accepteula"
-            : "-a -c -n -p -accepteula";
+        string arguments = includeUdp ? "-a -c -n -accepteula" : "-a -c -n -p -accepteula";
 
         ToolResult result = await SysinternalsHelper.RunAsync("tcpvcon", arguments, "Tcpvcon endpoint enumeration").ConfigureAwait(false);
         if (!result.Success)

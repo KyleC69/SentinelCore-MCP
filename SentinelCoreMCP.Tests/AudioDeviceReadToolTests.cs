@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         AudioDeviceReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="AudioDeviceReadTool" /> covering pnputil-based device
@@ -18,29 +28,12 @@ public sealed class AudioDeviceReadToolTests
 {
     private readonly AudioDeviceReadTool _tool = new();
 
-    #region Audio_List_Devices tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task AudioListDevices_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.audioListDevicesAsync();
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task AudioListDevices_ContainsAudioEndpointsSection()
-    {
-        ToolResult result = await _tool.audioListDevicesAsync();
 
-        Assert.True(result.Success);
-        Assert.Contains("Audio Endpoints", (string)result.Results!);
-    }
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -53,6 +46,31 @@ public sealed class AudioDeviceReadToolTests
         Assert.Contains("Audio Devices", (string)result.Results!);
     }
 
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task AudioListDevices_ContainsAudioEndpointsSection()
+    {
+        ToolResult result = await _tool.audioListDevicesAsync();
+
+        Assert.True(result.Success);
+        Assert.Contains("Audio Endpoints", (string)result.Results!);
+    }
+
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -64,6 +82,13 @@ public sealed class AudioDeviceReadToolTests
         Assert.Contains("Device Description:", (string)result.Results!);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -74,10 +99,15 @@ public sealed class AudioDeviceReadToolTests
         Assert.True(result.Success);
         // pnputil output always includes Instance ID and Status
         string output = (string)result.Results!;
-        Assert.True(
-            output.Contains("Instance ID:") || output.Contains("Status:"),
-            "Expected pnputil output to contain Instance ID or Status fields");
+        Assert.True(output.Contains("Instance ID:") || output.Contains("Status:"), "Expected pnputil output to contain Instance ID or Status fields");
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -90,20 +120,30 @@ public sealed class AudioDeviceReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
 
-    #region Audio_Read_Default_Device tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task AudioReadDefaultDevice_ReturnsSuccessfulToolResult()
+    public async Task AudioListDevices_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.audioReadDefaultDeviceAsync();
+        ToolResult result = await _tool.audioListDevicesAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -115,6 +155,13 @@ public sealed class AudioDeviceReadToolTests
         Assert.True(result.Success);
         Assert.Contains("Active Render Endpoints:", (string)result.Results!);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -128,6 +175,13 @@ public sealed class AudioDeviceReadToolTests
         Assert.Contains("Id=", (string)result.Results!);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -139,5 +193,21 @@ public sealed class AudioDeviceReadToolTests
         Assert.Contains("State=", (string)result.Results!);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task AudioReadDefaultDevice_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.audioReadDefaultDeviceAsync();
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
 }

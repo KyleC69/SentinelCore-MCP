@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         VpnReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="VpnReadTool" /> covering VPN/RAS connection enumeration
@@ -18,7 +28,51 @@ public sealed class VpnReadToolTests
 {
     private readonly VpnReadTool _tool = new();
 
-    #region VPN_List_Connections tests
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task VpnListConnections_NullErrorDetailsOnSuccess()
+    {
+        ToolResult result = await _tool.vpnListConnectionsAsync();
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task VpnListConnections_ReturnsDictionaryList()
+    {
+        ToolResult result = await _tool.vpnListConnectionsAsync();
+
+        Assert.True(result.Success);
+        // Results is a List<Dictionary<string, string?>> of phonebook entries
+        List<Dictionary<string, string?>> entries = Assert.IsType<List<Dictionary<string, string?>>>(result.Results);
+        // Every entry must have a Name key
+        Assert.All(entries, e => Assert.True(e.ContainsKey("Name")));
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -32,46 +86,12 @@ public sealed class VpnReadToolTests
         Assert.NotNull(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task VpnListConnections_ReturnsDictionaryList()
-    {
-        ToolResult result = await _tool.vpnListConnectionsAsync();
 
-        Assert.True(result.Success);
-        // Results is a List<Dictionary<string, string?>> of phonebook entries
-        List<Dictionary<string, string?>> entries =
-            Assert.IsType<List<Dictionary<string, string?>>>(result.Results);
-        // Every entry must have a Name key
-        Assert.All(entries, e => Assert.True(e.ContainsKey("Name")));
-    }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task VpnListConnections_NullErrorDetailsOnSuccess()
-    {
-        ToolResult result = await _tool.vpnListConnectionsAsync();
 
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
-    }
 
-    #endregion
 
-    #region VPN_Read_Phonebook_Status tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task VpnReadPhonebookStatus_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.vpnReadPhonebookStatusAsync();
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -86,6 +106,13 @@ public sealed class VpnReadToolTests
         Assert.Matches(@"Exists=(True|False)", output);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -97,5 +124,21 @@ public sealed class VpnReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task VpnReadPhonebookStatus_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.vpnReadPhonebookStatusAsync();
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
 }

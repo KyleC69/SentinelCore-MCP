@@ -1,21 +1,22 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         GroupPolicyExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Management;
 using System.Runtime.Versioning;
 
+using ModelContextProtocol.Server;
+
 
 
 
 namespace SentinelCoreMCP.Tools;
+
 
 
 
@@ -58,11 +59,11 @@ public sealed class GroupPolicyExtendedReadTool
 
                 results.Add(new
                 {
-                    Namespace = link["namespace"]?.ToString() ?? string.Empty,
-                    GpoId = link["GPOID"]?.ToString() ?? string.Empty,
-                    SomId = link["SOMID"]?.ToString() ?? string.Empty,
-                    LinkName = link["idName"]?.ToString() ?? string.Empty,
-                    LinkVersion = link["idVersion"]?.ToString() ?? string.Empty
+                        Namespace = link["namespace"]?.ToString() ?? string.Empty,
+                        GpoId = link["GPOID"]?.ToString() ?? string.Empty,
+                        SomId = link["SOMID"]?.ToString() ?? string.Empty,
+                        LinkName = link["idName"]?.ToString() ?? string.Empty,
+                        LinkVersion = link["idVersion"]?.ToString() ?? string.Empty
                 });
             }
 

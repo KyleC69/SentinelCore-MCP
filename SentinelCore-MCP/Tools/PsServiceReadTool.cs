@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PsServiceReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating Windows services and their configuration
 ///     using the Sysinternals PsService utility. Complements the managed
@@ -30,9 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PsServiceReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals PsService is installed and reports its version.
@@ -51,6 +49,8 @@ public sealed class PsServiceReadTool
 
 
 
+
+
     /// <summary>
     ///     Lists installed services with their configuration and status, or the
     ///     detailed configuration of a single service.
@@ -61,9 +61,7 @@ public sealed class PsServiceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_PsService_List_Services", ReadOnly = true, Destructive = false)]
     [Description("Lists services and their configuration using Sysinternals PsService. Requires PsService to be installed.")]
-    public async Task<ToolResult> PsServiceListServicesAsync(
-        [Description("Optional service name to inspect in detail. When omitted, all services are listed.")] string? serviceName = null,
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> PsServiceListServicesAsync([Description("Optional service name to inspect in detail. When omitted, all services are listed.")] string? serviceName = null, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         if (serviceName is not null)
         {
@@ -75,9 +73,7 @@ public sealed class PsServiceReadTool
 
             if (!System.Text.RegularExpressions.Regex.IsMatch(serviceName!, @"^[a-zA-Z0-9._\- ]+$"))
             {
-                return ToolResult.Fail(
-                    "serviceName must contain only letters, digits, dots, hyphens, underscores, and spaces.",
-                    "PsService enumeration");
+                return ToolResult.Fail("serviceName must contain only letters, digits, dots, hyphens, underscores, and spaces.", "PsService enumeration");
             }
         }
 
@@ -88,9 +84,7 @@ public sealed class PsServiceReadTool
         }
 
         // -c renders the output as CSV; -accepteula suppresses the EULA prompt.
-        string arguments = string.IsNullOrWhiteSpace(serviceName)
-            ? "-c -accepteula"
-            : $"-c -accepteula \"{serviceName}\"";
+        string arguments = string.IsNullOrWhiteSpace(serviceName) ? "-c -accepteula" : $"-c -accepteula \"{serviceName}\"";
 
         ToolResult result = await SysinternalsHelper.RunAsync("psservice", arguments, "PsService enumeration").ConfigureAwait(false);
         if (!result.Success)

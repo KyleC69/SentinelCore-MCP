@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         FileSystemExtendedReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="FileSystemExtendedReadTool" /> covering file hashing,
@@ -16,9 +26,16 @@ namespace SentinelCoreMCP.Tests;
 [SupportedOSPlatform("windows")]
 public sealed class FileSystemExtendedReadToolTests : IDisposable
 {
-    private readonly FileSystemExtendedReadTool _tool = new();
     private readonly string _tempDir;
     private readonly string _tempFile;
+    private readonly FileSystemExtendedReadTool _tool = new();
+
+
+
+
+
+
+
 
     public FileSystemExtendedReadToolTests()
     {
@@ -27,6 +44,13 @@ public sealed class FileSystemExtendedReadToolTests : IDisposable
         _tempFile = Path.Combine(_tempDir, "sample.txt");
         File.WriteAllText(_tempFile, "hello world");
     }
+
+
+
+
+
+
+
 
     public void Dispose()
     {
@@ -40,7 +64,34 @@ public sealed class FileSystemExtendedReadToolTests : IDisposable
         }
     }
 
-    #region File_System_Compute_Hash tests
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemComputeHash_DefaultAlgorithm_IsSha256()
+    {
+        ToolResult result = await _tool.FileSystemComputeHashAsync(_tempFile);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        object payload = result.Results!;
+        Assert.Equal("SHA256", (string)payload.GetType().GetProperty("Algorithm")!.GetValue(payload)!);
+        // SHA-256 hash is 64 hex characters
+        string hash = (string)payload.GetType().GetProperty("Hash")!.GetValue(payload)!;
+        Assert.Equal(64, hash.Length);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     public async Task FileSystemComputeHash_EmptyPath_ReturnsFailure()
@@ -50,6 +101,13 @@ public sealed class FileSystemExtendedReadToolTests : IDisposable
         Assert.False(result.Success);
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
+
+
+
+
+
+
+
 
     [Theory]
     [InlineData("MD5", "5EB63BBBE01EEED093CB22BB8F5ACDC3")]
@@ -67,20 +125,30 @@ public sealed class FileSystemExtendedReadToolTests : IDisposable
         Assert.Equal(algorithm, (string)payload.GetType().GetProperty("Algorithm")!.GetValue(payload)!);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemComputeHash_DefaultAlgorithm_IsSha256()
+    public async Task FileSystemComputeHash_NullErrorDetailsOnSuccess()
     {
         ToolResult result = await _tool.FileSystemComputeHashAsync(_tempFile);
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        object payload = result.Results!;
-        Assert.Equal("SHA256", (string)payload.GetType().GetProperty("Algorithm")!.GetValue(payload)!);
-        // SHA-256 hash is 64 hex characters
-        string hash = (string)payload.GetType().GetProperty("Hash")!.GetValue(payload)!;
-        Assert.Equal(64, hash.Length);
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -96,20 +164,12 @@ public sealed class FileSystemExtendedReadToolTests : IDisposable
         Assert.Equal(64, hash.Length);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemComputeHash_NullErrorDetailsOnSuccess()
-    {
-        ToolResult result = await _tool.FileSystemComputeHashAsync(_tempFile);
 
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
-    }
 
-    #endregion
 
-    #region File_System_List_Streams tests
+
+
+
 
     [Fact]
     public async Task FileSystemListStreams_EmptyPath_ReturnsFailure()
@@ -120,16 +180,12 @@ public sealed class FileSystemExtendedReadToolTests : IDisposable
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemListStreams_NonExistentPath_ReturnsFailure()
-    {
-        ToolResult result = await _tool.FileSystemListStreamsAsync(Path.Combine(_tempDir, "DoesNotExist"));
 
-        Assert.False(result.Success);
-        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -144,21 +200,48 @@ public sealed class FileSystemExtendedReadToolTests : IDisposable
         Assert.IsType<List<object>>(result.Results);
     }
 
-    #endregion
 
-    #region File_System_Read_Hosts tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadHosts_ReturnsSuccessfulToolResult()
+    public async Task FileSystemListStreams_NonExistentPath_ReturnsFailure()
+    {
+        ToolResult result = await _tool.FileSystemListStreamsAsync(Path.Combine(_tempDir, "DoesNotExist"));
+
+        Assert.False(result.Success);
+        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FileSystemReadHosts_NullErrorDetailsOnSuccess()
     {
         ToolResult result = await _tool.FileSystemReadHostsAsync();
 
-        // The hosts file exists on all Windows systems
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -172,16 +255,22 @@ public sealed class FileSystemExtendedReadToolTests : IDisposable
         Assert.IsType<List<object>>(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FileSystemReadHosts_NullErrorDetailsOnSuccess()
+    public async Task FileSystemReadHosts_ReturnsSuccessfulToolResult()
     {
         ToolResult result = await _tool.FileSystemReadHostsAsync();
 
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
+        // The hosts file exists on all Windows systems
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
     }
-
-    #endregion
 }

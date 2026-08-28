@@ -1,19 +1,29 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         ScheduledTaskReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
+
+
 
 using System.ComponentModel;
+using System.Runtime.Versioning;
 using System.Text;
 
 using Microsoft.Win32.TaskScheduler;
+
 using ModelContextProtocol.Server;
-using System.Runtime.Versioning;
 
 using ScheduledTask = Microsoft.Win32.TaskScheduler.Task;
 
+
+
+
 namespace SentinelCoreMCP.Tools;
+
+
+
+
 
 /// <summary>
 ///     Read-only tool for querying Windows Scheduled Tasks.
@@ -60,6 +70,13 @@ public sealed class ScheduledTaskReadTool
             return ToolResult.Fail("Scheduled task listing failed.", "ScheduledTaskReadTool");
         }
     }
+
+
+
+
+
+
+
 
     [McpServerTool(Name = "Scheduled_Task_Read", ReadOnly = true, Destructive = false)]
     [Description("Reads details of a specific scheduled task.")]

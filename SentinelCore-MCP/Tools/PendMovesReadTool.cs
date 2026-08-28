@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PendMovesReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating pending file rename and delete operations
 ///     registered in the PendingFileRenameOperations registry value, replicating
@@ -31,9 +32,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PendMovesReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals PendMoves is installed and reports its version.
@@ -46,6 +44,8 @@ public sealed class PendMovesReadTool
     {
         return await Task.Run(() => SysinternalsHelper.ProbeAvailability("pendmoves")).ConfigureAwait(false);
     }
+
+
 
 
 
@@ -68,38 +68,36 @@ public sealed class PendMovesReadTool
         const string pendingRenamesValue = "PendingFileRenameOperations";
 
         return await Task.Run(() =>
-        {
-            try
-            {
-                using Microsoft.Win32.RegistryKey? key =
-                    Microsoft.Win32.Registry.LocalMachine.OpenSubKey(sessionManagerKey, false);
-                if (key is null)
                 {
-                    return ToolResult.Fail($"Registry key not found: HKLM\\{sessionManagerKey}", "Pending moves read");
-                }
+                    try
+                    {
+                        using Microsoft.Win32.RegistryKey? key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(sessionManagerKey, false);
+                        if (key is null)
+                        {
+                            return ToolResult.Fail($"Registry key not found: HKLM\\{sessionManagerKey}", "Pending moves read");
+                        }
 
-                if (key.GetValue(pendingRenamesValue) is not string[] operations || operations.Length == 0)
-                {
-                    return ToolResult.Ok("No pending file rename operations.", "Pending moves read complete.");
-                }
+                        if (key.GetValue(pendingRenamesValue) is not string[] operations || operations.Length == 0)
+                        {
+                            return ToolResult.Ok("No pending file rename operations.", "Pending moves read complete.");
+                        }
 
-                System.Text.StringBuilder sb = new();
-                sb.AppendLine($"[{pendingRenamesValue}]");
-                for (int i = 0; i < operations.Length; i += 2)
-                {
-                    string source = operations[i];
-                    string destination = i + 1 < operations.Length ? operations[i + 1] : string.Empty;
-                    sb.AppendLine(destination.Length > 0
-                        ? $"  Rename: {source} -> {destination}"
-                        : $"  Delete: {source}");
-                }
+                        System.Text.StringBuilder sb = new();
+                        sb.AppendLine($"[{pendingRenamesValue}]");
+                        for (int i = 0; i < operations.Length; i += 2)
+                        {
+                            string source = operations[i];
+                            string destination = i + 1 < operations.Length ? operations[i + 1] : string.Empty;
+                            sb.AppendLine(destination.Length > 0 ? $"  Rename: {source} -> {destination}" : $"  Delete: {source}");
+                        }
 
-                return ToolResult.Ok(sb.ToString(), "Pending moves read complete.");
-            }
-            catch (Exception ex)
-            {
-                return ToolResult.Fail(ex.Message, "Pending moves read");
-            }
-        }).ConfigureAwait(false);
+                        return ToolResult.Ok(sb.ToString(), "Pending moves read complete.");
+                    }
+                    catch (Exception ex)
+                    {
+                        return ToolResult.Fail(ex.Message, "Pending moves read");
+                    }
+                })
+                .ConfigureAwait(false);
     }
 }

@@ -1,19 +1,22 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         BootConfigurationReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 
+using ModelContextProtocol.Server;
+
+
+
 
 namespace SentinelCoreMCP.Tools;
+
 
 
 
@@ -28,6 +31,60 @@ public sealed class BootConfigurationReadTool
 {
 
     /// <summary>
+    ///     Returns the current boot entry GUID from the BCD store.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing the bcdedit output.</returns>
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Boot_Configuration_Read_Current", ReadOnly = true, Destructive = false)]
+    [Description("Returns the current boot entry GUID from the BCD store.")]
+    public async Task<ToolResult> BcdeditCurrentAsync()
+    {
+        try
+        {
+            string output = await RunBcdeditAsync("/enum {current}").ConfigureAwait(false);
+            return ToolResult.Ok(output, "BCD current boot entry read.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "BCD current entry read");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Enumerates the active boot configuration store entries.
+    /// </summary>
+    /// <returns>A <see cref="ToolResult" /> containing the bcdedit output.</returns>
+    [SupportedOSPlatform("windows")]
+    [McpServerTool(Name = "Boot_Configuration_Enum", ReadOnly = true, Destructive = false)]
+    [Description("Enumerates the active boot configuration store entries.")]
+    public async Task<ToolResult> BcdeditEnumAsync()
+    {
+        try
+        {
+            string output = await RunBcdeditAsync("/enum").ConfigureAwait(false);
+            return ToolResult.Ok(output, "BCD enumeration complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "BCD enumeration");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
     ///     Runs bcdedit.exe with the specified arguments and returns the standard output asynchronously.
     /// </summary>
     /// <param name="arguments">The arguments to pass to bcdedit.exe.</param>
@@ -38,15 +95,15 @@ public sealed class BootConfigurationReadTool
     {
         using Process process = new()
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "bcdedit.exe",
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            }
+                StartInfo = new ProcessStartInfo
+                {
+                        FileName = "bcdedit.exe",
+                        Arguments = arguments,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                }
         };
 
         process.Start();
@@ -70,45 +127,5 @@ public sealed class BootConfigurationReadTool
         }
 
         return string.IsNullOrWhiteSpace(output) ? error : output;
-    }
-
-    /// <summary>
-    ///     Returns the current boot entry GUID from the BCD store.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the bcdedit output.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Boot_Configuration_Read_Current", ReadOnly = true, Destructive = false)]
-    [Description("Returns the current boot entry GUID from the BCD store.")]
-    public async Task<ToolResult> BcdeditCurrentAsync()
-    {
-        try
-        {
-            string output = await RunBcdeditAsync("/enum {current}").ConfigureAwait(false);
-            return ToolResult.Ok(output, "BCD current boot entry read.");
-        }
-        catch (Exception ex)
-        {
-            return ToolResult.Fail(ex.Message, "BCD current entry read");
-        }
-    }
-
-    /// <summary>
-    ///     Enumerates the active boot configuration store entries.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the bcdedit output.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Boot_Configuration_Enum", ReadOnly = true, Destructive = false)]
-    [Description("Enumerates the active boot configuration store entries.")]
-    public async Task<ToolResult> BcdeditEnumAsync()
-    {
-        try
-        {
-            string output = await RunBcdeditAsync("/enum").ConfigureAwait(false);
-            return ToolResult.Ok(output, "BCD enumeration complete.");
-        }
-        catch (Exception ex)
-        {
-            return ToolResult.Fail(ex.Message, "BCD enumeration");
-        }
     }
 }

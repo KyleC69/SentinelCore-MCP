@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         CertificateExtendedReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="CertificateExtendedReadTool" /> covering certificate
@@ -18,16 +28,12 @@ public sealed class CertificateExtendedReadToolTests
 {
     private readonly CertificateExtendedReadTool _tool = new();
 
-    #region Certificate_Verify validation tests
 
-    [Fact]
-    public async Task CertificateVerify_NullThumbprint_ReturnsFailure()
-    {
-        ToolResult result = await _tool.CertificateVerifyAsync(null!);
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
 
     [Fact]
     public async Task CertificateVerify_EmptyThumbprint_ReturnsFailure()
@@ -38,14 +44,12 @@ public sealed class CertificateExtendedReadToolTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public async Task CertificateVerify_WhitespaceThumbprint_ReturnsFailure()
-    {
-        ToolResult result = await _tool.CertificateVerifyAsync("   ");
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -58,9 +62,55 @@ public sealed class CertificateExtendedReadToolTests
         Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    #endregion
 
-    #region Certificate_Verify integration tests
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task CertificateVerify_NullErrorDetailsOnSuccess()
+    {
+        using System.Security.Cryptography.X509Certificates.X509Store store = new(System.Security.Cryptography.X509Certificates.StoreName.Root, System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
+        store.Open(System.Security.Cryptography.X509Certificates.OpenFlags.ReadOnly | System.Security.Cryptography.X509Certificates.OpenFlags.OpenExistingOnly);
+
+        if (store.Certificates.Count == 0)
+        {
+            return;
+        }
+
+        string thumbprint = store.Certificates[0].Thumbprint;
+        ToolResult result = await _tool.CertificateVerifyAsync(thumbprint, "Root");
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task CertificateVerify_NullThumbprint_ReturnsFailure()
+    {
+        ToolResult result = await _tool.CertificateVerifyAsync(null!);
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -68,9 +118,7 @@ public sealed class CertificateExtendedReadToolTests
     public async Task CertificateVerify_RootStoreCertificate_ReturnsSuccessfulToolResult()
     {
         // Find any certificate in the LocalMachine Root store to verify
-        using System.Security.Cryptography.X509Certificates.X509Store store =
-            new(System.Security.Cryptography.X509Certificates.StoreName.Root,
-                System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
+        using System.Security.Cryptography.X509Certificates.X509Store store = new(System.Security.Cryptography.X509Certificates.StoreName.Root, System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
         store.Open(System.Security.Cryptography.X509Certificates.OpenFlags.ReadOnly | System.Security.Cryptography.X509Certificates.OpenFlags.OpenExistingOnly);
 
         if (store.Certificates.Count == 0)
@@ -85,14 +133,19 @@ public sealed class CertificateExtendedReadToolTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
     public async Task CertificateVerify_SuccessfulVerification_ContainsCertificateDetails()
     {
-        using System.Security.Cryptography.X509Certificates.X509Store store =
-            new(System.Security.Cryptography.X509Certificates.StoreName.Root,
-                System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
+        using System.Security.Cryptography.X509Certificates.X509Store store = new(System.Security.Cryptography.X509Certificates.StoreName.Root, System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
         store.Open(System.Security.Cryptography.X509Certificates.OpenFlags.ReadOnly | System.Security.Cryptography.X509Certificates.OpenFlags.OpenExistingOnly);
 
         if (store.Certificates.Count == 0)
@@ -111,27 +164,19 @@ public sealed class CertificateExtendedReadToolTests
         Assert.NotNull(payload.GetType().GetProperty("IsNotYetValid"));
     }
 
+
+
+
+
+
+
+
     [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task CertificateVerify_NullErrorDetailsOnSuccess()
+    public async Task CertificateVerify_WhitespaceThumbprint_ReturnsFailure()
     {
-        using System.Security.Cryptography.X509Certificates.X509Store store =
-            new(System.Security.Cryptography.X509Certificates.StoreName.Root,
-                System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
-        store.Open(System.Security.Cryptography.X509Certificates.OpenFlags.ReadOnly | System.Security.Cryptography.X509Certificates.OpenFlags.OpenExistingOnly);
+        ToolResult result = await _tool.CertificateVerifyAsync("   ");
 
-        if (store.Certificates.Count == 0)
-        {
-            return;
-        }
-
-        string thumbprint = store.Certificates[0].Thumbprint;
-        ToolResult result = await _tool.CertificateVerifyAsync(thumbprint, "Root");
-
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
-
-    #endregion
 }

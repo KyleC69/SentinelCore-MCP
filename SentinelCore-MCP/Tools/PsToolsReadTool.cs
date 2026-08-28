@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PsToolsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for reporting which members of the Sysinternals PsTools
 ///     suite are installed on the host. PsTools binaries are console utilities;
@@ -31,9 +32,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PsToolsReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes each PsTools suite member and reports its installation state,
@@ -46,19 +44,20 @@ public sealed class PsToolsReadTool
     public async Task<ToolResult> PsToolsListSuiteAsync()
     {
         return await Task.Run(() =>
-        {
-            List<SysinternalsHelper.SysinternalsBinaryInfo> results = new();
-
-            foreach (string member in SysinternalsHelper.PsToolsSuiteMembers)
-            {
-                ToolResult probe = SysinternalsHelper.ProbeAvailability(member);
-                if (probe.Success && probe.Results is SysinternalsHelper.SysinternalsBinaryInfo info)
                 {
-                    results.Add(info);
-                }
-            }
+                    List<SysinternalsHelper.SysinternalsBinaryInfo> results = new();
 
-            return ToolResult.Ok(results, $"Probed {results.Count} PsTools suite member(s).");
-        }).ConfigureAwait(false);
+                    foreach (string member in SysinternalsHelper.PsToolsSuiteMembers)
+                    {
+                        ToolResult probe = SysinternalsHelper.ProbeAvailability(member);
+                        if (probe.Success && probe.Results is SysinternalsHelper.SysinternalsBinaryInfo info)
+                        {
+                            results.Add(info);
+                        }
+                    }
+
+                    return ToolResult.Ok(results, $"Probed {results.Count} PsTools suite member(s).");
+                })
+                .ConfigureAwait(false);
     }
 }

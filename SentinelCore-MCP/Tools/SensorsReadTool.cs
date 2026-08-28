@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         SensorsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
-
-using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Management;
-using System.Text;
 using System.Runtime.Versioning;
+using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -29,13 +29,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class SensorsReadTool
 {
 
-
-
-
-
-
-
-
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sensor_List_Devices", ReadOnly = true, Destructive = false)]
     [Description("Lists sensor devices via CIM Win32_PnPEntity matching common sensor class names.")]
@@ -48,11 +41,11 @@ public sealed class SensorsReadTool
             foreach (ManagementObject device in searcher.Get())
                 results.Add(new
                 {
-                    DeviceID = device["DeviceID"]?.ToString(),
-                    Name = device["Name"]?.ToString(),
-                    Status = device["Status"]?.ToString(),
-                    PNPClass = device["PNPClass"]?.ToString(),
-                    Manufacturer = device["Manufacturer"]?.ToString()
+                        DeviceID = device["DeviceID"]?.ToString(),
+                        Name = device["Name"]?.ToString(),
+                        Status = device["Status"]?.ToString(),
+                        PNPClass = device["PNPClass"]?.ToString(),
+                        Manufacturer = device["Manufacturer"]?.ToString()
                 });
 
             return ToolResult.Ok(results, "SensorsReadTool");

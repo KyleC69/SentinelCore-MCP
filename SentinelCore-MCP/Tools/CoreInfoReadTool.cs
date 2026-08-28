@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         CoreInfoReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating low-level system information (CPU topology,
 ///     cache geometry, NUMA nodes, virtualization) using the Sysinternals Coreinfo
@@ -30,9 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class CoreInfoReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals Coreinfo is installed and reports its version.
@@ -51,6 +49,8 @@ public sealed class CoreInfoReadTool
 
 
 
+
+
     /// <summary>
     ///     Enumerates processor topology, cache geometry, NUMA nodes, and
     ///     virtualization support using Coreinfo.
@@ -60,8 +60,7 @@ public sealed class CoreInfoReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_CoreInfo_Read_System", ReadOnly = true, Destructive = false)]
     [Description("Enumerates CPU topology, cache geometry, NUMA nodes, and virtualization support using Sysinternals Coreinfo. Requires Coreinfo to be installed.")]
-    public async Task<ToolResult> CoreInfoReadSystemAsync(
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> CoreInfoReadSystemAsync([Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
         if (maxValidation is not null)

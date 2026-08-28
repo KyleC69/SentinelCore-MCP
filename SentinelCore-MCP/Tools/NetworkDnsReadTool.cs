@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         NetworkDnsReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using Microsoft.Win32;
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Text;
+
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -30,13 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class NetworkDnsReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Network_Read_DNS_Settings", ReadOnly = true, Destructive = false)]

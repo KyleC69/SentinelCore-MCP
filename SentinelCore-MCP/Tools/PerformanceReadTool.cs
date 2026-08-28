@@ -1,18 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PerformanceReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -30,13 +29,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class PerformanceReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Performance_List_Categories", ReadOnly = true, Destructive = false)]

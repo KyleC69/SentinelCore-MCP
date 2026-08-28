@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         SysinternalsToolsTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for the Sysinternals read-only tool suite. Sysinternals binaries are
@@ -17,138 +27,6 @@ namespace SentinelCoreMCP.Tests;
 [SupportedOSPlatform("windows")]
 public sealed class SysinternalsToolsTests
 {
-    #region AccessChk tests
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task AccessChkAvailability_AlwaysSucceeds()
-    {
-        AccessChkReadTool tool = new();
-        ToolResult result = await tool.AccessChkAvailabilityAsync();
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task AccessChkReadPermissions_EmptyTarget_ReturnsFailure()
-    {
-        AccessChkReadTool tool = new();
-        ToolResult result = await tool.AccessChkReadPermissionsAsync("");
-
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task AccessChkReadPermissions_DangerousTarget_ReturnsFailure()
-    {
-        AccessChkReadTool tool = new();
-        ToolResult result = await tool.AccessChkReadPermissionsAsync("C:\\test\" & whoami");
-
-        Assert.False(result.Success);
-        Assert.Contains("not permitted", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task AccessChkReadPermissions_ZeroMaxLines_ReturnsFailure()
-    {
-        AccessChkReadTool tool = new();
-        ToolResult result = await tool.AccessChkReadPermissionsAsync("C:\\Windows", maxLines: 0);
-
-        Assert.False(result.Success);
-        Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task AccessChkReadPermissions_ReturnsSuccessfulOrGracefulFailure()
-    {
-        AccessChkReadTool tool = new();
-        ToolResult result = await tool.AccessChkReadPermissionsAsync("C:\\Windows");
-
-        // AccessChk may not be installed; the tool must fail gracefully
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
-    }
-
-    #endregion
-
-    #region AccessEnum tests
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task AccessEnumAvailability_AlwaysSucceeds()
-    {
-        AccessEnumReadTool tool = new();
-        ToolResult result = await tool.AccessEnumAvailabilityAsync();
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    #endregion
-
-    #region Active Directory tests
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ActiveDirectoryAvailability_AlwaysSucceedsOrFailsGracefully()
-    {
-        ActiveDirectoryReadTool tool = new();
-        ToolResult result = await tool.ActiveDirectoryAvailabilityAsync();
-
-        // Domain-joined or not, the probe must never throw
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ActiveDirectoryBrowseContainer_InvalidLdapPath_ReturnsFailure()
-    {
-        ActiveDirectoryReadTool tool = new();
-        ToolResult result = await tool.ActiveDirectoryBrowseContainerAsync("not-a-ldap-path");
-
-        Assert.False(result.Success);
-        Assert.Contains("LDAP://", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ActiveDirectoryBrowseContainer_ZeroMaxRecords_ReturnsFailure()
-    {
-        ActiveDirectoryReadTool tool = new();
-        ToolResult result = await tool.ActiveDirectoryBrowseContainerAsync(maxRecords: 0);
-
-        Assert.False(result.Success);
-        Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ActiveDirectoryBrowseContainer_ReturnsSuccessfulOrGracefulFailure()
-    {
-        ActiveDirectoryReadTool tool = new();
-        ToolResult result = await tool.ActiveDirectoryBrowseContainerAsync();
-
-        // Non-domain-joined hosts fail gracefully
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
-    }
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -162,9 +40,202 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
-    #endregion
 
-    #region CoreInfo tests
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task AccessChkAvailability_AlwaysSucceeds()
+    {
+        AccessChkReadTool tool = new();
+        ToolResult result = await tool.AccessChkAvailabilityAsync();
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task AccessChkReadPermissions_DangerousTarget_ReturnsFailure()
+    {
+        AccessChkReadTool tool = new();
+        ToolResult result = await tool.AccessChkReadPermissionsAsync("C:\\test\" & whoami");
+
+        Assert.False(result.Success);
+        Assert.Contains("not permitted", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task AccessChkReadPermissions_EmptyTarget_ReturnsFailure()
+    {
+        AccessChkReadTool tool = new();
+        ToolResult result = await tool.AccessChkReadPermissionsAsync("");
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task AccessChkReadPermissions_ReturnsSuccessfulOrGracefulFailure()
+    {
+        AccessChkReadTool tool = new();
+        ToolResult result = await tool.AccessChkReadPermissionsAsync("C:\\Windows");
+
+        // AccessChk may not be installed; the tool must fail gracefully
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task AccessChkReadPermissions_ZeroMaxLines_ReturnsFailure()
+    {
+        AccessChkReadTool tool = new();
+        ToolResult result = await tool.AccessChkReadPermissionsAsync("C:\\Windows", maxLines: 0);
+
+        Assert.False(result.Success);
+        Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task AccessEnumAvailability_AlwaysSucceeds()
+    {
+        AccessEnumReadTool tool = new();
+        ToolResult result = await tool.AccessEnumAvailabilityAsync();
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ActiveDirectoryAvailability_AlwaysSucceedsOrFailsGracefully()
+    {
+        ActiveDirectoryReadTool tool = new();
+        ToolResult result = await tool.ActiveDirectoryAvailabilityAsync();
+
+        // Domain-joined or not, the probe must never throw
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ActiveDirectoryBrowseContainer_InvalidLdapPath_ReturnsFailure()
+    {
+        ActiveDirectoryReadTool tool = new();
+        ToolResult result = await tool.ActiveDirectoryBrowseContainerAsync("not-a-ldap-path");
+
+        Assert.False(result.Success);
+        Assert.Contains("LDAP://", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ActiveDirectoryBrowseContainer_ReturnsSuccessfulOrGracefulFailure()
+    {
+        ActiveDirectoryReadTool tool = new();
+        ToolResult result = await tool.ActiveDirectoryBrowseContainerAsync();
+
+        // Non-domain-joined hosts fail gracefully
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ActiveDirectoryBrowseContainer_ZeroMaxRecords_ReturnsFailure()
+    {
+        ActiveDirectoryReadTool tool = new();
+        ToolResult result = await tool.ActiveDirectoryBrowseContainerAsync(maxRecords: 0);
+
+        Assert.False(result.Success);
+        Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -178,6 +249,31 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task CoreInfoReadSystem_ReturnsSuccessfulOrGracefulFailure()
+    {
+        CoreInfoReadTool tool = new();
+        ToolResult result = await tool.CoreInfoReadSystemAsync();
+
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
+    }
+
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -190,21 +286,12 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task CoreInfoReadSystem_ReturnsSuccessfulOrGracefulFailure()
-    {
-        CoreInfoReadTool tool = new();
-        ToolResult result = await tool.CoreInfoReadSystemAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
-    }
 
-    #endregion
 
-    #region Handle tests
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -218,6 +305,13 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -230,6 +324,13 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("not permitted", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -238,13 +339,15 @@ public sealed class SysinternalsToolsTests
         HandleReadTool tool = new();
         ToolResult result = await tool.HandleListAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region ListDlls tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -257,6 +360,13 @@ public sealed class SysinternalsToolsTests
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -271,6 +381,13 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("must be a numeric PID", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -279,13 +396,15 @@ public sealed class SysinternalsToolsTests
         ListDllsReadTool tool = new();
         ToolResult result = await tool.ListDllsListLoadedAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region LogonSessions tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -299,6 +418,13 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -307,13 +433,15 @@ public sealed class SysinternalsToolsTests
         LogonSessionsReadTool tool = new();
         ToolResult result = await tool.LogonSessionsListActiveAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region NtfsInfo tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -327,6 +455,13 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -338,6 +473,13 @@ public sealed class SysinternalsToolsTests
         Assert.False(result.Success);
         Assert.Contains("invalid drive letter", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -351,6 +493,13 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("invalid drive letter", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -359,13 +508,15 @@ public sealed class SysinternalsToolsTests
         NtfsInfoReadTool tool = new();
         ToolResult result = await tool.NtfsInfoReadVolumeAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region PendMoves tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -378,6 +529,32 @@ public sealed class SysinternalsToolsTests
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task PendMovesListPending_NullErrorDetailsOnSuccess()
+    {
+        PendMovesReadTool tool = new();
+        ToolResult result = await tool.PendMovesListPendingAsync();
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -392,21 +569,12 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task PendMovesListPending_NullErrorDetailsOnSuccess()
-    {
-        PendMovesReadTool tool = new();
-        ToolResult result = await tool.PendMovesListPendingAsync();
 
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
-    }
 
-    #endregion
 
-    #region PipeList tests
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -420,6 +588,13 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -428,13 +603,15 @@ public sealed class SysinternalsToolsTests
         PipeListReadTool tool = new();
         ToolResult result = await tool.PipeListListPipesAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region ProcDump tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -448,29 +625,12 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ProcDumpCaptureDump_ZeroPid_ReturnsFailure()
-    {
-        ProcDumpReadTool tool = new();
-        ToolResult result = await tool.ProcDumpCaptureDumpAsync(0, "C:\\temp\\test.dmp");
 
-        Assert.False(result.Success);
-        Assert.Contains("positive", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ProcDumpCaptureDump_RelativePath_ReturnsFailure()
-    {
-        ProcDumpReadTool tool = new();
-        ToolResult result = await tool.ProcDumpCaptureDumpAsync(1234, "relative.dmp");
 
-        Assert.False(result.Success);
-        Assert.Contains("absolute path", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -484,6 +644,13 @@ public sealed class SysinternalsToolsTests
         Assert.Contains(".dmp", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -496,9 +663,50 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("does not exist", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    #endregion
 
-    #region ProcessExplorer tests
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ProcDumpCaptureDump_RelativePath_ReturnsFailure()
+    {
+        ProcDumpReadTool tool = new();
+        ToolResult result = await tool.ProcDumpCaptureDumpAsync(1234, "relative.dmp");
+
+        Assert.False(result.Success);
+        Assert.Contains("absolute path", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ProcDumpCaptureDump_ZeroPid_ReturnsFailure()
+    {
+        ProcDumpReadTool tool = new();
+        ToolResult result = await tool.ProcDumpCaptureDumpAsync(0, "C:\\temp\\test.dmp");
+
+        Assert.False(result.Success);
+        Assert.Contains("positive", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -512,9 +720,12 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
-    #endregion
 
-    #region PsInfo tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -528,6 +739,13 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -536,13 +754,15 @@ public sealed class SysinternalsToolsTests
         PsInfoReadTool tool = new();
         ToolResult result = await tool.PsInfoReadSystemAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region PsList tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -555,6 +775,13 @@ public sealed class SysinternalsToolsTests
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -569,6 +796,13 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("must be a numeric PID", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -577,13 +811,15 @@ public sealed class SysinternalsToolsTests
         PsListReadTool tool = new();
         ToolResult result = await tool.PsListListProcessesAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region PsLogList tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -597,6 +833,13 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -608,6 +851,13 @@ public sealed class SysinternalsToolsTests
         Assert.False(result.Success);
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -622,6 +872,31 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("must contain only", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task PsLogListDumpEvents_ReturnsSuccessfulOrGracefulFailure()
+    {
+        PsLogListReadTool tool = new();
+        ToolResult result = await tool.PsLogListDumpEventsAsync("Application");
+
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
+    }
+
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -634,21 +909,12 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task PsLogListDumpEvents_ReturnsSuccessfulOrGracefulFailure()
-    {
-        PsLogListReadTool tool = new();
-        ToolResult result = await tool.PsLogListDumpEventsAsync("Application");
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
-    }
 
-    #endregion
 
-    #region PsService tests
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -661,6 +927,13 @@ public sealed class SysinternalsToolsTests
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -675,6 +948,13 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("must contain only", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -683,13 +963,15 @@ public sealed class SysinternalsToolsTests
         PsServiceReadTool tool = new();
         ToolResult result = await tool.PsServiceListServicesAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region PsTools suite tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -703,6 +985,13 @@ public sealed class SysinternalsToolsTests
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -722,9 +1011,12 @@ public sealed class SysinternalsToolsTests
         Assert.Equal(12, inventory.Count);
     }
 
-    #endregion
 
-    #region RegDelNull tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -738,6 +1030,13 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -750,29 +1049,12 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task RegDelNullScanNulls_ZeroMaxRecords_ReturnsFailure()
-    {
-        RegDelNullReadTool tool = new();
-        ToolResult result = await tool.RegDelNullScanNullsAsync("SOFTWARE", maxRecords: 0);
 
-        Assert.False(result.Success);
-        Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task RegDelNullScanNulls_ValidKey_ReturnsSuccessfulToolResult()
-    {
-        RegDelNullReadTool tool = new();
-        ToolResult result = await tool.RegDelNullScanNullsAsync("SOFTWARE\\Microsoft", maxRecords: 10);
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -789,9 +1071,50 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(payload.GetType().GetProperty("FindingCount"));
     }
 
-    #endregion
 
-    #region ShareEnum tests
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task RegDelNullScanNulls_ValidKey_ReturnsSuccessfulToolResult()
+    {
+        RegDelNullReadTool tool = new();
+        ToolResult result = await tool.RegDelNullScanNullsAsync("SOFTWARE\\Microsoft", maxRecords: 10);
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task RegDelNullScanNulls_ZeroMaxRecords_ReturnsFailure()
+    {
+        RegDelNullReadTool tool = new();
+        ToolResult result = await tool.RegDelNullScanNullsAsync("SOFTWARE", maxRecords: 0);
+
+        Assert.False(result.Success);
+        Assert.Contains("between 1 and 500", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -805,9 +1128,12 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
-    #endregion
 
-    #region SigCheck tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -821,17 +1147,12 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task SigCheckVerifyFile_NonExistentFile_ReturnsFailure()
-    {
-        SigCheckReadTool tool = new();
-        ToolResult result = await tool.SigCheckVerifyFileAsync("C:\\__no_such_file_12345__.exe");
 
-        Assert.False(result.Success);
-        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -845,6 +1166,32 @@ public sealed class SysinternalsToolsTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task SigCheckVerifyFile_NonExistentFile_ReturnsFailure()
+    {
+        SigCheckReadTool tool = new();
+        ToolResult result = await tool.SigCheckVerifyFileAsync("C:\\__no_such_file_12345__.exe");
+
+        Assert.False(result.Success);
+        Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -853,17 +1200,22 @@ public sealed class SysinternalsToolsTests
         SigCheckReadTool tool = new();
         string target = Environment.ProcessPath ?? Path.Combine(Environment.SystemDirectory, "notepad.exe");
 
-        if (!File.Exists(target)) { return; } // Skip if the probe target is absent
+        if (!File.Exists(target))
+        {
+            return;
+        } // Skip if the probe target is absent
 
         ToolResult result = await tool.SigCheckVerifyFileAsync(target);
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region TcpView tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -877,6 +1229,13 @@ public sealed class SysinternalsToolsTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -885,13 +1244,15 @@ public sealed class SysinternalsToolsTests
         TcpViewReadTool tool = new();
         ToolResult result = await tool.TcpViewListEndpointsAsync();
 
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
 
-    #endregion
 
-    #region WinObj tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -904,6 +1265,4 @@ public sealed class SysinternalsToolsTests
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
-
-    #endregion
 }

@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         DefenderExtendedReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="DefenderExtendedReadTool" /> covering SmartScreen and
@@ -18,19 +28,12 @@ public sealed class DefenderExtendedReadToolTests
 {
     private readonly DefenderExtendedReadTool _tool = new();
 
-    #region Defender_Read_SmartScreen tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task DefenderReadSmartScreen_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.DefenderReadSmartScreenAsync();
 
-        // Succeeds even when SmartScreen keys are absent (empty output)
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -43,5 +46,22 @@ public sealed class DefenderExtendedReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task DefenderReadSmartScreen_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.DefenderReadSmartScreenAsync();
+
+        // Succeeds even when SmartScreen keys are absent (empty output)
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
 }

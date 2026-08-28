@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         EventLogReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Diagnostics.Eventing.Reader;
 using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -28,12 +28,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class EventLogReadTool
 {
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Event_Log_List_Channels", ReadOnly = true, Destructive = false)]
@@ -62,6 +56,7 @@ public sealed class EventLogReadTool
             return ToolResult.Fail("Event log channel listing failed.", "EventLogReadTool");
         }
     }
+
 
 
 
@@ -106,6 +101,7 @@ public sealed class EventLogReadTool
 
 
 
+
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Event_Log_Read_Configuration", ReadOnly = true, Destructive = false)]
     [Description("Reads event log configuration such as retention and file size.")]
@@ -121,12 +117,12 @@ public sealed class EventLogReadTool
             EventLogConfiguration config = new(channel);
             var result = new
             {
-                ChannelName = config.LogName,
-                config.LogType,
-                config.IsEnabled,
-                config.MaximumSizeInBytes,
-                config.LogFilePath,
-                config.IsClassicLog
+                    ChannelName = config.LogName,
+                    config.LogType,
+                    config.IsEnabled,
+                    config.MaximumSizeInBytes,
+                    config.LogFilePath,
+                    config.IsClassicLog
             };
 
             return ToolResult.Ok(result, "Event log configuration read.");

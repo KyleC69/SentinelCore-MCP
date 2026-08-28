@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         NtfsInfoReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for reporting NTFS volume information (cluster size, MFT
 ///     records, journal state) using the Sysinternals NTFSInfo utility.
@@ -29,9 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class NtfsInfoReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals NTFSInfo is installed and reports its version.
@@ -50,6 +48,8 @@ public sealed class NtfsInfoReadTool
 
 
 
+
+
     /// <summary>
     ///     Reports NTFS volume geometry and metadata for the specified drive letter.
     /// </summary>
@@ -59,9 +59,7 @@ public sealed class NtfsInfoReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_NtfsInfo_Read_Volume", ReadOnly = true, Destructive = false)]
     [Description("Reports NTFS volume geometry, MFR size, and metadata file layout using Sysinternals NTFSInfo. Requires NTFSInfo to be installed.")]
-    public async Task<ToolResult> NtfsInfoReadVolumeAsync(
-        [Description("The drive letter to inspect, e.g. C. Defaults to the system drive.")] string? driveLetter = null,
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> NtfsInfoReadVolumeAsync([Description("The drive letter to inspect, e.g. C. Defaults to the system drive.")] string? driveLetter = null, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
         if (maxValidation is not null)
@@ -69,9 +67,7 @@ public sealed class NtfsInfoReadTool
             return maxValidation;
         }
 
-        string drive = string.IsNullOrWhiteSpace(driveLetter)
-            ? Environment.SystemDirectory[..2]
-            : driveLetter.TrimEnd(':').ToUpperInvariant();
+        string drive = string.IsNullOrWhiteSpace(driveLetter) ? Environment.SystemDirectory[..2] : driveLetter.TrimEnd(':').ToUpperInvariant();
 
         if (drive.Length != 1 || drive[0] is < 'A' or > 'Z')
         {

@@ -1,19 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         WirelessReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Management;
 using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -33,13 +32,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class WirelessReadTool
 {
 
-
-
-
-
-
-
-
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Wireless_List_Interfaces", ReadOnly = true, Destructive = false)]
     [Description("Lists wireless network interfaces on the system using CIM/MSNdis classes.")]
@@ -58,11 +50,11 @@ public sealed class WirelessReadTool
 
                 results.Add(new
                 {
-                    InstanceID = adapter["InstanceID"]?.ToString(),
-                    Name = adapter["Name"]?.ToString(),
-                    InterfaceDescription = adapter["InterfaceDescription"]?.ToString(),
-                    State = adapter["State"]?.ToString(),
-                    Active = adapter["Active"]?.ToString()
+                        InstanceID = adapter["InstanceID"]?.ToString(),
+                        Name = adapter["Name"]?.ToString(),
+                        InterfaceDescription = adapter["InterfaceDescription"]?.ToString(),
+                        State = adapter["State"]?.ToString(),
+                        Active = adapter["Active"]?.ToString()
                 });
             }
 
@@ -90,12 +82,12 @@ public sealed class WirelessReadTool
         {
             ProcessStartInfo startInfo = new()
             {
-                FileName = "netsh",
-                Arguments = "wlan show profiles",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+                    FileName = "netsh",
+                    Arguments = "wlan show profiles",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
             };
 
             using Process? process = Process.Start(startInfo);

@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PowerSettingsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
-
-using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Management;
-using System.Text;
 using System.Runtime.Versioning;
+using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -28,13 +28,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class PowerSettingsReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Power_List_Plans", ReadOnly = true, Destructive = false)]

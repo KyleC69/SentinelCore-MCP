@@ -1,14 +1,24 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         FirewallReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Reflection;
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="FirewallReadTool" /> covering normalize helpers and
@@ -19,91 +29,30 @@ public sealed class FirewallReadToolTests
 {
     private readonly FirewallReadTool _tool = new();
 
-    #region NormalizeDirection tests (via reflection — internal method)
 
-    private static string? InvokeNormalizeDirection(string? direction)
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FirewallListRules_DefaultParameters_ContainsRuleName()
     {
-        MethodInfo? method = typeof(FirewallReadTool).GetMethod(
-            "NormalizeDirection",
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+        ToolResult result = await _tool.firewallListRulesAsync();
 
-        Assert.NotNull(method);
-        return (string?)method.Invoke(null, [direction]);
+        Assert.True(result.Success);
+        Assert.Contains("Rule Name:", (string)result.Results!);
     }
 
-    [Theory]
-    [InlineData("Inbound", "In")]
-    [InlineData("inbound", "In")]
-    [InlineData("INBOUND", "In")]
-    [InlineData("InBound", "In")]
-    [InlineData("Outbound", "Out")]
-    [InlineData("outbound", "Out")]
-    [InlineData("OUTBOUND", "Out")]
-    [InlineData("OutBound", "Out")]
-    public void NormalizeDirection_ValidDirections_ReturnsExpectedValue(string direction, string expected)
-    {
-        string? result = InvokeNormalizeDirection(direction);
-        Assert.Equal(expected, result);
-    }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("unknown")]
-    [InlineData("BIDIRECTIONAL")]
-    [InlineData("both")]
-    public void NormalizeDirection_InvalidOrNullDirections_ReturnsNull(string? direction)
-    {
-        string? result = InvokeNormalizeDirection(direction);
-        Assert.Null(result);
-    }
 
-    #endregion
 
-    #region NormalizeProfile tests (via reflection — internal method)
 
-    private static string? InvokeNormalizeProfile(string? profile)
-    {
-        MethodInfo? method = typeof(FirewallReadTool).GetMethod(
-            "NormalizeProfile",
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
 
-        Assert.NotNull(method);
-        return (string?)method.Invoke(null, [profile]);
-    }
 
-    [Theory]
-    [InlineData("Domain", "Domain")]
-    [InlineData("domain", "Domain")]
-    [InlineData("DOMAIN", "Domain")]
-    [InlineData("Private", "Private")]
-    [InlineData("private", "Private")]
-    [InlineData("PRIVATE", "Private")]
-    [InlineData("Public", "Public")]
-    [InlineData("public", "Public")]
-    [InlineData("PUBLIC", "Public")]
-    public void NormalizeProfile_ValidProfiles_ReturnsExpectedValue(string profile, string expected)
-    {
-        string? result = InvokeNormalizeProfile(profile);
-        Assert.Equal(expected, result);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("unknown")]
-    [InlineData("GUEST")]
-    public void NormalizeProfile_InvalidOrNullProfiles_ReturnsNull(string? profile)
-    {
-        string? result = InvokeNormalizeProfile(profile);
-        Assert.Null(result);
-    }
-
-    #endregion
-
-    #region firewallListRulesAsync integration tests
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -117,38 +66,116 @@ public sealed class FirewallReadToolTests
         Assert.NotEmpty((string)result.Results!);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_DefaultParameters_ContainsRuleName()
+    public async Task FirewallListRules_InboundFilterOutputContainsOnlyInboundRules()
+    {
+        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound");
+
+        Assert.True(result.Success);
+        // When filtered by Inbound, all Direction lines should say "In"
+        string[] lines = ((string)result.Results!).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        var directionLines = lines.Where(l => l.StartsWith("Direction:", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        Assert.NotEmpty(directionLines);
+        Assert.All(directionLines, line => Assert.Contains("In", line, StringComparison.OrdinalIgnoreCase));
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FirewallListRules_OutboundFilterOutputContainsOnlyOutboundRules()
+    {
+        ToolResult result = await _tool.firewallListRulesAsync(direction: "Outbound");
+
+        Assert.True(result.Success);
+        // When filtered by Outbound, all Direction lines should say "Out"
+        string[] lines = ((string)result.Results!).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+        var directionLines = lines.Where(l => l.StartsWith("Direction:", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        Assert.NotEmpty(directionLines);
+        Assert.All(directionLines, line => Assert.Contains("Out", line, StringComparison.OrdinalIgnoreCase));
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FirewallListRules_OutputContainsExpectedFields()
     {
         ToolResult result = await _tool.firewallListRulesAsync();
 
         Assert.True(result.Success);
+        // netsh output should contain these standard fields
         Assert.Contains("Rule Name:", (string)result.Results!);
+        Assert.Contains("Enabled:", (string)result.Results);
+        Assert.Contains("Direction:", (string)result.Results);
+        Assert.Contains("Action:", (string)result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_WithInboundFilter_ReturnsSuccessfulToolResult()
+    public async Task FirewallListRules_ReturnsNullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound");
+        ToolResult result = await _tool.firewallListRulesAsync();
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FirewallListRules_WithDirectionAndProfileFilter_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound", profile: "Private");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_WithOutboundFilter_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Outbound");
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -161,38 +188,68 @@ public sealed class FirewallReadToolTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_WithPrivateProfileFilter_ReturnsSuccessfulToolResult()
+    public async Task FirewallListRules_WithInboundFilter_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(profile: "Private");
+        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_WithPublicProfileFilter_ReturnsSuccessfulToolResult()
+    public async Task FirewallListRules_WithInvalidDirection_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(profile: "Public");
+        // Invalid direction should be treated as "no filter" (returns all directions)
+        ToolResult result = await _tool.firewallListRulesAsync(direction: "InvalidDirection");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_WithDirectionAndProfileFilter_ReturnsSuccessfulToolResult()
+    public async Task FirewallListRules_WithInvalidProfile_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound", profile: "Private");
+        // Invalid profile should be treated as "no filter" (returns all profiles)
+        ToolResult result = await _tool.firewallListRulesAsync(profile: "InvalidProfile");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -215,99 +272,69 @@ public sealed class FirewallReadToolTests
             index++;
         }
 
-        Assert.True(ruleCount <= maxRecords,
-            $"Expected at most {maxRecords} rule blocks but got {ruleCount}");
+        Assert.True(ruleCount <= maxRecords, $"Expected at most {maxRecords} rule blocks but got {ruleCount}");
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_WithInvalidDirection_ReturnsSuccessfulToolResult()
-    {
-        // Invalid direction should be treated as "no filter" (returns all directions)
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "InvalidDirection");
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_WithInvalidProfile_ReturnsSuccessfulToolResult()
-    {
-        // Invalid profile should be treated as "no filter" (returns all profiles)
-        ToolResult result = await _tool.firewallListRulesAsync(profile: "InvalidProfile");
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_OutputContainsExpectedFields()
-    {
-        ToolResult result = await _tool.firewallListRulesAsync();
-
-        Assert.True(result.Success);
-        // netsh output should contain these standard fields
-        Assert.Contains("Rule Name:", (string)result.Results!);
-        Assert.Contains("Enabled:", (string)result.Results);
-        Assert.Contains("Direction:", (string)result.Results);
-        Assert.Contains("Action:", (string)result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_InboundFilterOutputContainsOnlyInboundRules()
-    {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound");
-
-        Assert.True(result.Success);
-        // When filtered by Inbound, all Direction lines should say "In"
-        string[] lines = ((string)result.Results!).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        var directionLines = lines.Where(l =>
-            l.StartsWith("Direction:", StringComparison.OrdinalIgnoreCase)).ToList();
-
-        Assert.NotEmpty(directionLines);
-        Assert.All(directionLines, line =>
-            Assert.Contains("In", line, StringComparison.OrdinalIgnoreCase));
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_OutboundFilterOutputContainsOnlyOutboundRules()
+    public async Task FirewallListRules_WithOutboundFilter_ReturnsSuccessfulToolResult()
     {
         ToolResult result = await _tool.firewallListRulesAsync(direction: "Outbound");
 
-        Assert.True(result.Success);
-        // When filtered by Outbound, all Direction lines should say "Out"
-        string[] lines = ((string)result.Results!).Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        var directionLines = lines.Where(l =>
-            l.StartsWith("Direction:", StringComparison.OrdinalIgnoreCase)).ToList();
-
-        Assert.NotEmpty(directionLines);
-        Assert.All(directionLines, line =>
-            Assert.Contains("Out", line, StringComparison.OrdinalIgnoreCase));
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
     }
 
-    #endregion
 
-    #region firewallReadProfilesAsync integration tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FirewallReadProfiles_ReturnsSuccessfulToolResult()
+    public async Task FirewallListRules_WithPrivateProfileFilter_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallReadProfilesAsync();
+        ToolResult result = await _tool.firewallListRulesAsync(profile: "Private");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FirewallListRules_WithPublicProfileFilter_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.firewallListRulesAsync(profile: "Public");
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -322,16 +349,12 @@ public sealed class FirewallReadToolTests
         Assert.Contains("Public Profile", (string)result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task FirewallReadProfiles_ContainsStateField()
-    {
-        ToolResult result = await _tool.firewallReadProfilesAsync();
 
-        Assert.True(result.Success);
-        Assert.Contains("State", (string)result.Results!);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -344,6 +367,13 @@ public sealed class FirewallReadToolTests
         Assert.Contains("Firewall Policy", (string)result.Results!);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -355,20 +385,30 @@ public sealed class FirewallReadToolTests
         Assert.Contains("Logging", (string)result.Results!);
     }
 
-    #endregion
 
-    #region ToolResult contract tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task FirewallListRules_ReturnsNullErrorDetailsOnSuccess()
+    public async Task FirewallReadProfiles_ContainsStateField()
     {
-        ToolResult result = await _tool.firewallListRulesAsync();
+        ToolResult result = await _tool.firewallReadProfilesAsync();
 
         Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
+        Assert.Contains("State", (string)result.Results!);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -381,5 +421,135 @@ public sealed class FirewallReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task FirewallReadProfiles_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.firewallReadProfilesAsync();
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    private static string? InvokeNormalizeDirection(string? direction)
+    {
+        MethodInfo? method = typeof(FirewallReadTool).GetMethod("NormalizeDirection", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+
+        Assert.NotNull(method);
+        return (string?)method.Invoke(null, [direction]);
+    }
+
+
+
+
+
+
+
+
+    private static string? InvokeNormalizeProfile(string? profile)
+    {
+        MethodInfo? method = typeof(FirewallReadTool).GetMethod("NormalizeProfile", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+
+        Assert.NotNull(method);
+        return (string?)method.Invoke(null, [profile]);
+    }
+
+
+
+
+
+
+
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("unknown")]
+    [InlineData("BIDIRECTIONAL")]
+    [InlineData("both")]
+    public void NormalizeDirection_InvalidOrNullDirections_ReturnsNull(string? direction)
+    {
+        string? result = InvokeNormalizeDirection(direction);
+        Assert.Null(result);
+    }
+
+
+
+
+
+
+
+
+    [Theory]
+    [InlineData("Inbound", "In")]
+    [InlineData("inbound", "In")]
+    [InlineData("INBOUND", "In")]
+    [InlineData("InBound", "In")]
+    [InlineData("Outbound", "Out")]
+    [InlineData("outbound", "Out")]
+    [InlineData("OUTBOUND", "Out")]
+    [InlineData("OutBound", "Out")]
+    public void NormalizeDirection_ValidDirections_ReturnsExpectedValue(string direction, string expected)
+    {
+        string? result = InvokeNormalizeDirection(direction);
+        Assert.Equal(expected, result);
+    }
+
+
+
+
+
+
+
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("unknown")]
+    [InlineData("GUEST")]
+    public void NormalizeProfile_InvalidOrNullProfiles_ReturnsNull(string? profile)
+    {
+        string? result = InvokeNormalizeProfile(profile);
+        Assert.Null(result);
+    }
+
+
+
+
+
+
+
+
+    [Theory]
+    [InlineData("Domain", "Domain")]
+    [InlineData("domain", "Domain")]
+    [InlineData("DOMAIN", "Domain")]
+    [InlineData("Private", "Private")]
+    [InlineData("private", "Private")]
+    [InlineData("PRIVATE", "Private")]
+    [InlineData("Public", "Public")]
+    [InlineData("public", "Public")]
+    [InlineData("PUBLIC", "Public")]
+    public void NormalizeProfile_ValidProfiles_ReturnsExpectedValue(string profile, string expected)
+    {
+        string? result = InvokeNormalizeProfile(profile);
+        Assert.Equal(expected, result);
+    }
 }

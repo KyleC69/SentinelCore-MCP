@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         RegDelNullReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for detecting registry values with embedded null characters
 ///     (RegDelNull equivalent). Such values are invisible to regedit and are a
@@ -32,9 +33,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class RegDelNullReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals RegDelNull is installed and reports its version.
@@ -53,6 +51,8 @@ public sealed class RegDelNullReadTool
 
 
 
+
+
     /// <summary>
     ///     Scans a registry key subtree for values whose names or data contain
     ///     embedded null characters. Detection only; no values are deleted.
@@ -63,9 +63,7 @@ public sealed class RegDelNullReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_RegDelNull_Scan_Nulls", ReadOnly = true, Destructive = false)]
     [Description("Scans a registry subtree for values with embedded null characters (RegDelNull detection equivalent). Detection only; never deletes values.")]
-    public async Task<ToolResult> RegDelNullScanNullsAsync(
-        [Description("The key path under HKLM to scan, e.g. SOFTWARE.")] string keyPath,
-        [Description("Maximum number of findings to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> RegDelNullScanNullsAsync([Description("The key path under HKLM to scan, e.g. SOFTWARE.")] string keyPath, [Description("Maximum number of findings to return. Defaults to 50.")] int maxRecords = 50)
     {
         ToolResult? pathValidation = InputValidator.ValidateRequired(keyPath, "keyPath");
         if (pathValidation is not null)
@@ -80,28 +78,24 @@ public sealed class RegDelNullReadTool
         }
 
         return await Task.Run(() =>
-        {
-            try
-            {
-                List<object> findings = new();
-                using RegistryKey? root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-                ScanKey(root, keyPath, findings, maxRecords, depth: 0);
-
-                return ToolResult.Ok(
-                    new
+                {
+                    try
                     {
-                        ScannedPath = $"HKLM\\{keyPath}",
-                        Findings = findings,
-                        FindingCount = findings.Count
-                    },
-                    "Registry null-value scan complete.");
-            }
-            catch (Exception ex)
-            {
-                return ToolResult.Fail(ex.Message, "Registry null-value scan");
-            }
-        }).ConfigureAwait(false);
+                        List<object> findings = new();
+                        using RegistryKey? root = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+                        ScanKey(root, keyPath, findings, maxRecords, depth: 0);
+
+                        return ToolResult.Ok(new { ScannedPath = $"HKLM\\{keyPath}", Findings = findings, FindingCount = findings.Count }, "Registry null-value scan complete.");
+                    }
+                    catch (Exception ex)
+                    {
+                        return ToolResult.Fail(ex.Message, "Registry null-value scan");
+                    }
+                })
+                .ConfigureAwait(false);
     }
+
+
 
 
 
@@ -145,12 +139,7 @@ public sealed class RegDelNullReadTool
 
             if (nameHasNull || dataHasNull)
             {
-                findings.Add(new
-                {
-                    KeyPath = $"HKLM\\{keyPath}",
-                    ValueName = nameHasNull ? "(name contains embedded null)" : valueName,
-                    DataHasNull = dataHasNull
-                });
+                findings.Add(new { KeyPath = $"HKLM\\{keyPath}", ValueName = nameHasNull ? "(name contains embedded null)" : valueName, DataHasNull = dataHasNull });
             }
         }
 

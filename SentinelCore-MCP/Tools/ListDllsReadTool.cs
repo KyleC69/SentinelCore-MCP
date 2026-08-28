@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         ListDllsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating DLLs loaded into processes using the
 ///     Sysinternals ListDLLs utility. Loaded-module inventory is a core primitive
@@ -30,9 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class ListDllsReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals ListDLLs is installed and reports its version.
@@ -51,6 +49,8 @@ public sealed class ListDllsReadTool
 
 
 
+
+
     /// <summary>
     ///     Lists DLLs loaded by all processes, or by a specific process when a name
     ///     or PID is supplied.
@@ -61,9 +61,7 @@ public sealed class ListDllsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_ListDlls_List_Loaded", ReadOnly = true, Destructive = false)]
     [Description("Lists DLLs loaded by processes using Sysinternals ListDLLs. Requires ListDLLs to be installed; full output requires elevation.")]
-    public async Task<ToolResult> ListDllsListLoadedAsync(
-        [Description("Optional process name (e.g., explorer) or numeric PID to scope the listing.")] string? processNameOrPid = null,
-        [Description("Maximum number of output lines to return. Defaults to 300.")] int maxLines = 300)
+    public async Task<ToolResult> ListDllsListLoadedAsync([Description("Optional process name (e.g., explorer) or numeric PID to scope the listing.")] string? processNameOrPid = null, [Description("Maximum number of output lines to return. Defaults to 300.")] int maxLines = 300)
     {
         if (processNameOrPid is not null)
         {
@@ -74,12 +72,9 @@ public sealed class ListDllsReadTool
             }
 
             // Numeric PIDs and simple image names are the only accepted shapes.
-            if (!uint.TryParse(processNameOrPid, out _) &&
-                !System.Text.RegularExpressions.Regex.IsMatch(processNameOrPid, @"^[a-zA-Z0-9._\- ]+$"))
+            if (!uint.TryParse(processNameOrPid, out _) && !System.Text.RegularExpressions.Regex.IsMatch(processNameOrPid, @"^[a-zA-Z0-9._\- ]+$"))
             {
-                return ToolResult.Fail(
-                    "processNameOrPid must be a numeric PID or a simple image name (letters, digits, dots, hyphens, underscores, spaces).",
-                    "ListDLLs enumeration");
+                return ToolResult.Fail("processNameOrPid must be a numeric PID or a simple image name (letters, digits, dots, hyphens, underscores, spaces).", "ListDLLs enumeration");
             }
         }
 
@@ -90,9 +85,7 @@ public sealed class ListDllsReadTool
         }
 
         // -accepteula suppresses the EULA prompt.
-        string arguments = string.IsNullOrWhiteSpace(processNameOrPid)
-            ? "-accepteula"
-            : $"-accepteula \"{processNameOrPid}\"";
+        string arguments = string.IsNullOrWhiteSpace(processNameOrPid) ? "-accepteula" : $"-accepteula \"{processNameOrPid}\"";
 
         ToolResult result = await SysinternalsHelper.RunAsync("listdlls", arguments, "ListDLLs enumeration").ConfigureAwait(false);
         if (!result.Success)

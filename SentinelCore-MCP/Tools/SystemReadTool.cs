@@ -1,15 +1,15 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         SystemReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -28,13 +28,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class SystemReadTool
 {
 
-
-
-
-
-
-
-
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "System_Read_Info", ReadOnly = true, Destructive = false)]
     [Description("Reads system information including OS version, build, architecture, uptime, and hostname.")]
@@ -44,19 +37,19 @@ public sealed class SystemReadTool
         {
             var result = new
             {
-                MachineName = Environment.MachineName,
-                OSVersion = Environment.OSVersion.VersionString,
-                OSPlatform = Environment.OSVersion.Platform.ToString(),
-                Is64BitOperatingSystem = Environment.Is64BitOperatingSystem,
-                Is64BitProcess = Environment.Is64BitProcess,
-                ProcessorCount = Environment.ProcessorCount,
-                SystemDirectory = Environment.SystemDirectory,
-                UserName = Environment.UserName,
-                UserDomainName = Environment.UserDomainName,
-                CLRVersion = Environment.Version.ToString(),
-                SystemUpTime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"dd\.hh\:mm\:ss"),
-                WorkingSet = Environment.WorkingSet,
-                CurrentDirectory = Environment.CurrentDirectory
+                    Environment.MachineName,
+                    OSVersion = Environment.OSVersion.VersionString,
+                    OSPlatform = Environment.OSVersion.Platform.ToString(),
+                    Environment.Is64BitOperatingSystem,
+                    Environment.Is64BitProcess,
+                    Environment.ProcessorCount,
+                    Environment.SystemDirectory,
+                    Environment.UserName,
+                    Environment.UserDomainName,
+                    CLRVersion = Environment.Version.ToString(),
+                    SystemUpTime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"dd\.hh\:mm\:ss"),
+                    Environment.WorkingSet,
+                    Environment.CurrentDirectory
             };
 
             return ToolResult.Ok(result, "SystemReadTool");
@@ -84,13 +77,13 @@ public sealed class SystemReadTool
             TimeZoneInfo tz = TimeZoneInfo.Local;
             var result = new
             {
-                tz.Id,
-                tz.DisplayName,
-                tz.StandardName,
-                tz.DaylightName,
-                BaseUtcOffset = tz.BaseUtcOffset.ToString(),
-                SupportsDaylightSavingTime = tz.SupportsDaylightSavingTime,
-                CurrentUtcOffset = tz.GetUtcOffset(DateTimeOffset.Now).ToString()
+                    tz.Id,
+                    tz.DisplayName,
+                    tz.StandardName,
+                    tz.DaylightName,
+                    BaseUtcOffset = tz.BaseUtcOffset.ToString(),
+                    tz.SupportsDaylightSavingTime,
+                    CurrentUtcOffset = tz.GetUtcOffset(DateTimeOffset.Now).ToString()
             };
 
             return ToolResult.Ok(result, "SystemReadTool");

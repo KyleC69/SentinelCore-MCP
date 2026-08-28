@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PsLogListReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for dumping event log records using the Sysinternals
 ///     PsLogList utility. Complements the managed Event_Log_Query tool with
@@ -30,9 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PsLogListReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals PsLogList is installed and reports its version.
@@ -51,6 +49,8 @@ public sealed class PsLogListReadTool
 
 
 
+
+
     /// <summary>
     ///     Dumps recent events from an event log channel using PsLogList.
     /// </summary>
@@ -61,10 +61,7 @@ public sealed class PsLogListReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_PsLogList_Dump_Events", ReadOnly = true, Destructive = false)]
     [Description("Dumps recent event log records using Sysinternals PsLogList. Requires PsLogList to be installed; the Security log requires elevation.")]
-    public async Task<ToolResult> PsLogListDumpEventsAsync(
-        [Description("The event log name to dump, e.g. Application, System, Security.")] string logName,
-        [Description("Maximum number of events to dump. Defaults to 50.")] int maxEvents = 50,
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> PsLogListDumpEventsAsync([Description("The event log name to dump, e.g. Application, System, Security.")] string logName, [Description("Maximum number of events to dump. Defaults to 50.")] int maxEvents = 50, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         ToolResult? logValidation = SysinternalsHelper.ValidateArgument(logName, "logName");
         if (logValidation is not null)
@@ -75,9 +72,7 @@ public sealed class PsLogListReadTool
         // Log names are restricted to a safe character set to prevent argument shaping.
         if (!System.Text.RegularExpressions.Regex.IsMatch(logName!, @"^[a-zA-Z0-9 _\-]+$"))
         {
-            return ToolResult.Fail(
-                "logName must contain only letters, digits, spaces, hyphens, and underscores.",
-                "PsLogList dump");
+            return ToolResult.Fail("logName must contain only letters, digits, spaces, hyphens, and underscores.", "PsLogList dump");
         }
 
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxEvents, "maxEvents");
@@ -93,10 +88,7 @@ public sealed class PsLogListReadTool
         }
 
         // -n limits the event count; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync(
-            "psloglist",
-            $"-n {maxEvents} -accepteula \"{logName}\"",
-            "PsLogList dump").ConfigureAwait(false);
+        ToolResult result = await SysinternalsHelper.RunAsync("psloglist", $"-n {maxEvents} -accepteula \"{logName}\"", "PsLogList dump").ConfigureAwait(false);
         if (!result.Success)
         {
             return result;

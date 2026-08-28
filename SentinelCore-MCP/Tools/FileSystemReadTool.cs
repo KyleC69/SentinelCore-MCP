@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         FileSystemReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -29,13 +29,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class FileSystemReadTool
 {
-
-
-
-
-
-
-
 
     [McpServerTool(Name = "File_System_List_Directory", ReadOnly = true, Destructive = false)]
     [Description("Lists the names of files and directories in the specified directory path.")]
@@ -147,74 +140,9 @@ public sealed class FileSystemReadTool
 
 
 
-    [McpServerTool(Name = "File_System_Read_Metadata", ReadOnly = true, Destructive = false)]
-    [Description("Reads metadata and attributes for a file or directory path.")]
-    public async Task<ToolResult> FileSystemReadMetadataAsync([Description("The absolute file or directory path to inspect.")] string path)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return ToolResult.Fail("path is required.", "FileSystemReadTool");
-            }
-
-            FileInfo info = new(path);
-            if (!info.Exists)
-            {
-                DirectoryInfo dirInfo = new(path);
-                if (dirInfo.Exists)
-                {
-                    var dirResult = new
-                    {
-                        Path = dirInfo.FullName,
-                        Exists = true,
-                        IsDirectory = true,
-                        Attributes = dirInfo.Attributes.ToString(),
-                        dirInfo.CreationTimeUtc,
-                        dirInfo.LastWriteTimeUtc,
-                        dirInfo.LastAccessTimeUtc
-                    };
-
-                    return ToolResult.Ok(dirResult, "File system metadata read.");
-                }
-
-                return ToolResult.Fail($"Path not found: {path}", "FileSystemReadTool");
-            }
-
-            var fileResult = new
-            {
-                Path = info.FullName,
-                Exists = true,
-                IsDirectory = false,
-                Attributes = info.Attributes.ToString(),
-                info.Length,
-                info.CreationTimeUtc,
-                info.LastWriteTimeUtc,
-                info.LastAccessTimeUtc
-            };
-
-            return ToolResult.Ok(fileResult, "File system metadata read.");
-        }
-        catch
-        {
-            return ToolResult.Fail("File system metadata read failed.", "FileSystemReadTool");
-        }
-    }
-
-
-
-
-
-
-
-
     [McpServerTool(Name = "File_System_Read_Content", ReadOnly = true, Destructive = false)]
     [Description("Reads the text content of a file. Supports optional line range selection and encoding detection. Binary files are rejected.")]
-    public async Task<ToolResult> FileSystemReadContentAsync(
-        [Description("The absolute file path to read.")] string path,
-        [Description("Optional 1-based starting line number. Defaults to 1.")] int startLine = 1,
-        [Description("Optional number of lines to read from the starting line. Defaults to 0 (read all lines).")] int lineCount = 0,
-        [Description("Optional encoding name (e.g. utf-8, ascii). Defaults to utf-8.")] string? encoding = null)
+    public async Task<ToolResult> FileSystemReadContentAsync([Description("The absolute file path to read.")] string path, [Description("Optional 1-based starting line number. Defaults to 1.")] int startLine = 1, [Description("Optional number of lines to read from the starting line. Defaults to 0 (read all lines).")] int lineCount = 0, [Description("Optional encoding name (e.g. utf-8, ascii). Defaults to utf-8.")] string? encoding = null)
     {
         try
         {
@@ -249,9 +177,7 @@ public sealed class FileSystemReadTool
             }
 
             // Resolve the encoding.
-            Encoding fileEncoding = !string.IsNullOrWhiteSpace(encoding)
-                ? Encoding.GetEncoding(encoding)
-                : Encoding.UTF8;
+            Encoding fileEncoding = !string.IsNullOrWhiteSpace(encoding) ? Encoding.GetEncoding(encoding) : Encoding.UTF8;
 
             string[] lines = File.ReadAllLines(path, fileEncoding);
 
@@ -301,6 +227,67 @@ public sealed class FileSystemReadTool
         catch
         {
             return ToolResult.Fail("File content read failed.", "FileSystemReadTool");
+        }
+    }
+
+
+
+
+
+
+
+
+    [McpServerTool(Name = "File_System_Read_Metadata", ReadOnly = true, Destructive = false)]
+    [Description("Reads metadata and attributes for a file or directory path.")]
+    public async Task<ToolResult> FileSystemReadMetadataAsync([Description("The absolute file or directory path to inspect.")] string path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return ToolResult.Fail("path is required.", "FileSystemReadTool");
+            }
+
+            FileInfo info = new(path);
+            if (!info.Exists)
+            {
+                DirectoryInfo dirInfo = new(path);
+                if (dirInfo.Exists)
+                {
+                    var dirResult = new
+                    {
+                            Path = dirInfo.FullName,
+                            Exists = true,
+                            IsDirectory = true,
+                            Attributes = dirInfo.Attributes.ToString(),
+                            dirInfo.CreationTimeUtc,
+                            dirInfo.LastWriteTimeUtc,
+                            dirInfo.LastAccessTimeUtc
+                    };
+
+                    return ToolResult.Ok(dirResult, "File system metadata read.");
+                }
+
+                return ToolResult.Fail($"Path not found: {path}", "FileSystemReadTool");
+            }
+
+            var fileResult = new
+            {
+                    Path = info.FullName,
+                    Exists = true,
+                    IsDirectory = false,
+                    Attributes = info.Attributes.ToString(),
+                    info.Length,
+                    info.CreationTimeUtc,
+                    info.LastWriteTimeUtc,
+                    info.LastAccessTimeUtc
+            };
+
+            return ToolResult.Ok(fileResult, "File system metadata read.");
+        }
+        catch
+        {
+            return ToolResult.Fail("File system metadata read failed.", "FileSystemReadTool");
         }
     }
 }

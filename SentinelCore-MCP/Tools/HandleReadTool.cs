@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         HandleReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -22,6 +22,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating open file and kernel object handles using
 ///     the Sysinternals Handle utility. Handle enumeration is a core forensic
@@ -31,9 +32,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class HandleReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals Handle is installed and reports its version.
@@ -52,6 +50,8 @@ public sealed class HandleReadTool
 
 
 
+
+
     /// <summary>
     ///     Lists open handles for all processes, optionally filtered by a search
     ///     substring matched against handle names.
@@ -62,9 +62,7 @@ public sealed class HandleReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_Handle_List", ReadOnly = true, Destructive = false)]
     [Description("Lists open file and kernel object handles using Sysinternals Handle. Requires Handle to be installed; handle enumeration requires elevation.")]
-    public async Task<ToolResult> HandleListAsync(
-        [Description("Optional substring to match against handle names, e.g. a file path fragment.")] string? searchFilter = null,
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> HandleListAsync([Description("Optional substring to match against handle names, e.g. a file path fragment.")] string? searchFilter = null, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         if (searchFilter is not null)
         {

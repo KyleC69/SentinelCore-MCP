@@ -1,19 +1,19 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         NetworkReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
-using System.Runtime.Versioning;
 
 using System.ComponentModel;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -32,13 +32,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class NetworkReadTool
 {
 
-
-
-
-
-
-
-
     [McpServerTool(Name = "Network_List_Interfaces", ReadOnly = true, Destructive = false)]
     [Description("Lists network interfaces and their operational status.")]
     public async Task<ToolResult> NetworkListInterfacesAsync([Description("Maximum number of interfaces to return. Defaults to 50.")] int maxRecords = 50)
@@ -48,12 +41,12 @@ public sealed class NetworkReadTool
             var interfaces = NetworkInterface.GetAllNetworkInterfaces().Take(maxRecords);
             var results = interfaces.Select(ni => new
             {
-                ni.Name,
-                ni.Description,
-                ni.OperationalStatus,
-                ni.Speed,
-                ni.NetworkInterfaceType,
-                ni.GetIPProperties().UnicastAddresses.Count
+                    ni.Name,
+                    ni.Description,
+                    ni.OperationalStatus,
+                    ni.Speed,
+                    ni.NetworkInterfaceType,
+                    ni.GetIPProperties().UnicastAddresses.Count
             });
 
             return ToolResult.Ok(results, "NetworkReadTool");

@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PipeListReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating named pipes on the local system using the
 ///     Sysinternals PipeList utility. Unusual named pipes are a common
@@ -30,9 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PipeListReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals PipeList is installed and reports its version.
@@ -51,6 +49,8 @@ public sealed class PipeListReadTool
 
 
 
+
+
     /// <summary>
     ///     Lists named pipes with their instances and maximum instance counts using
     ///     PipeList.
@@ -60,8 +60,7 @@ public sealed class PipeListReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_PipeList_List_Pipes", ReadOnly = true, Destructive = false)]
     [Description("Lists named pipes with instance counts using Sysinternals PipeList. Requires PipeList to be installed.")]
-    public async Task<ToolResult> PipeListListPipesAsync(
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> PipeListListPipesAsync([Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
         if (maxValidation is not null)

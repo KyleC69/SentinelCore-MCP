@@ -1,16 +1,15 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         VpnReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-
-using ModelContextProtocol.Server;
-using System.Runtime.Versioning;
 
 using System.ComponentModel;
+using System.Runtime.Versioning;
+
+using ModelContextProtocol.Server;
 
 
 

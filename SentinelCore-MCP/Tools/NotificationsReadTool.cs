@@ -1,17 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         NotificationsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
+using System.Text;
 
 using Microsoft.Win32;
 
 using ModelContextProtocol.Server;
-using System.ComponentModel;
-using System.Text;
-using System.Runtime.Versioning;
 
 
 
@@ -61,11 +62,11 @@ public sealed class NotificationsReadTool
 
                         results.Add(new Dictionary<string, object?>
                         {
-                            ["App"] = appKeyName,
-                            ["Enabled"] = appKey.GetValue("Enabled"),
-                            ["ShowBanner"] = appKey.GetValue("ShowBannerAndSound"),
-                            ["ShowNotificationActions"] = appKey.GetValue("ShowNotificationActions"),
-                            ["LastModified"] = appKey.GetValue("LastNotificationAdded")
+                                ["App"] = appKeyName,
+                                ["Enabled"] = appKey.GetValue("Enabled"),
+                                ["ShowBanner"] = appKey.GetValue("ShowBannerAndSound"),
+                                ["ShowNotificationActions"] = appKey.GetValue("ShowNotificationActions"),
+                                ["LastModified"] = appKey.GetValue("LastNotificationAdded")
                         });
                     }
                     catch

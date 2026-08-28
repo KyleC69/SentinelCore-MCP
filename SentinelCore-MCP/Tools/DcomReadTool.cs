@@ -1,19 +1,19 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         DcomReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using Microsoft.Win32;
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Management;
 using System.Runtime.Versioning;
 using System.Text;
+
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -30,13 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class DcomReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "DCOM_List_Applications", ReadOnly = true, Destructive = false)]

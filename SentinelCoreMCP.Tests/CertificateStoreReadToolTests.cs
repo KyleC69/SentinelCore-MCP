@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         CertificateStoreReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="CertificateStoreReadTool" /> covering certificate store
@@ -18,16 +28,30 @@ public sealed class CertificateStoreReadToolTests
 {
     private readonly CertificateStoreReadTool _tool = new();
 
-    #region Certificate_List validation tests
+
+
+
+
+
+
 
     [Fact]
-    public async Task CertificateList_NullStoreName_ReturnsFailure()
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task CertificateList_CurrentUserMy_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.CertificateListAsync(null!);
+        ToolResult result = await _tool.CertificateListAsync("My", System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser);
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
     }
+
+
+
+
+
+
+
 
     [Fact]
     public async Task CertificateList_EmptyStoreName_ReturnsFailure()
@@ -38,35 +62,46 @@ public sealed class CertificateStoreReadToolTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    #endregion
 
-    #region Certificate_List integration tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task CertificateList_RootStore_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.CertificateListAsync("Root");
 
-        // The LocalMachine Root store exists on all Windows systems
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task CertificateList_RootStore_ContainsCertificateDetails()
+    public async Task CertificateList_NullErrorDetailsOnSuccess()
     {
         ToolResult result = await _tool.CertificateListAsync("Root");
 
         Assert.True(result.Success);
-        string output = (string)result.Results!;
-        // Root store always has certificates on Windows
-        Assert.Contains("Subject=", output);
-        Assert.Contains("Thumbprint=", output);
+        Assert.Null(result.ErrorDetails);
     }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task CertificateList_NullStoreName_ReturnsFailure()
+    {
+        ToolResult result = await _tool.CertificateListAsync(null!);
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -86,35 +121,71 @@ public sealed class CertificateStoreReadToolTests
             index++;
         }
 
-        Assert.True(certCount <= maxRecords,
-            $"Expected at most {maxRecords} certificates but got {certCount}");
+        Assert.True(certCount <= maxRecords, $"Expected at most {maxRecords} certificates but got {certCount}");
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task CertificateList_CurrentUserMy_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.CertificateListAsync("My", System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser);
-
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task CertificateList_NullErrorDetailsOnSuccess()
+    public async Task CertificateList_RootStore_ContainsCertificateDetails()
     {
         ToolResult result = await _tool.CertificateListAsync("Root");
 
         Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
+        string output = (string)result.Results!;
+        // Root store always has certificates on Windows
+        Assert.Contains("Subject=", output);
+        Assert.Contains("Thumbprint=", output);
     }
 
-    #endregion
 
-    #region Certificate_Read tests
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task CertificateList_RootStore_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.CertificateListAsync("Root");
+
+        // The LocalMachine Root store exists on all Windows systems
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task CertificateRead_EmptyStoreName_ReturnsFailure()
+    {
+        ToolResult result = await _tool.CertificateReadAsync("ABC", "");
+
+        Assert.False(result.Success);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     public async Task CertificateRead_EmptyThumbprint_ReturnsFailure()
@@ -125,14 +196,12 @@ public sealed class CertificateStoreReadToolTests
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
-    public async Task CertificateRead_EmptyStoreName_ReturnsFailure()
-    {
-        ToolResult result = await _tool.CertificateReadAsync("ABC", "");
 
-        Assert.False(result.Success);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -145,14 +214,19 @@ public sealed class CertificateStoreReadToolTests
         Assert.Contains("not found", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
     public async Task CertificateRead_RootStoreCertificate_ReturnsSuccessfulToolResult()
     {
-        using System.Security.Cryptography.X509Certificates.X509Store store =
-            new(System.Security.Cryptography.X509Certificates.StoreName.Root,
-                System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
+        using System.Security.Cryptography.X509Certificates.X509Store store = new(System.Security.Cryptography.X509Certificates.StoreName.Root, System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
         store.Open(System.Security.Cryptography.X509Certificates.OpenFlags.ReadOnly | System.Security.Cryptography.X509Certificates.OpenFlags.OpenExistingOnly);
 
         if (store.Certificates.Count == 0)
@@ -167,6 +241,4 @@ public sealed class CertificateStoreReadToolTests
         string output = (string)result.Results!;
         Assert.Contains($"Thumbprint={thumbprint}", output);
     }
-
-    #endregion
 }

@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         WindowsServiceReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="WindowsServiceReadTool" /> covering Windows service queries.
@@ -17,18 +27,12 @@ public sealed class WindowsServiceReadToolTests
 {
     private readonly WindowsServiceReadTool _tool = new();
 
-    #region Service_List tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ServiceList_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.serviceListAsync();
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -42,16 +46,12 @@ public sealed class WindowsServiceReadToolTests
         Assert.NotEmpty(((string)result.Results!).Trim());
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task ServiceList_WithNameFilter_ReturnsFilteredResults()
-    {
-        ToolResult result = await _tool.serviceListAsync(nameFilter: "Windows");
 
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -64,9 +64,65 @@ public sealed class WindowsServiceReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
 
-    #region Service_Read tests
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ServiceList_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.serviceListAsync();
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task ServiceList_WithNameFilter_ReturnsFilteredResults()
+    {
+        ToolResult result = await _tool.serviceListAsync(nameFilter: "Windows");
+
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    public async Task ServiceRead_EmptyServiceName_ReturnsFailure()
+    {
+        ToolResult result = await _tool.serviceReadAsync("");
+
+        Assert.False(result.Success);
+        Assert.NotNull(result.ErrorDetails);
+        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -80,6 +136,13 @@ public sealed class WindowsServiceReadToolTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
@@ -90,17 +153,4 @@ public sealed class WindowsServiceReadToolTests
         Assert.False(result.Success);
         Assert.NotNull(result.ErrorDetails);
     }
-
-    [Fact]
-    public async Task ServiceRead_EmptyServiceName_ReturnsFailure()
-    {
-        ToolResult result = await _tool.serviceReadAsync("");
-
-        Assert.False(result.Success);
-        Assert.NotNull(result.ErrorDetails);
-        Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
-    }
-
-    #endregion
 }
-

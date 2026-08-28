@@ -1,18 +1,25 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         LocalAccountsReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
+
+
 
 using System.ComponentModel;
 using System.DirectoryServices.AccountManagement;
-using System.Text;
-
 using System.Runtime.Versioning;
+using System.Text;
 
 using ModelContextProtocol.Server;
 
+
+
+
 namespace SentinelCoreMCP.Tools;
+
+
+
 
 
 /// <summary>
@@ -65,6 +72,13 @@ public sealed class LocalAccountsReadTool
             return ToolResult.Fail("Local group listing failed.", "LocalAccountsReadTool");
         }
     }
+
+
+
+
+
+
+
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Local_Accounts_List_Users", ReadOnly = true, Destructive = false)]

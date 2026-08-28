@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         WindowsServiceReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
-
-using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.ServiceProcess;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -29,12 +29,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class WindowsServiceReadTool
 {
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Service_List", ReadOnly = true, Destructive = false)]
@@ -69,6 +63,7 @@ public sealed class WindowsServiceReadTool
             return ToolResult.Fail($"Service listing failed: {ex.Message}", "WindowsServiceReadTool");
         }
     }
+
 
 
 

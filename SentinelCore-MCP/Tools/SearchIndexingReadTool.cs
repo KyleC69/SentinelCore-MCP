@@ -1,17 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         SearchIndexingReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
+using System.Text;
 
 using Microsoft.Win32;
 
 using ModelContextProtocol.Server;
-using System.ComponentModel;
-using System.Text;
-using System.Runtime.Versioning;
 
 
 

@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         BrowserConfigReadToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="BrowserConfigReadTool" /> covering browser policy,
@@ -18,7 +28,30 @@ public sealed class BrowserConfigReadToolTests
 {
     private readonly BrowserConfigReadTool _tool = new();
 
-    #region Browser_Config_Read_Chrome_Policies tests
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task BrowserReadChromePolicies_NullErrorDetailsOnSuccess()
+    {
+        ToolResult result = await _tool.BrowserReadChromePoliciesAsync();
+
+        Assert.True(result.Success);
+        Assert.Null(result.ErrorDetails);
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -32,20 +65,48 @@ public sealed class BrowserConfigReadToolTests
         Assert.NotNull(result.Results);
     }
 
+
+
+
+
+
+
+
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task BrowserReadChromePolicies_NullErrorDetailsOnSuccess()
+    public async Task BrowserReadDefault_ContainsProgId()
     {
-        ToolResult result = await _tool.BrowserReadChromePoliciesAsync();
+        ToolResult result = await _tool.BrowserReadDefaultAsync();
+
+        Assert.True(result.Success);
+        Assert.Contains("DefaultBrowserProgId=", (string)result.Results!);
+    }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task BrowserReadDefault_NullErrorDetailsOnSuccess()
+    {
+        ToolResult result = await _tool.BrowserReadDefaultAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
 
-    #region Browser_Config_Read_Default tests
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -59,43 +120,12 @@ public sealed class BrowserConfigReadToolTests
         Assert.NotNull(result.Results);
     }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task BrowserReadDefault_ContainsProgId()
-    {
-        ToolResult result = await _tool.BrowserReadDefaultAsync();
 
-        Assert.True(result.Success);
-        Assert.Contains("DefaultBrowserProgId=", (string)result.Results!);
-    }
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task BrowserReadDefault_NullErrorDetailsOnSuccess()
-    {
-        ToolResult result = await _tool.BrowserReadDefaultAsync();
 
-        Assert.True(result.Success);
-        Assert.Null(result.ErrorDetails);
-    }
 
-    #endregion
 
-    #region Browser_Config_Read_IE_Settings tests
 
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task BrowserReadIeSettings_ReturnsSuccessfulToolResult()
-    {
-        ToolResult result = await _tool.BrowserReadIeSettingsAsync();
-
-        // The IE Internet Settings key exists on all Windows systems
-        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
-        Assert.NotNull(result.Results);
-    }
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -108,5 +138,22 @@ public sealed class BrowserConfigReadToolTests
         Assert.Null(result.ErrorDetails);
     }
 
-    #endregion
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task BrowserReadIeSettings_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.BrowserReadIeSettingsAsync();
+
+        // The IE Internet Settings key exists on all Windows systems
+        Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
+        Assert.NotNull(result.Results);
+    }
 }

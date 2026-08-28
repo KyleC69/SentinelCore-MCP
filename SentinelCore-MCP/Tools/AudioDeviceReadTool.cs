@@ -1,20 +1,19 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         AudioDeviceReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-
-using Microsoft.Win32;
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
+
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -32,57 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class AudioDeviceReadTool
 {
-
-
-
-
-
-
-    /// <summary>
-    ///     Runs pnputil with the specified arguments and returns the standard output,
-    ///     or a failure result if the process cannot start or returns a non-zero exit code.
-    /// </summary>
-    [SupportedOSPlatform("windows")]
-    private static ToolResult RunPnputil(string arguments)
-    {
-        try
-        {
-            ProcessStartInfo startInfo = new()
-            {
-                FileName = "pnputil",
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using Process? process = Process.Start(startInfo);
-            if (process is null)
-            {
-                return ToolResult.Fail("Failed to start pnputil.", "AudioDeviceReadTool");
-            }
-
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            return process.ExitCode != 0
-                ? ToolResult.Fail($"pnputil failed: {stderr}", "AudioDeviceReadTool")
-                : ToolResult.Ok(stdout, "AudioDeviceReadTool");
-        }
-        catch
-        {
-            return ToolResult.Fail("pnputil execution failed.", "AudioDeviceReadTool");
-        }
-    }
-
-
-
-
-
-
-
 
     /// <summary>
     ///     Reads the friendly name for an audio endpoint from the MMDevices registry key.
@@ -147,15 +95,59 @@ public sealed class AudioDeviceReadTool
 
 
     /// <summary>
+    ///     Runs pnputil with the specified arguments and returns the standard output,
+    ///     or a failure result if the process cannot start or returns a non-zero exit code.
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    private static ToolResult RunPnputil(string arguments)
+    {
+        try
+        {
+            ProcessStartInfo startInfo = new()
+            {
+                    FileName = "pnputil",
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using Process? process = Process.Start(startInfo);
+            if (process is null)
+            {
+                return ToolResult.Fail("Failed to start pnputil.", "AudioDeviceReadTool");
+            }
+
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            return process.ExitCode != 0 ? ToolResult.Fail($"pnputil failed: {stderr}", "AudioDeviceReadTool") : ToolResult.Ok(stdout, "AudioDeviceReadTool");
+        }
+        catch
+        {
+            return ToolResult.Fail("pnputil execution failed.", "AudioDeviceReadTool");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
     ///     Converts a device state value to a human-readable string.
     /// </summary>
     private static string StateToString(int state) => state switch
     {
-        1 => "Active",
-        2 => "Disabled",
-        4 => "NotPresent",
-        8 => "Unplugged",
-        _ => $"Unknown({state})"
+            1 => "Active",
+            2 => "Disabled",
+            4 => "NotPresent",
+            8 => "Unplugged",
+            _ => $"Unknown({state})"
     };
 
 

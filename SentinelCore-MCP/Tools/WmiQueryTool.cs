@@ -1,16 +1,20 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         WmiQueryTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
+
+using System.ComponentModel;
+using System.Runtime.Versioning;
 
 using Microsoft.Management.Infrastructure;
 
 using ModelContextProtocol.Server;
-using System.ComponentModel;
-using System.Runtime.Versioning;
+
+
+
 
 namespace SentinelCoreMCP.Tools;
 
@@ -28,12 +32,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class WmiQueryTool
 {
 
-
-
-
-
-
-
     /// <summary>
     ///     The set of CIM namespaces that are permitted for queries.
     ///     Restricting namespaces prevents access to dangerous namespaces
@@ -41,14 +39,42 @@ public sealed class WmiQueryTool
     /// </summary>
     private static readonly HashSet<string> AllowedNamespaces = new(StringComparer.OrdinalIgnoreCase)
     {
-        @"root\cimv2",
-        @"root\cimv2\security\MicrosoftVolumeEncryption",
-        @"root\cimv2\power",
-        @"root\StandardCimv2",
-        @"root\virtualization\v2",
-        @"root\Microsoft\Windows\Defender",
-        @"root\Microsoft\Windows\Storage"
+            @"root\cimv2",
+            @"root\cimv2\security\MicrosoftVolumeEncryption",
+            @"root\cimv2\power",
+            @"root\StandardCimv2",
+            @"root\virtualization\v2",
+            @"root\Microsoft\Windows\Defender",
+            @"root\Microsoft\Windows\Storage"
     };
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Validates that the provided namespace is in the allowed list.
+    /// </summary>
+    private static ToolResult? ValidateNamespace(string nameSpace)
+    {
+        if (string.IsNullOrWhiteSpace(nameSpace))
+        {
+            return ToolResult.Fail("nameSpace is required.", "WmiQueryTool");
+        }
+
+        if (!AllowedNamespaces.Contains(nameSpace))
+        {
+            return ToolResult.Fail($"Namespace '{nameSpace}' is not permitted. Allowed namespaces: {string.Join(", ", AllowedNamespaces)}", "WmiQueryTool");
+        }
+
+        return null;
+    }
+
+
+
 
 
 
@@ -56,10 +82,7 @@ public sealed class WmiQueryTool
 
     [McpServerTool(Name = "WMI_List_Classes", ReadOnly = true, Destructive = false)]
     [Description("Lists CIM class names in the specified namespace. Only pre-approved namespaces are permitted.")]
-    public async Task<ToolResult> WmiListClassesAsync(
-        [Description("The CIM namespace to query. Allowed: root\\cimv2, root\\cimv2\\security\\MicrosoftVolumeEncryption, root\\cimv2\\power, root\\StandardCimv2, root\\virtualization\\v2, root\\Microsoft\\Windows\\Defender, root\\Microsoft\\Windows\\Storage.")] string nameSpace = @"root\cimv2",
-        [Description("Optional class name prefix filter.")] string? prefix = null,
-        [Description("Maximum number of classes to return. Defaults to 50.")] int maxResults = 50)
+    public async Task<ToolResult> WmiListClassesAsync([Description("The CIM namespace to query. Allowed: root\\cimv2, root\\cimv2\\security\\MicrosoftVolumeEncryption, root\\cimv2\\power, root\\StandardCimv2, root\\virtualization\\v2, root\\Microsoft\\Windows\\Defender, root\\Microsoft\\Windows\\Storage.")] string nameSpace = @"root\cimv2", [Description("Optional class name prefix filter.")] string? prefix = null, [Description("Maximum number of classes to return. Defaults to 50.")] int maxResults = 50)
     {
         try
         {
@@ -77,17 +100,9 @@ public sealed class WmiQueryTool
 
             using CimSession session = CimSession.Create(null);
 
-            IEnumerable<CimClass> classes = session.EnumerateClasses(nameSpace)
-                    .Where(c => prefix == null || c.CimSystemProperties.ClassName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                    .Take(maxResults)
-                    .ToList();
+            IEnumerable<CimClass> classes = session.EnumerateClasses(nameSpace).Where(c => prefix == null || c.CimSystemProperties.ClassName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).Take(maxResults).ToList();
 
-            var result = new
-            {
-                Namespace = nameSpace,
-                Count = classes.Count(),
-                Classes = classes.Select(c => c.CimSystemProperties.ClassName).ToList()
-            };
+            var result = new { Namespace = nameSpace, Count = classes.Count(), Classes = classes.Select(c => c.CimSystemProperties.ClassName).ToList() };
 
             return ToolResult.Ok(result, "CIM query complete.");
         }
@@ -103,12 +118,10 @@ public sealed class WmiQueryTool
 
 
 
+
     [McpServerTool(Name = "WMI_Query", ReadOnly = true, Destructive = false)]
     [Description("Executes a read-only CIM WQL SELECT query and returns a compact result set. Only SELECT queries are permitted.")]
-    public async Task<ToolResult> WmiQueryAsync(
-            [Description("The WQL SELECT query to execute. Only SELECT queries are permitted.")] string query,
-            [Description("Maximum number of rows to return. Defaults to 25.")] int maxRows = 25,
-            [Description("Maximum number of properties per row. Defaults to 10.")] int maxProperties = 10)
+    public async Task<ToolResult> WmiQueryAsync([Description("The WQL SELECT query to execute. Only SELECT queries are permitted.")] string query, [Description("Maximum number of rows to return. Defaults to 25.")] int maxRows = 25, [Description("Maximum number of properties per row. Defaults to 10.")] int maxProperties = 10)
     {
         try
         {
@@ -150,9 +163,9 @@ public sealed class WmiQueryTool
                 {
                     object? value = prop.Value switch
                     {
-                        CimInstance nested => nested.CimSystemProperties.ClassName,
-                        Array array => string.Join(",", array.Cast<object?>().Where(x => x != null)),
-                        _ => prop.Value
+                            CimInstance nested => nested.CimSystemProperties.ClassName,
+                            Array array => string.Join(",", array.Cast<object?>().Where(x => x != null)),
+                            _ => prop.Value
                     };
 
                     row[prop.Name] = value;
@@ -163,12 +176,12 @@ public sealed class WmiQueryTool
 
             var result = new
             {
-                Query = query,
-                TotalRows = totalRows,
-                ReturnedRows = compactRows.Count,
-                MaxRows = maxRows,
-                MaxProperties = maxProperties,
-                Rows = compactRows
+                    Query = query,
+                    TotalRows = totalRows,
+                    ReturnedRows = compactRows.Count,
+                    MaxRows = maxRows,
+                    MaxProperties = maxProperties,
+                    Rows = compactRows
             };
 
             return ToolResult.Ok(result, "CIM query complete.");
@@ -177,27 +190,5 @@ public sealed class WmiQueryTool
         {
             return ToolResult.Fail(ex.Message, "CIM query");
         }
-    }
-
-
-
-
-
-    /// <summary>
-    ///     Validates that the provided namespace is in the allowed list.
-    /// </summary>
-    private static ToolResult? ValidateNamespace(string nameSpace)
-    {
-        if (string.IsNullOrWhiteSpace(nameSpace))
-        {
-            return ToolResult.Fail("nameSpace is required.", "WmiQueryTool");
-        }
-
-        if (!AllowedNamespaces.Contains(nameSpace))
-        {
-            return ToolResult.Fail($"Namespace '{nameSpace}' is not permitted. Allowed namespaces: {string.Join(", ", AllowedNamespaces)}", "WmiQueryTool");
-        }
-
-        return null;
     }
 }

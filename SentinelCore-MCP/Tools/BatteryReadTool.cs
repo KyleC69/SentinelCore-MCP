@@ -1,17 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         BatteryReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Management;
 using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -28,13 +28,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class BatteryReadTool
 {
-
-
-
-
-
-
-
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Battery_List", ReadOnly = true, Destructive = false)]
@@ -54,11 +47,11 @@ public sealed class BatteryReadTool
 
                 results.Add(new
                 {
-                    Name = battery["Name"]?.ToString(),
-                    Description = battery["Description"]?.ToString(),
-                    EstimatedChargeRemaining = battery["EstimatedChargeRemaining"]?.ToString(),
-                    BatteryStatus = battery["BatteryStatus"]?.ToString(),
-                    EstimatedRunTime = battery["EstimatedRunTime"]?.ToString()
+                        Name = battery["Name"]?.ToString(),
+                        Description = battery["Description"]?.ToString(),
+                        EstimatedChargeRemaining = battery["EstimatedChargeRemaining"]?.ToString(),
+                        BatteryStatus = battery["BatteryStatus"]?.ToString(),
+                        EstimatedRunTime = battery["EstimatedRunTime"]?.ToString()
                 });
             }
 

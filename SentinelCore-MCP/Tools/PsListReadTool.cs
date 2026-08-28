@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         PsListReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -22,6 +22,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for enumerating process and thread detail (CPU time, context
 ///     switches, thread states) using the Sysinternals PsList utility.
@@ -30,9 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PsListReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals PsList is installed and reports its version.
@@ -51,6 +49,8 @@ public sealed class PsListReadTool
 
 
 
+
+
     /// <summary>
     ///     Lists running processes with kernel/user CPU time and thread counts using
     ///     PsList.
@@ -62,10 +62,7 @@ public sealed class PsListReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_PsList_List_Processes", ReadOnly = true, Destructive = false)]
     [Description("Lists processes with CPU and memory statistics using Sysinternals PsList. Requires PsList to be installed.")]
-    public async Task<ToolResult> PsListListProcessesAsync(
-        [Description("Optional process name (e.g., explorer) or numeric PID to scope the listing.")] string? processNameOrPid = null,
-        [Description("Whether to include per-thread statistics. Defaults to false.")] bool includeThreads = false,
-        [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
+    public async Task<ToolResult> PsListListProcessesAsync([Description("Optional process name (e.g., explorer) or numeric PID to scope the listing.")] string? processNameOrPid = null, [Description("Whether to include per-thread statistics. Defaults to false.")] bool includeThreads = false, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
         if (processNameOrPid is not null)
         {
@@ -75,12 +72,9 @@ public sealed class PsListReadTool
                 return processValidation;
             }
 
-            if (!uint.TryParse(processNameOrPid, out _) &&
-                !System.Text.RegularExpressions.Regex.IsMatch(processNameOrPid, @"^[a-zA-Z0-9._\- ]+$"))
+            if (!uint.TryParse(processNameOrPid, out _) && !System.Text.RegularExpressions.Regex.IsMatch(processNameOrPid, @"^[a-zA-Z0-9._\- ]+$"))
             {
-                return ToolResult.Fail(
-                    "processNameOrPid must be a numeric PID or a simple image name (letters, digits, dots, hyphens, underscores, spaces).",
-                    "PsList enumeration");
+                return ToolResult.Fail("processNameOrPid must be a numeric PID or a simple image name (letters, digits, dots, hyphens, underscores, spaces).", "PsList enumeration");
             }
         }
 

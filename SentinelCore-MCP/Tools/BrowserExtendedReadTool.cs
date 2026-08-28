@@ -1,15 +1,15 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         BrowserExtendedReadTool.cs
-// Author: Kyle L. Crowler
-// Build Num:  080801
+// Author: Kyle L. Crowder
+// Build Num:  082808
 
 
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -28,37 +28,6 @@ namespace SentinelCoreMCP.Tools;
 [McpServerToolType]
 public sealed class BrowserExtendedReadTool
 {
-
-
-
-
-
-
-
-
-    private string GetChromeProfilePath()
-    {
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome", "User Data");
-    }
-
-
-
-
-
-
-
-
-    private string GetEdgeProfilePath()
-    {
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Edge", "User Data");
-    }
-
-
-
-
-
-
-
 
     [McpServerTool(Name = "Browser_List_Extensions", ReadOnly = true, Destructive = false)]
     [Description("Lists installed browser extensions for Chrome and Edge from their local profile directories.")]
@@ -89,13 +58,7 @@ public sealed class BrowserExtendedReadTool
                             string[] versionDirs = Directory.GetDirectories(extDir);
                             string version = versionDirs.Length > 0 ? Path.GetFileName(versionDirs[0]) : "unknown";
 
-                            results.Add(new
-                            {
-                                Browser = "Chrome",
-                                ExtensionId = extId,
-                                Version = version,
-                                Path = extDir
-                            });
+                            results.Add(new { Browser = "Chrome", ExtensionId = extId, Version = version, Path = extDir });
                         }
                     }
                 }
@@ -116,13 +79,7 @@ public sealed class BrowserExtendedReadTool
                             string[] versionDirs = Directory.GetDirectories(extDir);
                             string version = versionDirs.Length > 0 ? Path.GetFileName(versionDirs[0]) : "unknown";
 
-                            results.Add(new
-                            {
-                                Browser = "Edge",
-                                ExtensionId = extId,
-                                Version = version,
-                                Path = extDir
-                            });
+                            results.Add(new { Browser = "Edge", ExtensionId = extId, Version = version, Path = extDir });
                         }
                     }
                 }
@@ -135,13 +92,28 @@ public sealed class BrowserExtendedReadTool
             return ToolResult.Fail(ex.Message, "Browser extension listing");
         }
     }
+
+
+
+
+
+
+
+
+    private string GetChromeProfilePath()
+    {
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome", "User Data");
+    }
+
+
+
+
+
+
+
+
+    private string GetEdgeProfilePath()
+    {
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Edge", "User Data");
+    }
 }
-
-
-
-
-
-
-
-
-

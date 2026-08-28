@@ -1,18 +1,18 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         WindowsUpdateReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-using Microsoft.Win32;
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Text;
+
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -50,17 +50,8 @@ public sealed class WindowsUpdateReadTool
         }
 
         sb.AppendLine($"[{keyPath}]");
-        foreach (var v in RegistryHelper.ReadValues(key)) sb.AppendLine($"  {v.Name}={v.Value}");
+        foreach (RegistryHelper.RegistryValueRecord v in RegistryHelper.ReadValues(key)) sb.AppendLine($"  {v.Name}={v.Value}");
     }
-
-
-
-
-
-
-
-
-
 
 
 

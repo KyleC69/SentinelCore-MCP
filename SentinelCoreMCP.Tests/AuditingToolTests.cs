@@ -1,13 +1,23 @@
-// Solution: SentinelCore
+// Solution: SentinelCore-MCP
 // Project:   SentinelCoreMCP.Tests
 // File:         AuditingToolTests.cs
 // Author: Kyle L. Crowder
+// Build Num:  082808
+
+
 
 using System.Runtime.Versioning;
 
 using SentinelCoreMCP.Tools;
 
+
+
+
 namespace SentinelCoreMCP.Tests;
+
+
+
+
 
 /// <summary>
 ///     Tests for <see cref="AuditingTool" /> covering audit policy enumeration
@@ -18,19 +28,34 @@ public sealed class AuditingToolTests
 {
     private readonly AuditingTool _tool = new();
 
-    #region GetAuditPolicy tests
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
     [Trait("Category", "WindowsOnly")]
-    public async Task GetAuditPolicy_ReturnsSuccessfulToolResult()
+    public async Task GetAuditPolicy_NullErrorDetailsOnSuccess()
     {
         ToolResult result = await _tool.GetAuditPolicyAsync();
 
-        // auditpol requires admin privileges; accept graceful failure when not elevated
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        if (!result.Success)
+        {
+            return;
+        } // Skip if not elevated (auditpol requires admin)
+
+        Assert.Null(result.ErrorDetails);
     }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -41,9 +66,33 @@ public sealed class AuditingToolTests
 
         // auditpol requires admin privileges; the tool may succeed or fail gracefully
         // depending on the elevation level of the test runner
-        Assert.True(result.Success || result.ErrorDetails != null,
-            $"Expected success or graceful failure but got: Success={result.Success}");
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
     }
+
+
+
+
+
+
+
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    [Trait("Category", "WindowsOnly")]
+    public async Task GetAuditPolicy_ReturnsSuccessfulToolResult()
+    {
+        ToolResult result = await _tool.GetAuditPolicyAsync();
+
+        // auditpol requires admin privileges; accept graceful failure when not elevated
+        Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
+    }
+
+
+
+
+
+
+
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -60,18 +109,4 @@ public sealed class AuditingToolTests
 
         Assert.NotEmpty(((string)result.Results!).Trim());
     }
-
-    [Fact]
-    [Trait("Category", "Integration")]
-    [Trait("Category", "WindowsOnly")]
-    public async Task GetAuditPolicy_NullErrorDetailsOnSuccess()
-    {
-        ToolResult result = await _tool.GetAuditPolicyAsync();
-
-        if (!result.Success) { return; } // Skip if not elevated (auditpol requires admin)
-
-        Assert.Null(result.ErrorDetails);
-    }
-
-    #endregion
 }

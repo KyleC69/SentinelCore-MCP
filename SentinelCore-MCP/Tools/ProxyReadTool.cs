@@ -1,16 +1,27 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         ProxyReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
-using Microsoft.Win32;
-using ModelContextProtocol.Server;
+
+
 using System.ComponentModel;
 using System.Runtime.Versioning;
 using System.Text;
 
+using Microsoft.Win32;
+
+using ModelContextProtocol.Server;
+
+
+
+
 namespace SentinelCoreMCP.Tools;
+
+
+
+
 
 /// <summary>
 ///     Read-only tool for querying system proxy configuration from the registry
@@ -21,6 +32,13 @@ namespace SentinelCoreMCP.Tools;
 public sealed class ProxyReadTool
 {
     private const string WinHttpSettingsKey = @"SYSTEM\CurrentControlSet\Services\Http\Parameters\ProxySettings";
+
+
+
+
+
+
+
 
     /// <summary>
     ///     Reads the per-user system proxy configuration from the Internet Settings registry key.
@@ -56,6 +74,13 @@ public sealed class ProxyReadTool
         }
     }
 
+
+
+
+
+
+
+
     /// <summary>
     ///     Reads the machine-wide WinHTTP proxy configuration from the registry
     ///     instead of shelling out to <c>netsh winhttp show proxy</c>.
@@ -76,7 +101,7 @@ public sealed class ProxyReadTool
             }
 
             sb.AppendLine($"[HKLM\\{WinHttpSettingsKey}]");
-            foreach (var v in RegistryHelper.ReadValues(key)) sb.AppendLine($"  {v.Name}={v.Value}");
+            foreach (RegistryHelper.RegistryValueRecord v in RegistryHelper.ReadValues(key)) sb.AppendLine($"  {v.Name}={v.Value}");
 
             return ToolResult.Ok(sb.ToString(), "ProxyReadTool");
         }

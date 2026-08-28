@@ -1,14 +1,21 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         InputValidator.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
 using System.Text.RegularExpressions;
 
+
+
+
 namespace SentinelCoreMCP.Tools;
+
+
+
+
 
 /// <summary>
 ///     Shared input validation helpers for all MCP tools.
@@ -17,25 +24,24 @@ namespace SentinelCoreMCP.Tools;
 internal static class InputValidator
 {
 
-
-
-
-
     /// <summary>
-    ///     Validates that a required string parameter is not null, empty, or whitespace.
+    ///     Validates that a maxRecords parameter is within acceptable bounds (1-500).
     /// </summary>
     /// <param name="value">The value to validate.</param>
-    /// <param name="paramName">The name of the parameter (for error messages).</param>
+    /// <param name="paramName">The name of the parameter. Defaults to "maxRecords".</param>
     /// <returns>A <see cref="ToolResult" /> indicating failure if validation fails, or <c>null</c> if validation passes.</returns>
-    internal static ToolResult? ValidateRequired(string? value, string paramName)
+    internal static ToolResult? ValidateMaxRecords(int value, string paramName = "maxRecords")
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (value < 1 || value > 500)
         {
-            return ToolResult.Fail($"{paramName} is required.", "Input validation");
+            return ToolResult.Fail($"{paramName} must be between 1 and 500. Received: {value}", "Input validation");
         }
 
         return null;
     }
+
+
+
 
 
 
@@ -59,23 +65,6 @@ internal static class InputValidator
 
 
 
-
-
-    /// <summary>
-    ///     Validates that a maxRecords parameter is within acceptable bounds (1-500).
-    /// </summary>
-    /// <param name="value">The value to validate.</param>
-    /// <param name="paramName">The name of the parameter. Defaults to "maxRecords".</param>
-    /// <returns>A <see cref="ToolResult" /> indicating failure if validation fails, or <c>null</c> if validation passes.</returns>
-    internal static ToolResult? ValidateMaxRecords(int value, string paramName = "maxRecords")
-    {
-        if (value < 1 || value > 500)
-        {
-            return ToolResult.Fail($"{paramName} must be between 1 and 500. Received: {value}", "Input validation");
-        }
-
-        return null;
-    }
 
 
 
@@ -102,6 +91,75 @@ internal static class InputValidator
 
         return null;
     }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Validates that a required string parameter is not null, empty, or whitespace.
+    /// </summary>
+    /// <param name="value">The value to validate.</param>
+    /// <param name="paramName">The name of the parameter (for error messages).</param>
+    /// <returns>A <see cref="ToolResult" /> indicating failure if validation fails, or <c>null</c> if validation passes.</returns>
+    internal static ToolResult? ValidateRequired(string? value, string paramName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return ToolResult.Fail($"{paramName} is required.", "Input validation");
+        }
+
+        return null;
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Sanitizes a string value for safe interpolation into a WQL WHERE clause.
+    ///     Validates against injection patterns and ensures only safe characters are present.
+    ///     Backslashes are allowed because WMI paths (e.g., BitLocker volume IDs) contain them.
+    /// </summary>
+    /// <param name="value">The value to sanitize.</param>
+    /// <param name="paramName">The parameter name for error messages.</param>
+    /// <returns>A failure result if the value contains dangerous patterns, or <c>null</c> if validation passes.</returns>
+    internal static ToolResult? ValidateSanitizedWqlValue(string? value, string paramName)
+    {
+        ToolResult? requiredResult = ValidateRequired(value, paramName);
+        if (requiredResult is not null)
+        {
+            return requiredResult;
+        }
+
+        // Block patterns that could break out of a WQL string literal or inject WQL
+        // Note: backslashes are NOT blocked because WMI paths like \\?\Volume{GUID}\ contain them
+        string[] dangerousPatterns = ["'", ";", "--", "/*", "*/", "\0"];
+        foreach (string pattern in dangerousPatterns)
+        {
+            if (value!.Contains(pattern, StringComparison.Ordinal))
+            {
+                return ToolResult.Fail($"{paramName} contains a character that is not permitted in a WQL value: '{pattern}'.", "Input validation");
+            }
+        }
+
+        // Only allow safe characters: alphanumeric, spaces, hyphens, underscores, dots, colons, braces, backslashes, question marks
+        if (!Regex.IsMatch(value!, @"^[a-zA-Z0-9\s\-_./:\\?{}]+$"))
+        {
+            return ToolResult.Fail($"{paramName} contains characters that are not permitted. Only alphanumeric characters, spaces, hyphens, underscores, dots, colons, backslashes, question marks, and braces are allowed.", "Input validation");
+        }
+
+        return null;
+    }
+
+
+
 
 
 
@@ -143,46 +201,6 @@ internal static class InputValidator
         if (trimmed.Contains("()", StringComparison.OrdinalIgnoreCase))
         {
             return ToolResult.Fail("WQL query cannot contain method invocations. Only property-based SELECT queries are permitted.", "Input validation");
-        }
-
-        return null;
-    }
-
-
-
-
-
-    /// <summary>
-    ///     Sanitizes a string value for safe interpolation into a WQL WHERE clause.
-    ///     Validates against injection patterns and ensures only safe characters are present.
-    ///     Backslashes are allowed because WMI paths (e.g., BitLocker volume IDs) contain them.
-    /// </summary>
-    /// <param name="value">The value to sanitize.</param>
-    /// <param name="paramName">The parameter name for error messages.</param>
-    /// <returns>A failure result if the value contains dangerous patterns, or <c>null</c> if validation passes.</returns>
-    internal static ToolResult? ValidateSanitizedWqlValue(string? value, string paramName)
-    {
-        ToolResult? requiredResult = ValidateRequired(value, paramName);
-        if (requiredResult is not null)
-        {
-            return requiredResult;
-        }
-
-        // Block patterns that could break out of a WQL string literal or inject WQL
-        // Note: backslashes are NOT blocked because WMI paths like \\?\Volume{GUID}\ contain them
-        string[] dangerousPatterns = ["'", ";", "--", "/*", "*/", "\0"];
-        foreach (string pattern in dangerousPatterns)
-        {
-            if (value!.Contains(pattern, StringComparison.Ordinal))
-            {
-                return ToolResult.Fail($"{paramName} contains a character that is not permitted in a WQL value: '{pattern}'.", "Input validation");
-            }
-        }
-
-        // Only allow safe characters: alphanumeric, spaces, hyphens, underscores, dots, colons, braces, backslashes, question marks
-        if (!Regex.IsMatch(value!, @"^[a-zA-Z0-9\s\-_./:\\?{}]+$"))
-        {
-            return ToolResult.Fail($"{paramName} contains characters that are not permitted. Only alphanumeric characters, spaces, hyphens, underscores, dots, colons, backslashes, question marks, and braces are allowed.", "Input validation");
         }
 
         return null;

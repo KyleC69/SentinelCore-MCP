@@ -1,18 +1,17 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         FirewallReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
-
-
-using ModelContextProtocol.Server;
 
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
+
+using ModelContextProtocol.Server;
 
 
 
@@ -31,57 +30,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class FirewallReadTool
 {
 
-
-
-
-
-
-    /// <summary>
-    ///     Runs a netsh command and returns the standard output, or a failure result if
-    ///     the process cannot start or returns a non-zero exit code.
-    /// </summary>
-    [SupportedOSPlatform("windows")]
-    private static ToolResult RunNetsh(string arguments)
-    {
-        try
-        {
-            ProcessStartInfo startInfo = new()
-            {
-                FileName = "netsh",
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using Process? process = Process.Start(startInfo);
-            if (process is null)
-            {
-                return ToolResult.Fail("Failed to start netsh.", "FirewallReadTool");
-            }
-
-            string stdout = process.StandardOutput.ReadToEnd();
-            string stderr = process.StandardError.ReadToEnd();
-            process.WaitForExit();
-
-            return process.ExitCode != 0
-                ? ToolResult.Fail($"netsh failed: {stderr}", "FirewallReadTool")
-                : ToolResult.Ok(stdout, "FirewallReadTool");
-        }
-        catch
-        {
-            return ToolResult.Fail("netsh execution failed.", "FirewallReadTool");
-        }
-    }
-
-
-
-
-
-
-
-
     /// <summary>
     ///     Builds the netsh arguments for listing firewall rules, applying optional
     ///     direction filter.
@@ -96,47 +44,6 @@ public sealed class FirewallReadTool
         }
 
         return args.ToString();
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
-    ///     Parses the direction filter string into a normalized form for netsh.
-    /// </summary>
-    internal static string? NormalizeDirection(string? direction)
-    {
-        return direction?.Trim().ToUpperInvariant() switch
-        {
-            "INBOUND" => "In",
-            "OUTBOUND" => "Out",
-            _ => null
-        };
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
-    ///     Parses the profile filter string into a normalized form for output filtering.
-    /// </summary>
-    internal static string? NormalizeProfile(string? profile)
-    {
-        return profile?.Trim().ToUpperInvariant() switch
-        {
-            "DOMAIN" => "Domain",
-            "PRIVATE" => "Private",
-            "PUBLIC" => "Public",
-            _ => null
-        };
     }
 
 
@@ -168,11 +75,9 @@ public sealed class FirewallReadTool
 
             // Check if the Profiles line contains the requested profile
             string[] lines = block.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-            string? profilesLine = lines.FirstOrDefault(l =>
-                l.StartsWith("Profiles:", StringComparison.OrdinalIgnoreCase));
+            string? profilesLine = lines.FirstOrDefault(l => l.StartsWith("Profiles:", StringComparison.OrdinalIgnoreCase));
 
-            if (profilesLine is not null &&
-                profilesLine.Contains(profile, StringComparison.OrdinalIgnoreCase))
+            if (profilesLine is not null && profilesLine.Contains(profile, StringComparison.OrdinalIgnoreCase))
             {
                 filtered.AppendLine(block.TrimEnd());
                 filtered.AppendLine();
@@ -225,13 +130,95 @@ public sealed class FirewallReadTool
 
 
 
+    /// <summary>
+    ///     Parses the direction filter string into a normalized form for netsh.
+    /// </summary>
+    internal static string? NormalizeDirection(string? direction)
+    {
+        return direction?.Trim().ToUpperInvariant() switch
+        {
+                "INBOUND" => "In",
+                "OUTBOUND" => "Out",
+                _ => null
+        };
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Parses the profile filter string into a normalized form for output filtering.
+    /// </summary>
+    internal static string? NormalizeProfile(string? profile)
+    {
+        return profile?.Trim().ToUpperInvariant() switch
+        {
+                "DOMAIN" => "Domain",
+                "PRIVATE" => "Private",
+                "PUBLIC" => "Public",
+                _ => null
+        };
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Runs a netsh command and returns the standard output, or a failure result if
+    ///     the process cannot start or returns a non-zero exit code.
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    private static ToolResult RunNetsh(string arguments)
+    {
+        try
+        {
+            ProcessStartInfo startInfo = new()
+            {
+                    FileName = "netsh",
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using Process? process = Process.Start(startInfo);
+            if (process is null)
+            {
+                return ToolResult.Fail("Failed to start netsh.", "FirewallReadTool");
+            }
+
+            string stdout = process.StandardOutput.ReadToEnd();
+            string stderr = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            return process.ExitCode != 0 ? ToolResult.Fail($"netsh failed: {stderr}", "FirewallReadTool") : ToolResult.Ok(stdout, "FirewallReadTool");
+        }
+        catch
+        {
+            return ToolResult.Fail("netsh execution failed.", "FirewallReadTool");
+        }
+    }
+
+
+
+
+
+
+
+
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Firewall_List_Rules", ReadOnly = true, Destructive = false)]
     [Description("Lists Windows Firewall rules with optional profile and direction filters.")]
-    public async Task<ToolResult> firewallListRulesAsync(
-        [Description("Optional direction filter: Inbound or Outbound.")] string? direction = null,
-        [Description("Optional profile filter: Domain, Private, Public.")] string? profile = null,
-        [Description("Maximum number of rules to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> firewallListRulesAsync([Description("Optional direction filter: Inbound or Outbound.")] string? direction = null, [Description("Optional profile filter: Domain, Private, Public.")] string? profile = null, [Description("Maximum number of rules to return. Defaults to 50.")] int maxRecords = 50)
     {
         string? normalizedDir = NormalizeDirection(direction);
         string args = BuildListRulesArgs(normalizedDir);

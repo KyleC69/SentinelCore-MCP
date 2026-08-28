@@ -1,8 +1,8 @@
-// Solution: SentinelCore
-// Project:   SentinelCore.Orchestrations
+// Solution: SentinelCore-MCP
+// Project:   SentinelCore-MCP
 // File:         SigCheckReadTool.cs
 // Author: Kyle L. Crowder
-// Build Num:  080801
+// Build Num:  082808
 
 
 
@@ -21,6 +21,7 @@ namespace SentinelCoreMCP.Tools;
 
 
 
+
 /// <summary>
 ///     Read-only tool for verifying file digital signatures and reputation using
 ///     the Sysinternals SigCheck utility. Unsigned or revoked binaries are a
@@ -30,9 +31,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class SigCheckReadTool
 {
-
-
-
 
     /// <summary>
     ///     Probes whether Sysinternals SigCheck is installed and reports its version.
@@ -51,6 +49,8 @@ public sealed class SigCheckReadTool
 
 
 
+
+
     /// <summary>
     ///     Verifies the digital signature of a file and reports certificate details
     ///     using SigCheck.
@@ -61,9 +61,7 @@ public sealed class SigCheckReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_SigCheck_Verify_File", ReadOnly = true, Destructive = false)]
     [Description("Verifies a file's digital signature and reports certificate details using Sysinternals SigCheck. Requires SigCheck to be installed; revocation checks make outbound network calls to certificate authorities.")]
-    public async Task<ToolResult> SigCheckVerifyFileAsync(
-        [Description("The absolute path of the file to verify.")] string filePath,
-        [Description("Maximum number of output lines to return. Defaults to 100.")] int maxLines = 100)
+    public async Task<ToolResult> SigCheckVerifyFileAsync([Description("The absolute path of the file to verify.")] string filePath, [Description("Maximum number of output lines to return. Defaults to 100.")] int maxLines = 100)
     {
         ToolResult? pathValidation = SysinternalsHelper.ValidateArgument(filePath, "filePath");
         if (pathValidation is not null)
@@ -83,11 +81,7 @@ public sealed class SigCheckReadTool
         }
 
         // -a shows extended version info; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync(
-            "sigcheck",
-            $"-a -accepteula \"{filePath}\"",
-            "SigCheck verification",
-            timeoutSeconds: 120).ConfigureAwait(false);
+        ToolResult result = await SysinternalsHelper.RunAsync("sigcheck", $"-a -accepteula \"{filePath}\"", "SigCheck verification", timeoutSeconds: 120).ConfigureAwait(false);
         if (!result.Success)
         {
             return result;
