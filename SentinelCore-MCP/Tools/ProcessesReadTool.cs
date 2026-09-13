@@ -62,10 +62,12 @@ public sealed class ProcessesReadTool
                             PagedMemorySize = process.PagedMemorySize64
                     });
                 }
-                catch (Exception)
-                {
+                catch
+        {
+
                     // Skip processes we cannot inspect (e.g., protected/elevated).
-                }
+                
+        }
 
             return ToolResult.Ok(results, "ProcessesReadTool");
         }
@@ -97,9 +99,11 @@ public sealed class ProcessesReadTool
                 foreach (ProcessModule module in process.Modules)
                     moduleList.Add(new { module.ModuleName, module.FileName });
             }
-            catch (Exception)
-            {
-                moduleList.Add(new { ModuleName = "(unavailable)", FileName = "(unavailable)" });
+            catch
+        {
+
+                moduleList.Add(new { ModuleName = "(unavailable)", FileName = "(unavailable)" 
+        });
             }
 
             var processInfo = new
@@ -138,9 +142,11 @@ public sealed class ProcessesReadTool
         {
             return getter();
         }
-        catch (Exception)
+        catch
         {
+
             return default;
+        
         }
     }
 }

@@ -44,7 +44,7 @@ public sealed class ActiveDirectoryReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sysinternals_ADInsight_Availability", ReadOnly = true, Destructive = false)]
     [Description("Checks whether the Sysinternals ADInsight utility is installed and reports its version and path. ADInsight is GUI-only, so no automated tracing is available.")]
-    public async Task<ToolResult> ADInsightAvailabilityAsync()
+    public async Task<ToolResult> AdInsightAvailabilityAsync()
     {
         return await Task.Run(() => Interop.SysinternalsHelper.ProbeAvailability("adinsight")).ConfigureAwait(false);
     }
@@ -70,7 +70,7 @@ public sealed class ActiveDirectoryReadTool
                 {
                     if (!TryGetDomain(out Domain? domain))
                     {
-                        return ToolResult.Fail("This host is not joined to an Active Directory domain. ADExplorer and ADInsight require domain membership and a reachable domain controller.", "Active Directory availability");
+                        return ToolResult.Fail("This host is not joined to an Active Directory domain.", "Active Directory availability");
                     }
 
                     var result = new { DomainJoined = true, domain!.Name, ForestName = domain.Forest.Name, DomainControllers = domain.DomainControllers.OfType<DomainController>().Take(10).Select(dc => dc.Name).ToList() };
@@ -115,7 +115,7 @@ public sealed class ActiveDirectoryReadTool
 
         if (!TryGetDomain(out Domain? domain))
         {
-            return ToolResult.Fail("This host is not joined to an Active Directory domain. AD browsing is unavailable.", "Active Directory browse");
+            return ToolResult.Fail("This host is not joined to an Active Directory domain.", "Active Directory browse");
         }
 
         return await Task.Run(() =>
@@ -188,20 +188,23 @@ public sealed class ActiveDirectoryReadTool
             // Force a property read so a non-domain-joined machine throws here
             // rather than in the caller.
             _ = currentDomain.Name;
-            currentDomain = currentDomain;
+
             domain = currentDomain;
             return true;
         }
         catch (ActiveDirectoryObjectNotFoundException)
         {
             // Machine is not domain-joined.
+            domain = null;
+            return false;
         }
         catch (ActiveDirectoryOperationException)
         {
             // Domain controller could not be contacted.
+            domain = null;
+            return false;
         }
 
-        domain = null;
-        return false;
+
     }
 }

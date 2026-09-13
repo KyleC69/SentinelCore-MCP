@@ -67,7 +67,9 @@ public sealed class ScheduledTaskReadTool
         }
         catch
         {
-            return ToolResult.Fail("Scheduled task listing failed.", "ScheduledTaskReadTool");
+
+            return ToolResult.Fail("Operation failed", "ScheduledTaskReadTool");
+        
         }
     }
 
@@ -84,7 +86,7 @@ public sealed class ScheduledTaskReadTool
     {
         if (string.IsNullOrWhiteSpace(taskPath))
         {
-            return ToolResult.Fail("taskPath is required.", "ScheduledTaskReadTool");
+            return ToolResult.Fail("Operation failed", "ScheduledTaskReadTool");
         }
 
         try
@@ -112,9 +114,9 @@ public sealed class ScheduledTaskReadTool
 
             return ToolResult.Ok(sb.ToString(), "ScheduledTaskReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Scheduled task read failed.", "ScheduledTaskReadTool");
+            return ToolResult.Fail(ex.Message, "ScheduledTaskReadTool");
         }
     }
 }

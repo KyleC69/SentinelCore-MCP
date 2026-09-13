@@ -54,9 +54,9 @@ public sealed class AppLockerReadTool
 
             return ToolResult.Ok(sb.ToString(), "AppLockerReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("AppLocker policy query failed.", "AppLockerReadTool");
+            return ToolResult.Fail(ex.Message, "AppLockerReadTool");
         }
     }
 
@@ -88,9 +88,9 @@ public sealed class AppLockerReadTool
 
             return ToolResult.Ok(sb.ToString(), "AppLockerReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("AppLocker rule collection listing failed.", "AppLockerReadTool");
+            return ToolResult.Fail(ex.Message, "AppLockerReadTool");
         }
     }
 }

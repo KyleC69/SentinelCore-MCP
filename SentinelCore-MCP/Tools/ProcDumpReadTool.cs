@@ -78,7 +78,7 @@ public sealed class ProcDumpReadTool
 
         if (!Path.IsPathRooted(dumpFilePath) || !dumpFilePath.EndsWith(".dmp", StringComparison.OrdinalIgnoreCase))
         {
-            return ToolResult.Fail("dumpFilePath must be an absolute path ending in .dmp.", "ProcDump capture");
+            return ToolResult.Fail("dumpFilePath must be an absolute path ending with .dmp", "ProcDump capture");
         }
 
         string? directory = Path.GetDirectoryName(dumpFilePath);

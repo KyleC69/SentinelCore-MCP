@@ -38,7 +38,7 @@ public sealed class CertificateStoreReadTool
         {
             if (string.IsNullOrWhiteSpace(storeName))
             {
-                return ToolResult.Fail("storeName is required.", "CertificateStoreReadTool");
+                return ToolResult.Fail("Operation failed", "CertificateStoreReadTool");
             }
 
             StringBuilder sb = new();
@@ -60,7 +60,9 @@ public sealed class CertificateStoreReadTool
         }
         catch
         {
-            return ToolResult.Fail("Certificate store listing failed.", "CertificateStoreReadTool");
+
+            return ToolResult.Fail("Operation failed", "CertificateStoreReadTool");
+        
         }
     }
 
@@ -79,7 +81,7 @@ public sealed class CertificateStoreReadTool
         {
             if (string.IsNullOrWhiteSpace(thumbprint) || string.IsNullOrWhiteSpace(storeName))
             {
-                return ToolResult.Fail("thumbprint and storeName are required.", "CertificateStoreReadTool");
+                return ToolResult.Fail("Operation failed", "CertificateStoreReadTool");
             }
 
             using X509Store store = new(storeName, location);
@@ -104,9 +106,9 @@ public sealed class CertificateStoreReadTool
 
             return ToolResult.Ok(sb.ToString(), "CertificateStoreReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Certificate read failed.", "CertificateStoreReadTool");
+            return ToolResult.Fail(ex.Message, "CertificateStoreReadTool");
         }
     }
 }

@@ -41,7 +41,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_DefaultParameters_ContainsRuleName()
     {
-        ToolResult result = await _tool.firewallListRulesAsync();
+        ToolResult result = await _tool.FirewallListRulesAsync();
 
         Assert.True(result.Success);
         Assert.Contains("Rule Name:", (string)result.Results!);
@@ -59,7 +59,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_DefaultParameters_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync();
+        ToolResult result = await _tool.FirewallListRulesAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -78,7 +78,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_InboundFilterOutputContainsOnlyInboundRules()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound");
+        ToolResult result = await _tool.FirewallListRulesAsync(direction: "Inbound");
 
         Assert.True(result.Success);
         // When filtered by Inbound, all Direction lines should say "In"
@@ -101,7 +101,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_OutboundFilterOutputContainsOnlyOutboundRules()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Outbound");
+        ToolResult result = await _tool.FirewallListRulesAsync(direction: "Outbound");
 
         Assert.True(result.Success);
         // When filtered by Outbound, all Direction lines should say "Out"
@@ -124,7 +124,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_OutputContainsExpectedFields()
     {
-        ToolResult result = await _tool.firewallListRulesAsync();
+        ToolResult result = await _tool.FirewallListRulesAsync();
 
         Assert.True(result.Success);
         // netsh output should contain these standard fields
@@ -146,7 +146,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_ReturnsNullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.firewallListRulesAsync();
+        ToolResult result = await _tool.FirewallListRulesAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -164,7 +164,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_WithDirectionAndProfileFilter_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound", profile: "Private");
+        ToolResult result = await _tool.FirewallListRulesAsync(direction: "Inbound", profile: "Private");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -182,7 +182,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_WithDomainProfileFilter_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(profile: "Domain");
+        ToolResult result = await _tool.FirewallListRulesAsync(profile: "Domain");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -200,7 +200,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_WithInboundFilter_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Inbound");
+        ToolResult result = await _tool.FirewallListRulesAsync(direction: "Inbound");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -219,7 +219,7 @@ public sealed class FirewallReadToolTests
     public async Task FirewallListRules_WithInvalidDirection_ReturnsSuccessfulToolResult()
     {
         // Invalid direction should be treated as "no filter" (returns all directions)
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "InvalidDirection");
+        ToolResult result = await _tool.FirewallListRulesAsync(direction: "InvalidDirection");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -238,7 +238,7 @@ public sealed class FirewallReadToolTests
     public async Task FirewallListRules_WithInvalidProfile_ReturnsSuccessfulToolResult()
     {
         // Invalid profile should be treated as "no filter" (returns all profiles)
-        ToolResult result = await _tool.firewallListRulesAsync(profile: "InvalidProfile");
+        ToolResult result = await _tool.FirewallListRulesAsync(profile: "InvalidProfile");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -257,7 +257,7 @@ public sealed class FirewallReadToolTests
     public async Task FirewallListRules_WithMaxRecords_RespectsLimit()
     {
         const int maxRecords = 5;
-        ToolResult result = await _tool.firewallListRulesAsync(maxRecords: maxRecords);
+        ToolResult result = await _tool.FirewallListRulesAsync(maxRecords: maxRecords);
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -287,7 +287,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_WithOutboundFilter_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(direction: "Outbound");
+        ToolResult result = await _tool.FirewallListRulesAsync(direction: "Outbound");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -305,7 +305,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_WithPrivateProfileFilter_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(profile: "Private");
+        ToolResult result = await _tool.FirewallListRulesAsync(profile: "Private");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -323,7 +323,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallListRules_WithPublicProfileFilter_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallListRulesAsync(profile: "Public");
+        ToolResult result = await _tool.FirewallListRulesAsync(profile: "Public");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -341,7 +341,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallReadProfiles_ContainsAllThreeProfiles()
     {
-        ToolResult result = await _tool.firewallReadProfilesAsync();
+        ToolResult result = await _tool.FirewallReadProfilesAsync();
 
         Assert.True(result.Success);
         Assert.Contains("Domain Profile", (string)result.Results!);
@@ -361,7 +361,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallReadProfiles_ContainsFirewallPolicyField()
     {
-        ToolResult result = await _tool.firewallReadProfilesAsync();
+        ToolResult result = await _tool.FirewallReadProfilesAsync();
 
         Assert.True(result.Success);
         Assert.Contains("Firewall Policy", (string)result.Results!);
@@ -379,7 +379,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallReadProfiles_ContainsLoggingSection()
     {
-        ToolResult result = await _tool.firewallReadProfilesAsync();
+        ToolResult result = await _tool.FirewallReadProfilesAsync();
 
         Assert.True(result.Success);
         Assert.Contains("Logging", (string)result.Results!);
@@ -397,7 +397,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallReadProfiles_ContainsStateField()
     {
-        ToolResult result = await _tool.firewallReadProfilesAsync();
+        ToolResult result = await _tool.FirewallReadProfilesAsync();
 
         Assert.True(result.Success);
         Assert.Contains("State", (string)result.Results!);
@@ -415,7 +415,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallReadProfiles_ReturnsNullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.firewallReadProfilesAsync();
+        ToolResult result = await _tool.FirewallReadProfilesAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -433,7 +433,7 @@ public sealed class FirewallReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task FirewallReadProfiles_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.firewallReadProfilesAsync();
+        ToolResult result = await _tool.FirewallReadProfilesAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);

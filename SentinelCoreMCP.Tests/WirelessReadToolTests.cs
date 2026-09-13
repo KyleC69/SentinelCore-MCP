@@ -41,7 +41,7 @@ public sealed class WirelessReadToolTests
     public async Task WirelessListInterfaces_RespectsMaxRecords()
     {
         const int maxRecords = 2;
-        ToolResult result = await _tool.wirelessListInterfacesAsync(maxRecords: maxRecords);
+        ToolResult result = await _tool.WirelessListInterfacesAsync(maxRecords: maxRecords);
 
         if (!result.Success)
         {
@@ -64,7 +64,7 @@ public sealed class WirelessReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task WirelessListInterfaces_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.wirelessListInterfacesAsync();
+        ToolResult result = await _tool.WirelessListInterfacesAsync();
 
         // Systems without wireless adapters or the StandardCimv2 namespace may fail
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -82,7 +82,7 @@ public sealed class WirelessReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task WirelessListInterfaces_WhenSuccessful_ReturnsListContent()
     {
-        ToolResult result = await _tool.wirelessListInterfacesAsync();
+        ToolResult result = await _tool.WirelessListInterfacesAsync();
 
         if (!result.Success)
         {
@@ -106,7 +106,7 @@ public sealed class WirelessReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task WirelessListProfiles_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.wirelessListProfilesAsync();
+        ToolResult result = await _tool.WirelessListProfilesAsync();
 
         if (!result.Success)
         {
@@ -128,7 +128,7 @@ public sealed class WirelessReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task WirelessListProfiles_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.wirelessListProfilesAsync();
+        ToolResult result = await _tool.WirelessListProfilesAsync();
 
         // netsh wlan may not be available on systems without wireless capability
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -146,7 +146,7 @@ public sealed class WirelessReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task WirelessListProfiles_WhenSuccessful_ContainsProfileOutput()
     {
-        ToolResult result = await _tool.wirelessListProfilesAsync();
+        ToolResult result = await _tool.WirelessListProfilesAsync();
 
         if (!result.Success)
         {

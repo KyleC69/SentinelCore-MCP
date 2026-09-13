@@ -37,7 +37,7 @@ public sealed class PowerShellReadTool
     /// <summary>
     ///     Maximum number of result objects returned from any single query.
     /// </summary>
-    private const int DefaultMaxResults = 50;
+    private const int DefaultMaxResults = 250;
 
     /// <summary>
     ///     Timeout in seconds for PowerShell command execution.
@@ -51,12 +51,22 @@ public sealed class PowerShellReadTool
     /// </summary>
     private const int MaxPropertyStringLength = 4096;
 
+
+
+
+
+
+
+
     /// <summary>
     ///     The set of PowerShell commands that are explicitly permitted.
     ///     Only these commands may be invoked through this tool.
     ///     Every entry is a read-only, non-destructive query command.
     /// </summary>
-    private static readonly HashSet<string> AllowedCommands = new(StringComparer.OrdinalIgnoreCase)
+    [Description("Retrieve a list of allowed powershell commands")]
+    [McpServerTool(Title = "List of allowed command for this tool.", Destructive = false, Name = "AllowedCommands", ReadOnly = true)]
+    public List<string> GetAllowedCommands() => AllowedCommands.ToList();
+    public static readonly HashSet<string> AllowedCommands = new(StringComparer.OrdinalIgnoreCase)
     {
             // ---- System information ----
             "Get-ComputerInfo",
@@ -464,7 +474,7 @@ public sealed class PowerShellReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "PowerShell_List_Allowed_Commands", ReadOnly = true, Destructive = false)]
     [Description("Returns the list of PowerShell commands that are permitted by the PowerShell_Query tool.")]
-    public async Task<ToolResult> powershellListAllowedCommandsAsync()
+    public async Task<ToolResult> PowershellListAllowedCommandsAsync()
     {
         StringBuilder sb = new();
         sb.AppendLine("Allowed Commands:");
@@ -492,8 +502,8 @@ public sealed class PowerShellReadTool
     /// </summary>
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "PowerShell_Query", ReadOnly = true, Destructive = false)]
-    [Description("Executes a pre-approved, read-only PowerShell query in a sandboxed runspace. " + "Only whitelisted commands are permitted. Pipeline operators, redirects, " + "script blocks, and .NET type access are forbidden.")]
-    public async Task<ToolResult> powershellQueryAsync([Description("The PowerShell command to execute. Must be a single read-only command " + "from the approved list. No pipelines, redirects, or script blocks.")] string command, [Description("Maximum number of result objects to return. Defaults to 50.")] int maxResults = DefaultMaxResults)
+    [Description("Executes a pre-approved, read-only PowerShell query in a sandboxed runspace. " + "Only whitelisted commands are permitted. Pipeline operators, redirects, " + "script blocks, and .NET type access are forbidden. Call AllowedCommands for a list of commands.")]
+    public async Task<ToolResult> PowershellQueryAsync([Description("The PowerShell command to execute. Must be a single read-only command " + "from the approved list. No pipelines, redirects, or script blocks.")] string command, [Description("Maximum number of result objects to return. Defaults to 50.")] int maxResults = DefaultMaxResults)
     {
         // Step 1: Validate the command against whitelist and blacklist
         string? validationError = ValidateCommand(command);

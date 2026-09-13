@@ -52,7 +52,9 @@ public sealed class AudioDeviceReadTool
         }
         catch
         {
+
             return null;
+
         }
     }
 
@@ -83,7 +85,9 @@ public sealed class AudioDeviceReadTool
         }
         catch
         {
+
             return null;
+
         }
     }
 
@@ -105,18 +109,18 @@ public sealed class AudioDeviceReadTool
         {
             ProcessStartInfo startInfo = new()
             {
-                    FileName = "pnputil",
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                FileName = "pnputil",
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
 
             using Process? process = Process.Start(startInfo);
             if (process is null)
             {
-                return ToolResult.Fail("Failed to start pnputil.", "AudioDeviceReadTool");
+                return ToolResult.Fail("Operation failed", "AudioDeviceReadTool");
             }
 
             string stdout = process.StandardOutput.ReadToEnd();
@@ -127,7 +131,9 @@ public sealed class AudioDeviceReadTool
         }
         catch
         {
-            return ToolResult.Fail("pnputil execution failed.", "AudioDeviceReadTool");
+
+            return ToolResult.Fail("Operation failed", "AudioDeviceReadTool");
+
         }
     }
 
@@ -143,11 +149,11 @@ public sealed class AudioDeviceReadTool
     /// </summary>
     private static string StateToString(int state) => state switch
     {
-            1 => "Active",
-            2 => "Disabled",
-            4 => "NotPresent",
-            8 => "Unplugged",
-            _ => $"Unknown({state})"
+        1 => "Active",
+        2 => "Disabled",
+        4 => "NotPresent",
+        8 => "Unplugged",
+        _ => $"Unknown({state})"
     };
 
 
@@ -160,7 +166,7 @@ public sealed class AudioDeviceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Audio_List_Devices", ReadOnly = true, Destructive = false)]
     [Description("Lists active audio playback and recording devices using pnputil and the registry.")]
-    public async Task<ToolResult> audioListDevicesAsync()
+    public async Task<ToolResult> AudioListDevicesAsync()
     {
         try
         {
@@ -186,9 +192,9 @@ public sealed class AudioDeviceReadTool
 
             return ToolResult.Ok(sb.ToString(), "AudioDeviceReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Audio device listing failed.", "AudioDeviceReadTool");
+            return ToolResult.Fail(ex.Message, "AudioDeviceReadTool");
         }
     }
 
@@ -202,7 +208,7 @@ public sealed class AudioDeviceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Audio_Read_Default_Device", ReadOnly = true, Destructive = false)]
     [Description("Reads the default audio playback device from the registry.")]
-    public async Task<ToolResult> audioReadDefaultDeviceAsync()
+    public async Task<ToolResult> AudioReadDefaultDeviceAsync()
     {
         try
         {
@@ -213,7 +219,7 @@ public sealed class AudioDeviceReadTool
             using RegistryKey? renderKey = Registry.LocalMachine.OpenSubKey(renderKeyPath, false);
             if (renderKey is null)
             {
-                return ToolResult.Fail("MMDevices Audio Render registry key not found.", "AudioDeviceReadTool");
+                return ToolResult.Fail("Operation failed", "AudioDeviceReadTool");
             }
 
             StringBuilder sb = new();
@@ -251,7 +257,9 @@ public sealed class AudioDeviceReadTool
         }
         catch
         {
-            return ToolResult.Fail("Default audio device read failed.", "AudioDeviceReadTool");
+
+            return ToolResult.Fail("Operation failed", "AudioDeviceReadTool");
+
         }
     }
 }

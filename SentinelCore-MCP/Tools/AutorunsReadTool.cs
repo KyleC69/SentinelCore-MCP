@@ -171,9 +171,9 @@ public sealed class AutorunsReadTool
 
             return ToolResult.Ok(sb.ToString(), "AutorunsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Autoruns listing failed.", "AutorunsReadTool");
+            return ToolResult.Fail(ex.Message, "AutorunsReadTool");
         }
     }
 
@@ -215,9 +215,9 @@ public sealed class AutorunsReadTool
 
             return ToolResult.Ok(results, "AutorunsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("IFEO listing failed.", "AutorunsReadTool");
+            return ToolResult.Fail(ex.Message, "AutorunsReadTool");
         }
     }
 

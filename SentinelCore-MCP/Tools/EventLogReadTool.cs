@@ -51,9 +51,9 @@ public sealed class EventLogReadTool
 
             return ToolResult.Ok(sb.ToString(), "EventLogReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Event log channel listing failed.", "EventLogReadTool");
+            return ToolResult.Fail(ex.Message, "EventLogReadTool");
         }
     }
 
@@ -66,7 +66,7 @@ public sealed class EventLogReadTool
 
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Event_Log_Query", ReadOnly = true, Destructive = false)]
-    [Description("Queries events from a specific event log channel.")]
+    [Description("Queries events from a specific event log channel. Sorted from oldest to newest. Use Get-WinEvent and the PowershellReadTool")]
     public async Task<ToolResult> EventLogQueryAsync([Description("The event log channel name, e.g. Application or System.")] string channel, [Description("Optional XPath filter expression. Defaults to all events.")] string? query = null, [Description("Maximum number of events to return. Defaults to 50.")] int maxEvents = 50)
     {
         try
@@ -80,7 +80,10 @@ public sealed class EventLogReadTool
             StringBuilder sb = new();
             int count = 0;
             using EventLogReader reader = new(new EventLogQuery(channel, PathType.LogName, xpath));
+            reader.BatchSize = 150;
             EventRecord? record;
+
+
             while ((record = reader.ReadEvent()) is not null && count < maxEvents)
             {
                 sb.AppendLine($"TimeCreated={record.TimeCreated}, Level={record.LevelDisplayName}, Provider={record.ProviderName}, Id={record.Id}, Message={record.FormatDescription()}");
@@ -89,9 +92,9 @@ public sealed class EventLogReadTool
 
             return ToolResult.Ok(sb.ToString(), "EventLogReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Event log query failed.", "EventLogReadTool");
+            return ToolResult.Fail(ex.Message, "EventLogReadTool");
         }
     }
 
@@ -117,19 +120,19 @@ public sealed class EventLogReadTool
             EventLogConfiguration config = new(channel);
             var result = new
             {
-                    ChannelName = config.LogName,
-                    config.LogType,
-                    config.IsEnabled,
-                    config.MaximumSizeInBytes,
-                    config.LogFilePath,
-                    config.IsClassicLog
+                ChannelName = config.LogName,
+                config.LogType,
+                config.IsEnabled,
+                config.MaximumSizeInBytes,
+                config.LogFilePath,
+                config.IsClassicLog
             };
 
             return ToolResult.Ok(result, "Event log configuration read.");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Event log configuration read failed.", "EventLogReadTool");
+            return ToolResult.Fail(ex.Message, "EventLogReadTool");
         }
     }
 }

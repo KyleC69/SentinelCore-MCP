@@ -70,7 +70,7 @@ public sealed class ShellExplorerReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Shell_Explorer_Read_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads common Explorer settings such as hidden files and file extensions.")]
-    public async Task<ToolResult> shellExplorerReadSettingsAsync()
+    public async Task<ToolResult> ShellExplorerReadSettingsAsync()
     {
         try
         {
@@ -80,9 +80,9 @@ public sealed class ShellExplorerReadTool
 
             return ToolResult.Ok(sb.ToString(), "ShellExplorerReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Shell Explorer settings read failed.", "ShellExplorerReadTool");
+            return ToolResult.Fail(ex.Message, "ShellExplorerReadTool");
         }
     }
 
@@ -96,7 +96,7 @@ public sealed class ShellExplorerReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Shell_Taskbar_Pinned_List", ReadOnly = true, Destructive = false)]
     [Description("Lists pinned items in the Windows taskbar Quick Launch/User Pinned path.")]
-    public async Task<ToolResult> shellTaskbarPinnedListAsync()
+    public async Task<ToolResult> ShellTaskbarPinnedListAsync()
     {
         try
         {
@@ -111,9 +111,9 @@ public sealed class ShellExplorerReadTool
 
             return ToolResult.Ok(sb.ToString(), "ShellExplorerReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Taskbar pinned listing failed.", "ShellExplorerReadTool");
+            return ToolResult.Fail(ex.Message, "ShellExplorerReadTool");
         }
     }
 }

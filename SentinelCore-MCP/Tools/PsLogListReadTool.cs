@@ -72,7 +72,7 @@ public sealed class PsLogListReadTool
         // Log names are restricted to a safe character set to prevent argument shaping.
         if (!System.Text.RegularExpressions.Regex.IsMatch(logName!, @"^[a-zA-Z0-9 _\-]+$"))
         {
-            return ToolResult.Fail("logName must contain only letters, digits, spaces, hyphens, and underscores.", "PsLogList dump");
+            return ToolResult.Fail("Invalid log name format.", "PsLogList dump");
         }
 
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxEvents, "maxEvents");

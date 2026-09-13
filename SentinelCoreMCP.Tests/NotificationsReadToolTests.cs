@@ -40,7 +40,7 @@ public sealed class NotificationsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task NotificationListApps_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.notificationListAppsAsync();
+        ToolResult result = await _tool.NotificationListAppsAsync();
 
         if (!result.Success)
         {
@@ -62,7 +62,7 @@ public sealed class NotificationsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task NotificationListApps_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.notificationListAppsAsync();
+        ToolResult result = await _tool.NotificationListAppsAsync();
 
         // The notification registry key may not exist on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -80,7 +80,7 @@ public sealed class NotificationsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task NotificationListApps_WhenSuccessful_ReturnsDictionaryList()
     {
-        ToolResult result = await _tool.notificationListAppsAsync();
+        ToolResult result = await _tool.NotificationListAppsAsync();
 
         if (!result.Success)
         {
@@ -104,7 +104,7 @@ public sealed class NotificationsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task NotificationReadQuietHours_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.notificationReadQuietHoursAsync();
+        ToolResult result = await _tool.NotificationReadQuietHoursAsync();
 
         // The quiet hours key may not exist on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -122,7 +122,7 @@ public sealed class NotificationsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task NotificationReadQuietHours_WhenSuccessful_ContainsKeyValuePairs()
     {
-        ToolResult result = await _tool.notificationReadQuietHoursAsync();
+        ToolResult result = await _tool.NotificationReadQuietHoursAsync();
 
         if (!result.Success)
         {

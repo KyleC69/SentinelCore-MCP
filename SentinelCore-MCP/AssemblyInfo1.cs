@@ -27,3 +27,5 @@ using System.Runtime.Versioning;
 
 [assembly: Guid("b942f53a-37f5-4c68-a334-4419daa6ade8")]
 [assembly: SupportedOSPlatform("windows")]
+[assembly: UnsupportedOSPlatform("linux")]
+[assembly: UnsupportedOSPlatform("macos")]

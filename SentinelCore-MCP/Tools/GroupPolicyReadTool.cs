@@ -53,7 +53,7 @@ public sealed class GroupPolicyReadTool
         {
             if (string.IsNullOrWhiteSpace(keyPath))
             {
-                return ToolResult.Fail("keyPath is required.", "GroupPolicyReadTool");
+                return ToolResult.Fail("keyPath is required", "GroupPolicyReadTool");
             }
 
             StringBuilder sb = new();
@@ -79,9 +79,9 @@ public sealed class GroupPolicyReadTool
             return sb.Length == 0 ? ToolResult.Fail($"No group policy keys found under {keyPath}", "GroupPolicyReadTool") : ToolResult.Ok(sb.ToString(), "GroupPolicyReadTool");
 
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Group policy listing failed.", "GroupPolicyReadTool");
+            return ToolResult.Fail(ex.Message, "GroupPolicyReadTool");
         }
     }
 
@@ -101,7 +101,7 @@ public sealed class GroupPolicyReadTool
         {
             if (string.IsNullOrWhiteSpace(keyPath) || string.IsNullOrWhiteSpace(valueName))
             {
-                return ToolResult.Fail("keyPath and valueName are required.", "GroupPolicyReadTool");
+                return ToolResult.Fail("keyPath and valueName are required", "GroupPolicyReadTool");
             }
 
             foreach (string root in SPolicyRoots)
@@ -120,9 +120,9 @@ public sealed class GroupPolicyReadTool
 
             return ToolResult.Fail($"Group policy value not found: {keyPath}\\{valueName}", "GroupPolicyReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Group policy read failed.", "GroupPolicyReadTool");
+            return ToolResult.Fail(ex.Message, "GroupPolicyReadTool");
         }
     }
 }

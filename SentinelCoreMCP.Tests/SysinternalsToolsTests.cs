@@ -34,7 +34,7 @@ public sealed class SysinternalsToolsTests
     public async Task ADInsightAvailability_AlwaysSucceeds()
     {
         ActiveDirectoryReadTool tool = new();
-        ToolResult result = await tool.ADInsightAvailabilityAsync();
+        ToolResult result = await tool.AdInsightAvailabilityAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);

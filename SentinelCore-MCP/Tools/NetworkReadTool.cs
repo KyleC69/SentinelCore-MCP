@@ -41,19 +41,19 @@ public sealed class NetworkReadTool
             var interfaces = NetworkInterface.GetAllNetworkInterfaces().Take(maxRecords);
             var results = interfaces.Select(ni => new
             {
-                    ni.Name,
-                    ni.Description,
-                    ni.OperationalStatus,
-                    ni.Speed,
-                    ni.NetworkInterfaceType,
-                    ni.GetIPProperties().UnicastAddresses.Count
+                ni.Name,
+                ni.Description,
+                ni.OperationalStatus,
+                ni.Speed,
+                ni.NetworkInterfaceType,
+                ni.GetIPProperties().UnicastAddresses.Count
             });
 
             return ToolResult.Ok(results, "NetworkReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Network interface listing failed.", "NetworkReadTool");
+            return ToolResult.Fail(ex.Message, "NetworkReadTool");
         }
     }
 
@@ -76,9 +76,9 @@ public sealed class NetworkReadTool
 
             return ToolResult.Ok(results, "NetworkReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("TCP connection listing failed.", "NetworkReadTool");
+            return ToolResult.Fail(ex.Message, "NetworkReadTool");
         }
     }
 
@@ -97,7 +97,7 @@ public sealed class NetworkReadTool
         {
             if (string.IsNullOrWhiteSpace(interfaceName))
             {
-                return ToolResult.Fail("interfaceName is required.", "NetworkReadTool");
+                return ToolResult.Fail("interfaceName is required", "NetworkReadTool");
             }
 
             NetworkInterface? ni = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(x => x.Name.Equals(interfaceName, StringComparison.OrdinalIgnoreCase));
@@ -129,9 +129,9 @@ public sealed class NetworkReadTool
 
             return ToolResult.Ok(sb.ToString(), "NetworkReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("IP config read failed.", "NetworkReadTool");
+            return ToolResult.Fail(ex.Message, "NetworkReadTool");
         }
     }
 
@@ -150,7 +150,7 @@ public sealed class NetworkReadTool
         {
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                return ToolResult.Fail("hostName is required.", "NetworkReadTool");
+                return ToolResult.Fail("hostName is required", "NetworkReadTool");
             }
 
             IPHostEntry entries = Dns.GetHostEntry(hostName);
@@ -164,9 +164,9 @@ public sealed class NetworkReadTool
 
             return ToolResult.Ok(sb.ToString(), "NetworkReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("DNS resolution failed.", "NetworkReadTool");
+            return ToolResult.Fail(ex.Message, "NetworkReadTool");
         }
     }
 }

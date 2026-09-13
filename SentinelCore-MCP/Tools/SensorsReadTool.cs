@@ -32,7 +32,7 @@ public sealed class SensorsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sensor_List_Devices", ReadOnly = true, Destructive = false)]
     [Description("Lists sensor devices via CIM Win32_PnPEntity matching common sensor class names.")]
-    public async Task<ToolResult> sensorListDevicesAsync()
+    public async Task<ToolResult> SensorListDevicesAsync()
     {
         try
         {
@@ -41,18 +41,18 @@ public sealed class SensorsReadTool
             foreach (ManagementObject device in searcher.Get())
                 results.Add(new
                 {
-                        DeviceID = device["DeviceID"]?.ToString(),
-                        Name = device["Name"]?.ToString(),
-                        Status = device["Status"]?.ToString(),
-                        PNPClass = device["PNPClass"]?.ToString(),
-                        Manufacturer = device["Manufacturer"]?.ToString()
+                    DeviceID = device["DeviceID"]?.ToString(),
+                    Name = device["Name"]?.ToString(),
+                    Status = device["Status"]?.ToString(),
+                    PNPClass = device["PNPClass"]?.ToString(),
+                    Manufacturer = device["Manufacturer"]?.ToString()
                 });
 
             return ToolResult.Ok(results, "SensorsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Sensor device listing failed.", "SensorsReadTool");
+            return ToolResult.Fail(ex.Message, "SensorsReadTool");
         }
     }
 
@@ -66,7 +66,7 @@ public sealed class SensorsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Sensor_Read_Location_Service", ReadOnly = true, Destructive = false)]
     [Description("Reads the Windows sensor permissions / location service status from CIM.")]
-    public async Task<ToolResult> sensorReadLocationServiceAsync()
+    public async Task<ToolResult> SensorReadLocationServiceAsync()
     {
         try
         {
@@ -77,9 +77,9 @@ public sealed class SensorsReadTool
 
             return sb.Length == 0 ? ToolResult.Fail("Location service not found.", "SensorsReadTool") : ToolResult.Ok(sb.ToString(), "SensorsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Sensor location service read failed.", "SensorsReadTool");
+            return ToolResult.Fail(ex.Message, "SensorsReadTool");
         }
     }
 }

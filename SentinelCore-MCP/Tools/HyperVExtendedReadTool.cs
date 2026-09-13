@@ -64,9 +64,9 @@ public sealed class HyperVExtendedReadTool
 
             return ToolResult.Ok(results, "HyperVExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Hyper-V checkpoint listing failed.", "HyperVExtendedReadTool");
+            return ToolResult.Fail(ex.Message, "HyperVExtendedReadTool");
         }
     }
 }

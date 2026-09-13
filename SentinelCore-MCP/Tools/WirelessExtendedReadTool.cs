@@ -70,15 +70,15 @@ public sealed class WirelessExtendedReadTool
 
                         results.Add(new
                         {
-                                Guid = profileGuid,
-                                ProfileName = profileName?.ToString() ?? "",
-                                Description = description?.ToString() ?? "",
-                                Category = category?.ToString() ?? "",
-                                CategoryType = catType,
-                                DateCreated = dateCreated?.ToString() ?? "",
-                                DateLastConnected = dateLastConnected?.ToString() ?? "",
-                                Managed = managed?.ToString() ?? "",
-                                NameType = nameType?.ToString() ?? ""
+                            Guid = profileGuid,
+                            ProfileName = profileName?.ToString() ?? "",
+                            Description = description?.ToString() ?? "",
+                            Category = category?.ToString() ?? "",
+                            CategoryType = catType,
+                            DateCreated = dateCreated?.ToString() ?? "",
+                            DateLastConnected = dateLastConnected?.ToString() ?? "",
+                            Managed = managed?.ToString() ?? "",
+                            NameType = nameType?.ToString() ?? ""
                         });
                     }
                 }
@@ -86,9 +86,9 @@ public sealed class WirelessExtendedReadTool
 
             return ToolResult.Ok(results, "WirelessExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Wireless connection history listing failed.", "WirelessExtendedReadTool");
+            return ToolResult.Fail(ex.Message, "WirelessExtendedReadTool");
         }
     }
 }

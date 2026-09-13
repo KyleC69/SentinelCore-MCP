@@ -44,12 +44,12 @@ public sealed class CredentialsReadTool
         {
             ProcessStartInfo psi = new()
             {
-                    FileName = "cmdkey.exe",
-                    Arguments = "/list",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                FileName = "cmdkey.exe",
+                Arguments = "/list",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
 
             using Process process = new() { StartInfo = psi };
@@ -62,7 +62,7 @@ public sealed class CredentialsReadTool
             if (!exited)
             {
                 process.Kill();
-                return ToolResult.Fail("cmdkey /list timed out after 30 seconds.", "CredentialsReadTool");
+                return ToolResult.Fail("cmdkey process timed out after 30 seconds.", "CredentialsReadTool");
             }
 
             string output = await outputTask.ConfigureAwait(false);

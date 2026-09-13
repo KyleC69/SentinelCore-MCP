@@ -33,7 +33,7 @@ public sealed class PerformanceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Performance_List_Categories", ReadOnly = true, Destructive = false)]
     [Description("Lists performance counter categories available on the system.")]
-    public async Task<ToolResult> performanceListCategoriesAsync()
+    public async Task<ToolResult> PerformanceListCategoriesAsync()
     {
         try
         {
@@ -43,7 +43,9 @@ public sealed class PerformanceReadTool
         }
         catch
         {
-            return ToolResult.Fail("Performance category listing failed.", "PerformanceReadTool");
+
+            return ToolResult.Fail("Operation failed", "PerformanceReadTool");
+
         }
     }
 
@@ -57,13 +59,13 @@ public sealed class PerformanceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Performance_List_Counters", ReadOnly = true, Destructive = false)]
     [Description("Lists counters for a given performance counter category and optional instance.")]
-    public async Task<ToolResult> performanceListCountersAsync([Description("The performance counter category name, e.g. Processor.")] string categoryName, [Description("Optional instance name, e.g. _Total.")] string? instanceName = null)
+    public async Task<ToolResult> PerformanceListCountersAsync([Description("The performance counter category name, e.g. Processor.")] string categoryName, [Description("Optional instance name, e.g. _Total.")] string? instanceName = null)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(categoryName))
             {
-                return ToolResult.Fail("categoryName is required.", "PerformanceReadTool");
+                return ToolResult.Fail("Operation failed", "PerformanceReadTool");
             }
 
             PerformanceCounterCategory category = new(categoryName);
@@ -75,9 +77,9 @@ public sealed class PerformanceReadTool
 
             return ToolResult.Ok(sb.ToString(), "PerformanceReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Performance counter listing failed.", "PerformanceReadTool");
+            return ToolResult.Fail(ex.Message, "PerformanceReadTool");
         }
     }
 
@@ -91,13 +93,13 @@ public sealed class PerformanceReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Performance_Read_Counter", ReadOnly = true, Destructive = false)]
     [Description("Reads the current value of a performance counter.")]
-    public async Task<ToolResult> performanceReadCounterAsync([Description("The performance counter category name.")] string categoryName, [Description("The counter name, e.g. % Processor Time.")] string counterName, [Description("Optional instance name, e.g. _Total.")] string? instanceName = null, [Description("Optional machine name. Defaults to local.")] string machineName = "")
+    public async Task<ToolResult> PerformanceReadCounterAsync([Description("The performance counter category name.")] string categoryName, [Description("The counter name, e.g. % Processor Time.")] string counterName, [Description("Optional instance name, e.g. _Total.")] string? instanceName = null, [Description("Optional machine name. Defaults to local.")] string machineName = "")
     {
         try
         {
             if (string.IsNullOrWhiteSpace(categoryName) || string.IsNullOrWhiteSpace(counterName))
             {
-                return ToolResult.Fail("categoryName and counterName are required.", "PerformanceReadTool");
+                return ToolResult.Fail("Operation failed", "PerformanceReadTool");
             }
 
             using PerformanceCounter counter = string.IsNullOrWhiteSpace(instanceName) ? new PerformanceCounter(categoryName, counterName, machineName) : new PerformanceCounter(categoryName, counterName, instanceName, machineName);
@@ -106,9 +108,9 @@ public sealed class PerformanceReadTool
             float value = counter.NextValue();
             return ToolResult.Ok($"Counter={categoryName}/{counterName}[{instanceName ?? "(none)"}]={value}", "PerformanceReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Performance counter read failed.", "PerformanceReadTool");
+            return ToolResult.Fail(ex.Message, "PerformanceReadTool");
         }
     }
 }

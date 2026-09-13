@@ -38,7 +38,7 @@ public sealed class FileSystemReadTool
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.", "FileSystemReadTool");
+                return ToolResult.Fail("Operation failed", "FileSystemReadTool");
             }
 
             DirectoryInfo dir = new(path);
@@ -77,9 +77,8 @@ public sealed class FileSystemReadTool
 
             return ToolResult.Ok(sb.ToString(), "FileSystemReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("Directory listing failed.", "FileSystemReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "FileSystemReadTool");
         }
     }
 
@@ -99,7 +98,7 @@ public sealed class FileSystemReadTool
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.", "FileSystemReadTool");
+                return ToolResult.Fail("Operation failed", "FileSystemReadTool");
             }
 
             FileSystemSecurity security;
@@ -127,9 +126,8 @@ public sealed class FileSystemReadTool
 
             return ToolResult.Ok(sb.ToString(), "FileSystemReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("ACL read failed.", "FileSystemReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "FileSystemReadTool");
         }
     }
 
@@ -148,7 +146,7 @@ public sealed class FileSystemReadTool
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.", "FileSystemReadTool");
+                return ToolResult.Fail("Operation failed", "FileSystemReadTool");
             }
 
             FileInfo info = new(path);
@@ -224,9 +222,8 @@ public sealed class FileSystemReadTool
         {
             return ToolResult.Fail($"I/O error reading file: {path}", "FileSystemReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("File content read failed.", "FileSystemReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "FileSystemReadTool");
         }
     }
 
@@ -245,7 +242,7 @@ public sealed class FileSystemReadTool
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.", "FileSystemReadTool");
+                return ToolResult.Fail("Operation failed", "FileSystemReadTool");
             }
 
             FileInfo info = new(path);
@@ -285,9 +282,8 @@ public sealed class FileSystemReadTool
 
             return ToolResult.Ok(fileResult, "File system metadata read.");
         }
-        catch
-        {
-            return ToolResult.Fail("File system metadata read failed.", "FileSystemReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "FileSystemReadTool");
         }
     }
 }

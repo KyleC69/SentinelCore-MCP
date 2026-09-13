@@ -42,7 +42,7 @@ public sealed class NotificationsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Notification_List_Apps", ReadOnly = true, Destructive = false)]
     [Description("Lists notification settings and app entries from the Windows notification registry store.")]
-    public async Task<ToolResult> notificationListAppsAsync()
+    public async Task<ToolResult> NotificationListAppsAsync()
     {
         try
         {
@@ -62,24 +62,28 @@ public sealed class NotificationsReadTool
 
                         results.Add(new Dictionary<string, object?>
                         {
-                                ["App"] = appKeyName,
-                                ["Enabled"] = appKey.GetValue("Enabled"),
-                                ["ShowBanner"] = appKey.GetValue("ShowBannerAndSound"),
-                                ["ShowNotificationActions"] = appKey.GetValue("ShowNotificationActions"),
-                                ["LastModified"] = appKey.GetValue("LastNotificationAdded")
+                            ["App"] = appKeyName,
+                            ["Enabled"] = appKey.GetValue("Enabled"),
+                            ["ShowBanner"] = appKey.GetValue("ShowBannerAndSound"),
+                            ["ShowNotificationActions"] = appKey.GetValue("ShowNotificationActions"),
+                            ["LastModified"] = appKey.GetValue("LastNotificationAdded")
                         });
                     }
                     catch
-                    {
+        {
+
                         // Ignore unreadable entries.
-                    }
+
+        }
             }
 
             return ToolResult.Ok(results, "NotificationsReadTool");
         }
         catch
         {
-            return ToolResult.Fail("Notification app listing failed.", "NotificationsReadTool");
+
+            return ToolResult.Fail("Operation failed", "NotificationsReadTool");
+
         }
     }
 
@@ -93,7 +97,7 @@ public sealed class NotificationsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Notification_Read_Quiet_Hours", ReadOnly = true, Destructive = false)]
     [Description("Reads the global Windows quiet hours / do-not-disturb state from the registry.")]
-    public async Task<ToolResult> notificationReadQuietHoursAsync()
+    public async Task<ToolResult> NotificationReadQuietHoursAsync()
     {
         try
         {
@@ -101,7 +105,7 @@ public sealed class NotificationsReadTool
             using RegistryKey? key = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\NOC_GLOBAL_SETTING", false);
             if (key is null)
             {
-                return ToolResult.Fail("Quiet-hours registry key not present.", "NotificationsReadTool");
+                return ToolResult.Fail("Operation failed", "NotificationsReadTool");
             }
 
             StringBuilder sb = new();
@@ -109,9 +113,9 @@ public sealed class NotificationsReadTool
 
             return ToolResult.Ok(sb.ToString(), "NotificationsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Quiet hours read failed.", "NotificationsReadTool");
+            return ToolResult.Fail(ex.Message, "NotificationsReadTool");
         }
     }
 }

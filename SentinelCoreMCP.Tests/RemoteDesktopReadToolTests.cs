@@ -40,7 +40,7 @@ public sealed class RemoteDesktopReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task RdpReadListenerConfig_ContainsPortNumber()
     {
-        ToolResult result = await _tool.rdpReadListenerConfigAsync();
+        ToolResult result = await _tool.RdpReadListenerConfigAsync();
 
         Assert.True(result.Success);
         // The RDP TCP key always exists on Windows systems with the PortNumber value
@@ -59,7 +59,7 @@ public sealed class RemoteDesktopReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task RdpReadListenerConfig_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.rdpReadListenerConfigAsync();
+        ToolResult result = await _tool.RdpReadListenerConfigAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -77,7 +77,7 @@ public sealed class RemoteDesktopReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task RdpReadListenerConfig_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.rdpReadListenerConfigAsync();
+        ToolResult result = await _tool.RdpReadListenerConfigAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -95,7 +95,7 @@ public sealed class RemoteDesktopReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task RdpReadSettings_ContainsDenyTSConnections()
     {
-        ToolResult result = await _tool.rdpReadSettingsAsync();
+        ToolResult result = await _tool.RdpReadSettingsAsync();
 
         Assert.True(result.Success);
         // Terminal Server key always exists with fDenyTSConnections
@@ -114,7 +114,7 @@ public sealed class RemoteDesktopReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task RdpReadSettings_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.rdpReadSettingsAsync();
+        ToolResult result = await _tool.RdpReadSettingsAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -132,7 +132,7 @@ public sealed class RemoteDesktopReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task RdpReadSettings_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.rdpReadSettingsAsync();
+        ToolResult result = await _tool.RdpReadSettingsAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);

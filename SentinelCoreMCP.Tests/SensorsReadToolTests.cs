@@ -40,7 +40,7 @@ public sealed class SensorsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SensorListDevices_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.sensorListDevicesAsync();
+        ToolResult result = await _tool.SensorListDevicesAsync();
 
         if (!result.Success)
         {
@@ -62,7 +62,7 @@ public sealed class SensorsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SensorListDevices_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.sensorListDevicesAsync();
+        ToolResult result = await _tool.SensorListDevicesAsync();
 
         // Systems without sensors return an empty list (still success)
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -80,7 +80,7 @@ public sealed class SensorsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SensorListDevices_WhenSuccessful_ReturnsListContent()
     {
-        ToolResult result = await _tool.sensorListDevicesAsync();
+        ToolResult result = await _tool.SensorListDevicesAsync();
 
         if (!result.Success)
         {
@@ -104,7 +104,7 @@ public sealed class SensorsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SensorReadLocationService_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.sensorReadLocationServiceAsync();
+        ToolResult result = await _tool.SensorReadLocationServiceAsync();
 
         // The lfsvc service may not exist on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -122,7 +122,7 @@ public sealed class SensorsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SensorReadLocationService_WhenSuccessful_ContainsStatus()
     {
-        ToolResult result = await _tool.sensorReadLocationServiceAsync();
+        ToolResult result = await _tool.SensorReadLocationServiceAsync();
 
         if (!result.Success)
         {

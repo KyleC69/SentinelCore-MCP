@@ -134,7 +134,7 @@ public sealed class DisplayReadTool
 
             if (record is null)
             {
-                return ToolResult.Fail("No active video controller with a current resolution was found.", "DisplayReadTool");
+                return ToolResult.Fail("Display record not found.", "DisplayReadTool");
             }
 
             return ToolResult.Ok(record, "Virtual screen geometry read.");

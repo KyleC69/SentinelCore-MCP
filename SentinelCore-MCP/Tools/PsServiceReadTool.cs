@@ -73,7 +73,7 @@ public sealed class PsServiceReadTool
 
             if (!System.Text.RegularExpressions.Regex.IsMatch(serviceName!, @"^[a-zA-Z0-9._\- ]+$"))
             {
-                return ToolResult.Fail("serviceName must contain only letters, digits, dots, hyphens, underscores, and spaces.", "PsService enumeration");
+                return ToolResult.Fail("Invalid service name format.", "PsService enumeration");
             }
         }
 

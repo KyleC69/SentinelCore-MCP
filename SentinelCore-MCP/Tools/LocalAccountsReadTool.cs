@@ -67,9 +67,9 @@ public sealed class LocalAccountsReadTool
 
             return ToolResult.Ok(sb.ToString(), "LocalAccountsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Local group listing failed.", "LocalAccountsReadTool");
+            return ToolResult.Fail(ex.Message, "LocalAccountsReadTool");
         }
     }
 
@@ -108,9 +108,9 @@ public sealed class LocalAccountsReadTool
 
             return ToolResult.Ok(sb.ToString(), "LocalAccountsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Local user listing failed.", "LocalAccountsReadTool");
+            return ToolResult.Fail(ex.Message, "LocalAccountsReadTool");
         }
     }
 }

@@ -39,7 +39,7 @@ public sealed class WindowsServiceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ServiceList_ContainsServiceInfo()
     {
-        ToolResult result = await _tool.serviceListAsync();
+        ToolResult result = await _tool.ServiceListAsync();
 
         Assert.True(result.Success);
         // Service list output should contain service-related information
@@ -58,7 +58,7 @@ public sealed class WindowsServiceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ServiceList_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.serviceListAsync();
+        ToolResult result = await _tool.ServiceListAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -76,7 +76,7 @@ public sealed class WindowsServiceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ServiceList_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.serviceListAsync();
+        ToolResult result = await _tool.ServiceListAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -94,7 +94,7 @@ public sealed class WindowsServiceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ServiceList_WithNameFilter_ReturnsFilteredResults()
     {
-        ToolResult result = await _tool.serviceListAsync(nameFilter: "Windows");
+        ToolResult result = await _tool.ServiceListAsync(nameFilter: "Windows");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -110,7 +110,7 @@ public sealed class WindowsServiceReadToolTests
     [Fact]
     public async Task ServiceRead_EmptyServiceName_ReturnsFailure()
     {
-        ToolResult result = await _tool.serviceReadAsync("");
+        ToolResult result = await _tool.ServiceReadAsync("");
 
         Assert.False(result.Success);
         Assert.NotNull(result.ErrorDetails);
@@ -130,7 +130,7 @@ public sealed class WindowsServiceReadToolTests
     public async Task ServiceRead_KnownService_ReturnsSuccessfulToolResult()
     {
         // EventLog service exists on all Windows systems
-        ToolResult result = await _tool.serviceReadAsync("EventLog");
+        ToolResult result = await _tool.ServiceReadAsync("EventLog");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -148,7 +148,7 @@ public sealed class WindowsServiceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ServiceRead_NonExistentService_ReturnsFailure()
     {
-        ToolResult result = await _tool.serviceReadAsync("NonExistentService_12345");
+        ToolResult result = await _tool.ServiceReadAsync("NonExistentService_12345");
 
         Assert.False(result.Success);
         Assert.NotNull(result.ErrorDetails);

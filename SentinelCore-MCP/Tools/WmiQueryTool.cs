@@ -62,7 +62,7 @@ public sealed class WmiQueryTool
     {
         if (string.IsNullOrWhiteSpace(nameSpace))
         {
-            return ToolResult.Fail("nameSpace is required.", "WmiQueryTool");
+            return ToolResult.Fail("namespace is required", "WmiQueryTool");
         }
 
         if (!AllowedNamespaces.Contains(nameSpace))
@@ -163,9 +163,9 @@ public sealed class WmiQueryTool
                 {
                     object? value = prop.Value switch
                     {
-                            CimInstance nested => nested.CimSystemProperties.ClassName,
-                            Array array => string.Join(",", array.Cast<object?>().Where(x => x != null)),
-                            _ => prop.Value
+                        CimInstance nested => nested.CimSystemProperties.ClassName,
+                        Array array => string.Join(",", array.Cast<object?>().Where(x => x != null)),
+                        _ => prop.Value
                     };
 
                     row[prop.Name] = value;
@@ -176,12 +176,12 @@ public sealed class WmiQueryTool
 
             var result = new
             {
-                    Query = query,
-                    TotalRows = totalRows,
-                    ReturnedRows = compactRows.Count,
-                    MaxRows = maxRows,
-                    MaxProperties = maxProperties,
-                    Rows = compactRows
+                Query = query,
+                TotalRows = totalRows,
+                ReturnedRows = compactRows.Count,
+                MaxRows = maxRows,
+                MaxProperties = maxProperties,
+                Rows = compactRows
             };
 
             return ToolResult.Ok(result, "CIM query complete.");

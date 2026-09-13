@@ -38,7 +38,7 @@ public sealed class FileSystemExtendedReadTool
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {
-                return ToolResult.Fail("filePath is required.", "FileSystemExtendedReadTool");
+                return ToolResult.Fail("Operation failed", "FileSystemExtendedReadTool");
             }
 
             if (!File.Exists(filePath))
@@ -48,12 +48,12 @@ public sealed class FileSystemExtendedReadTool
 
             using HashAlgorithm hashAlgorithm = algorithm.ToUpperInvariant() switch
             {
-                    "MD5" => MD5.Create(),
-                    "SHA1" => SHA1.Create(),
-                    "SHA256" => SHA256.Create(),
-                    "SHA384" => SHA384.Create(),
-                    "SHA512" => SHA512.Create(),
-                    _ => SHA256.Create()
+                "MD5" => MD5.Create(),
+                "SHA1" => SHA1.Create(),
+                "SHA256" => SHA256.Create(),
+                "SHA384" => SHA384.Create(),
+                "SHA512" => SHA512.Create(),
+                _ => SHA256.Create()
             };
 
             using FileStream stream = File.OpenRead(filePath);
@@ -86,7 +86,7 @@ public sealed class FileSystemExtendedReadTool
         {
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ToolResult.Fail("path is required.", "FileSystemExtendedReadTool");
+                return ToolResult.Fail("Operation failed", "FileSystemExtendedReadTool");
             }
 
             if (!File.Exists(path) && !Directory.Exists(path))
@@ -97,18 +97,18 @@ public sealed class FileSystemExtendedReadTool
             List<object> results = new();
             System.Diagnostics.ProcessStartInfo psi = new()
             {
-                    FileName = "cmd",
-                    Arguments = $"/c \"dir /r \"{path}\"\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                FileName = "cmd",
+                Arguments = $"/c \"dir /r \"{path}\"\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
 
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start dir command.", "FileSystemExtendedReadTool");
+                return ToolResult.Fail("Operation failed", "FileSystemExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -142,7 +142,9 @@ public sealed class FileSystemExtendedReadTool
         }
         catch
         {
-            return ToolResult.Fail("Alternate data stream listing failed.", "FileSystemExtendedReadTool");
+
+            return ToolResult.Fail("Operation failed", "FileSystemExtendedReadTool");
+        
         }
     }
 
@@ -187,9 +189,9 @@ public sealed class FileSystemExtendedReadTool
 
             return ToolResult.Ok(entries, "FileSystemExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Hosts file read failed.", "FileSystemExtendedReadTool");
+            return ToolResult.Fail(ex.Message, "FileSystemExtendedReadTool");
         }
     }
 }

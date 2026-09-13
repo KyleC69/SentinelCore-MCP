@@ -40,7 +40,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioListDevices_ContainsAudioDevicesSection()
     {
-        ToolResult result = await _tool.audioListDevicesAsync();
+        ToolResult result = await _tool.AudioListDevicesAsync();
 
         Assert.True(result.Success);
         Assert.Contains("Audio Devices", (string)result.Results!);
@@ -58,7 +58,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioListDevices_ContainsAudioEndpointsSection()
     {
-        ToolResult result = await _tool.audioListDevicesAsync();
+        ToolResult result = await _tool.AudioListDevicesAsync();
 
         Assert.True(result.Success);
         Assert.Contains("Audio Endpoints", (string)result.Results!);
@@ -76,7 +76,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioListDevices_ContainsDeviceDescription()
     {
-        ToolResult result = await _tool.audioListDevicesAsync();
+        ToolResult result = await _tool.AudioListDevicesAsync();
 
         Assert.True(result.Success);
         Assert.Contains("Device Description:", (string)result.Results!);
@@ -94,7 +94,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioListDevices_ContainsInstanceOrStatus()
     {
-        ToolResult result = await _tool.audioListDevicesAsync();
+        ToolResult result = await _tool.AudioListDevicesAsync();
 
         Assert.True(result.Success);
         // pnputil output always includes Instance ID and Status
@@ -114,7 +114,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioListDevices_ReturnsNullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.audioListDevicesAsync();
+        ToolResult result = await _tool.AudioListDevicesAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -132,7 +132,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioListDevices_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.audioListDevicesAsync();
+        ToolResult result = await _tool.AudioListDevicesAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -150,7 +150,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioReadDefaultDevice_ContainsActiveRenderEndpointsHeader()
     {
-        ToolResult result = await _tool.audioReadDefaultDeviceAsync();
+        ToolResult result = await _tool.AudioReadDefaultDeviceAsync();
 
         Assert.True(result.Success);
         Assert.Contains("Active Render Endpoints:", (string)result.Results!);
@@ -168,7 +168,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioReadDefaultDevice_ContainsDeviceId()
     {
-        ToolResult result = await _tool.audioReadDefaultDeviceAsync();
+        ToolResult result = await _tool.AudioReadDefaultDeviceAsync();
 
         Assert.True(result.Success);
         // Active endpoints should have an Id field
@@ -187,7 +187,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioReadDefaultDevice_ContainsStateInfo()
     {
-        ToolResult result = await _tool.audioReadDefaultDeviceAsync();
+        ToolResult result = await _tool.AudioReadDefaultDeviceAsync();
 
         Assert.True(result.Success);
         Assert.Contains("State=", (string)result.Results!);
@@ -205,7 +205,7 @@ public sealed class AudioDeviceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task AudioReadDefaultDevice_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.audioReadDefaultDeviceAsync();
+        ToolResult result = await _tool.AudioReadDefaultDeviceAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);

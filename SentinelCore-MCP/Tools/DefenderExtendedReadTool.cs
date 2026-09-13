@@ -107,9 +107,9 @@ public sealed class DefenderExtendedReadTool
 
             return ToolResult.Ok(sb.ToString(), "DefenderExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("SmartScreen read failed.", "DefenderExtendedReadTool");
+            return ToolResult.Fail(ex.Message, "DefenderExtendedReadTool");
         }
     }
 }

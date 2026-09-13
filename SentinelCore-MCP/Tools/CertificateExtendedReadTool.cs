@@ -38,19 +38,19 @@ public sealed class CertificateExtendedReadTool
         {
             if (string.IsNullOrWhiteSpace(thumbprint))
             {
-                return ToolResult.Fail("thumbprint is required.", "CertificateExtendedReadTool");
+                return ToolResult.Fail("thumbprint is required", "CertificateExtendedReadTool");
             }
 
             StoreLocation location = storeLocation.Equals("CurrentUser", StringComparison.OrdinalIgnoreCase) ? StoreLocation.CurrentUser : StoreLocation.LocalMachine;
 
             StoreName name = storeName.ToUpperInvariant() switch
             {
-                    "MY" => StoreName.My,
-                    "ROOT" => StoreName.Root,
-                    "CA" => StoreName.CertificateAuthority,
-                    "TRUST" => StoreName.TrustedPublisher,
-                    "DISALLOWED" => StoreName.Disallowed,
-                    _ => StoreName.My
+                "MY" => StoreName.My,
+                "ROOT" => StoreName.Root,
+                "CA" => StoreName.CertificateAuthority,
+                "TRUST" => StoreName.TrustedPublisher,
+                "DISALLOWED" => StoreName.Disallowed,
+                _ => StoreName.My
             };
 
             using X509Store store = new(name, location);
@@ -65,18 +65,18 @@ public sealed class CertificateExtendedReadTool
             X509Certificate2 cert = certs[0];
             var result = new
             {
-                    cert.Subject,
-                    cert.Issuer,
-                    cert.Thumbprint,
-                    cert.NotBefore,
-                    cert.NotAfter,
-                    cert.SerialNumber,
-                    IsExpired = DateTime.Now > cert.NotAfter,
-                    IsNotYetValid = DateTime.Now < cert.NotBefore,
-                    cert.HasPrivateKey,
-                    cert.SignatureAlgorithm?.FriendlyName,
-                    KeyAlgorithm = cert.GetKeyAlgorithm(),
-                    cert.IssuerName?.Name
+                cert.Subject,
+                cert.Issuer,
+                cert.Thumbprint,
+                cert.NotBefore,
+                cert.NotAfter,
+                cert.SerialNumber,
+                IsExpired = DateTime.Now > cert.NotAfter,
+                IsNotYetValid = DateTime.Now < cert.NotBefore,
+                cert.HasPrivateKey,
+                cert.SignatureAlgorithm?.FriendlyName,
+                KeyAlgorithm = cert.GetKeyAlgorithm(),
+                cert.IssuerName?.Name
             };
 
             return ToolResult.Ok(result, "CertificateExtendedReadTool");

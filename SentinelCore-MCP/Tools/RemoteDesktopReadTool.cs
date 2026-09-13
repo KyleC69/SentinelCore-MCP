@@ -70,7 +70,7 @@ public sealed class RemoteDesktopReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "RDP_Read_Listener_Config", ReadOnly = true, Destructive = false)]
     [Description("Reads RDP listener port and security layer settings.")]
-    public async Task<ToolResult> rdpReadListenerConfigAsync()
+    public async Task<ToolResult> RdpReadListenerConfigAsync()
     {
         try
         {
@@ -79,9 +79,8 @@ public sealed class RemoteDesktopReadTool
 
             return ToolResult.Ok(sb.ToString(), "RemoteDesktopReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("RDP listener config read failed.", "RemoteDesktopReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "RemoteDesktopReadTool");
         }
     }
 
@@ -95,7 +94,7 @@ public sealed class RemoteDesktopReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "RDP_Read_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads Remote Desktop configuration from the registry.")]
-    public async Task<ToolResult> rdpReadSettingsAsync()
+    public async Task<ToolResult> RdpReadSettingsAsync()
     {
         try
         {
@@ -105,9 +104,8 @@ public sealed class RemoteDesktopReadTool
 
             return ToolResult.Ok(sb.ToString(), "RemoteDesktopReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("RDP settings read failed.", "RemoteDesktopReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "RemoteDesktopReadTool");
         }
     }
 }

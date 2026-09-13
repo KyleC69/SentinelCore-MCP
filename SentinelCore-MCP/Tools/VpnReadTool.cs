@@ -69,7 +69,7 @@ public sealed class VpnReadTool
 
     [McpServerTool(Name = "VPN_List_Connections", ReadOnly = true, Destructive = false)]
     [Description("Lists configured VPN/RAS connections from the current user's phonebook directory.")]
-    public async Task<ToolResult> vpnListConnectionsAsync()
+    public async Task<ToolResult> VpnListConnectionsAsync()
     {
         try
         {
@@ -98,7 +98,7 @@ public sealed class VpnReadTool
 
     [McpServerTool(Name = "VPN_Read_Phonebook_Status", ReadOnly = true, Destructive = false)]
     [Description("Reads the phonebook directory path and whether a user phonebook exists.")]
-    public async Task<ToolResult> vpnReadPhonebookStatusAsync()
+    public async Task<ToolResult> VpnReadPhonebookStatusAsync()
     {
         try
         {

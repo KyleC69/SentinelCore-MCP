@@ -74,7 +74,7 @@ public sealed class PsListReadTool
 
             if (!uint.TryParse(processNameOrPid, out _) && !System.Text.RegularExpressions.Regex.IsMatch(processNameOrPid, @"^[a-zA-Z0-9._\- ]+$"))
             {
-                return ToolResult.Fail("processNameOrPid must be a numeric PID or a simple image name (letters, digits, dots, hyphens, underscores, spaces).", "PsList enumeration");
+                return ToolResult.Fail("Invalid process name or PID format.", "PsList enumeration");
             }
         }
 

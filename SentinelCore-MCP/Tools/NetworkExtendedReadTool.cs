@@ -63,9 +63,11 @@ public sealed class NetworkExtendedReadTool
 
             return ToolResult.Ok(results, "NetworkExtendedReadTool");
         }
-        catch (Exception ex)
+        catch
         {
-            return ToolResult.Fail(ex.Message, "Listening port listing");
+
+            return ToolResult.Fail("Operation failed", "Listening port listing");
+        
         }
     }
 
@@ -97,7 +99,7 @@ public sealed class NetworkExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start net share.", "NetworkExtendedReadTool");
+                return ToolResult.Fail("Operation failed", "NetworkExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -123,9 +125,8 @@ public sealed class NetworkExtendedReadTool
 
             return ToolResult.Ok(results, "NetworkExtendedReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("Network share listing failed.", "NetworkExtendedReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "NetworkExtendedReadTool");
         }
     }
 
@@ -157,7 +158,7 @@ public sealed class NetworkExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start arp.", "NetworkExtendedReadTool");
+                return ToolResult.Fail("Operation failed", "NetworkExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -182,9 +183,8 @@ public sealed class NetworkExtendedReadTool
 
             return ToolResult.Ok(results, "NetworkExtendedReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("ARP table read failed.", "NetworkExtendedReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "NetworkExtendedReadTool");
         }
     }
 
@@ -224,7 +224,7 @@ public sealed class NetworkExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start ipconfig.", "NetworkExtendedReadTool");
+                return ToolResult.Fail("Operation failed", "NetworkExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -271,9 +271,8 @@ public sealed class NetworkExtendedReadTool
 
             return ToolResult.Ok(entries, "NetworkExtendedReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("DNS cache read failed.", "NetworkExtendedReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "NetworkExtendedReadTool");
         }
     }
 
@@ -305,7 +304,7 @@ public sealed class NetworkExtendedReadTool
             using System.Diagnostics.Process? process = System.Diagnostics.Process.Start(psi);
             if (process is null)
             {
-                return ToolResult.Fail("Unable to start route.", "NetworkExtendedReadTool");
+                return ToolResult.Fail("Operation failed", "NetworkExtendedReadTool");
             }
 
             string output = process.StandardOutput.ReadToEnd();
@@ -343,9 +342,8 @@ public sealed class NetworkExtendedReadTool
 
             return ToolResult.Ok(results, "NetworkExtendedReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("Routing table read failed.", "NetworkExtendedReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "NetworkExtendedReadTool");
         }
     }
 }

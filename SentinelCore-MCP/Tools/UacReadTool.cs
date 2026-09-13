@@ -34,7 +34,7 @@ public sealed class UacReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "UAC_Read_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads UAC policy settings from the registry.")]
-    public async Task<ToolResult> uacReadSettingsAsync()
+    public async Task<ToolResult> UacReadSettingsAsync()
     {
         try
         {
@@ -42,16 +42,16 @@ public sealed class UacReadTool
             using RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", false);
             if (key is null)
             {
-                return ToolResult.Fail("System UAC policy key not found.", "UacReadTool");
+                return ToolResult.Fail("UAC registry key not found.", "UacReadTool");
             }
 
             foreach (string valueName in key.GetValueNames()) sb.AppendLine($"{valueName}={key.GetValue(valueName)}");
 
             return ToolResult.Ok(sb.ToString(), "UacReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("UAC settings read failed.", "UacReadTool");
+            return ToolResult.Fail(ex.Message, "UacReadTool");
         }
     }
 
@@ -65,7 +65,7 @@ public sealed class UacReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "UAC_Read_Token_Elevation", ReadOnly = true, Destructive = false)]
     [Description("Reports whether the current process token is elevated.")]
-    public async Task<ToolResult> uacReadTokenElevationAsync()
+    public async Task<ToolResult> UacReadTokenElevationAsync()
     {
         try
         {
@@ -75,9 +75,9 @@ public sealed class UacReadTool
             bool elevated = !identity.IsSystem && isAdmin;
             return ToolResult.Ok($"IsElevated={elevated}, IsAdministrator={isAdmin}", "UacReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Token elevation read failed.", "UacReadTool");
+            return ToolResult.Fail(ex.Message, "UacReadTool");
         }
     }
 }

@@ -40,7 +40,7 @@ public sealed class ShellExplorerReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ShellExplorerReadSettings_ContainsAdvancedKeySection()
     {
-        ToolResult result = await _tool.shellExplorerReadSettingsAsync();
+        ToolResult result = await _tool.ShellExplorerReadSettingsAsync();
 
         Assert.True(result.Success);
         string output = (string)result.Results!;
@@ -59,7 +59,7 @@ public sealed class ShellExplorerReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ShellExplorerReadSettings_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.shellExplorerReadSettingsAsync();
+        ToolResult result = await _tool.ShellExplorerReadSettingsAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -77,7 +77,7 @@ public sealed class ShellExplorerReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ShellExplorerReadSettings_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.shellExplorerReadSettingsAsync();
+        ToolResult result = await _tool.ShellExplorerReadSettingsAsync();
 
         // The Explorer Advanced key exists on all Windows systems
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
@@ -96,7 +96,7 @@ public sealed class ShellExplorerReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ShellTaskbarPinnedList_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.shellTaskbarPinnedListAsync();
+        ToolResult result = await _tool.ShellTaskbarPinnedListAsync();
 
         // The pinned path may not exist on all systems/profiles
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -114,7 +114,7 @@ public sealed class ShellExplorerReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task ShellTaskbarPinnedList_WhenSuccessful_ReturnsFileList()
     {
-        ToolResult result = await _tool.shellTaskbarPinnedListAsync();
+        ToolResult result = await _tool.ShellTaskbarPinnedListAsync();
 
         if (!result.Success)
         {

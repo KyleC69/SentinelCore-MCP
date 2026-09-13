@@ -37,26 +37,26 @@ public sealed class SystemReadTool
         {
             var result = new
             {
-                    Environment.MachineName,
-                    OSVersion = Environment.OSVersion.VersionString,
-                    OSPlatform = Environment.OSVersion.Platform.ToString(),
-                    Environment.Is64BitOperatingSystem,
-                    Environment.Is64BitProcess,
-                    Environment.ProcessorCount,
-                    Environment.SystemDirectory,
-                    Environment.UserName,
-                    Environment.UserDomainName,
-                    CLRVersion = Environment.Version.ToString(),
-                    SystemUpTime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"dd\.hh\:mm\:ss"),
-                    Environment.WorkingSet,
-                    Environment.CurrentDirectory
+                Environment.MachineName,
+                OSVersion = Environment.OSVersion.VersionString,
+                OSPlatform = Environment.OSVersion.Platform.ToString(),
+                Environment.Is64BitOperatingSystem,
+                Environment.Is64BitProcess,
+                Environment.ProcessorCount,
+                Environment.SystemDirectory,
+                Environment.UserName,
+                Environment.UserDomainName,
+                CLRVersion = Environment.Version.ToString(),
+                SystemUpTime = TimeSpan.FromMilliseconds(Environment.TickCount64).ToString(@"dd\.hh\:mm\:ss"),
+                Environment.WorkingSet,
+                Environment.CurrentDirectory
             };
 
             return ToolResult.Ok(result, "SystemReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("System info read failed.", "SystemReadTool");
+            return ToolResult.Fail(ex.Message, "SystemReadTool");
         }
     }
 
@@ -77,20 +77,20 @@ public sealed class SystemReadTool
             TimeZoneInfo tz = TimeZoneInfo.Local;
             var result = new
             {
-                    tz.Id,
-                    tz.DisplayName,
-                    tz.StandardName,
-                    tz.DaylightName,
-                    BaseUtcOffset = tz.BaseUtcOffset.ToString(),
-                    tz.SupportsDaylightSavingTime,
-                    CurrentUtcOffset = tz.GetUtcOffset(DateTimeOffset.Now).ToString()
+                tz.Id,
+                tz.DisplayName,
+                tz.StandardName,
+                tz.DaylightName,
+                BaseUtcOffset = tz.BaseUtcOffset.ToString(),
+                tz.SupportsDaylightSavingTime,
+                CurrentUtcOffset = tz.GetUtcOffset(DateTimeOffset.Now).ToString()
             };
 
             return ToolResult.Ok(result, "SystemReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Time zone read failed.", "SystemReadTool");
+            return ToolResult.Fail(ex.Message, "SystemReadTool");
         }
     }
 }

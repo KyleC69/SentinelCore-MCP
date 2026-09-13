@@ -40,7 +40,7 @@ public sealed class VpnReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task VpnListConnections_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.vpnListConnectionsAsync();
+        ToolResult result = await _tool.VpnListConnectionsAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -58,7 +58,7 @@ public sealed class VpnReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task VpnListConnections_ReturnsDictionaryList()
     {
-        ToolResult result = await _tool.vpnListConnectionsAsync();
+        ToolResult result = await _tool.VpnListConnectionsAsync();
 
         Assert.True(result.Success);
         // Results is a List<Dictionary<string, string?>> of phonebook entries
@@ -79,7 +79,7 @@ public sealed class VpnReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task VpnListConnections_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.vpnListConnectionsAsync();
+        ToolResult result = await _tool.VpnListConnectionsAsync();
 
         // Succeeds even when no VPN connections are configured (empty list)
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
@@ -98,7 +98,7 @@ public sealed class VpnReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task VpnReadPhonebookStatus_ContainsPathAndExists()
     {
-        ToolResult result = await _tool.vpnReadPhonebookStatusAsync();
+        ToolResult result = await _tool.VpnReadPhonebookStatusAsync();
 
         Assert.True(result.Success);
         string output = (string)result.Results!;
@@ -118,7 +118,7 @@ public sealed class VpnReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task VpnReadPhonebookStatus_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.vpnReadPhonebookStatusAsync();
+        ToolResult result = await _tool.VpnReadPhonebookStatusAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -136,7 +136,7 @@ public sealed class VpnReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task VpnReadPhonebookStatus_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.vpnReadPhonebookStatusAsync();
+        ToolResult result = await _tool.VpnReadPhonebookStatusAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);

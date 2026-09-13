@@ -74,7 +74,7 @@ public sealed class ListDllsReadTool
             // Numeric PIDs and simple image names are the only accepted shapes.
             if (!uint.TryParse(processNameOrPid, out _) && !System.Text.RegularExpressions.Regex.IsMatch(processNameOrPid, @"^[a-zA-Z0-9._\- ]+$"))
             {
-                return ToolResult.Fail("processNameOrPid must be a numeric PID or a simple image name (letters, digits, dots, hyphens, underscores, spaces).", "ListDLLs enumeration");
+                return ToolResult.Fail("Invalid process name or PID format", "ListDLLs enumeration");
             }
         }
 

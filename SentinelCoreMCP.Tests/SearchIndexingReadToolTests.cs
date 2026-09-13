@@ -40,7 +40,7 @@ public sealed class SearchIndexingReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SearchIndexingListScopes_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.searchIndexingListScopesAsync();
+        ToolResult result = await _tool.SearchIndexingListScopesAsync();
 
         if (!result.Success)
         {
@@ -62,7 +62,7 @@ public sealed class SearchIndexingReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SearchIndexingListScopes_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.searchIndexingListScopesAsync();
+        ToolResult result = await _tool.SearchIndexingListScopesAsync();
 
         // The Windows Search service may not be installed on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -80,7 +80,7 @@ public sealed class SearchIndexingReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SearchIndexingListScopes_WhenSuccessful_ContainsCrawlScopeSection()
     {
-        ToolResult result = await _tool.searchIndexingListScopesAsync();
+        ToolResult result = await _tool.SearchIndexingListScopesAsync();
 
         if (!result.Success)
         {
@@ -103,7 +103,7 @@ public sealed class SearchIndexingReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SearchIndexingReadSettings_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.searchIndexingReadSettingsAsync();
+        ToolResult result = await _tool.SearchIndexingReadSettingsAsync();
 
         if (!result.Success)
         {
@@ -125,7 +125,7 @@ public sealed class SearchIndexingReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SearchIndexingReadSettings_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.searchIndexingReadSettingsAsync();
+        ToolResult result = await _tool.SearchIndexingReadSettingsAsync();
 
         // The Windows Search key may not exist on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -143,7 +143,7 @@ public sealed class SearchIndexingReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task SearchIndexingReadSettings_WhenSuccessful_ContainsSearchKeySection()
     {
-        ToolResult result = await _tool.searchIndexingReadSettingsAsync();
+        ToolResult result = await _tool.SearchIndexingReadSettingsAsync();
 
         if (!result.Success)
         {

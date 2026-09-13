@@ -49,9 +49,9 @@ public sealed class DcomReadTool
 
             return ToolResult.Ok(sb.ToString(), "DcomReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("DCOM application query failed.", "DcomReadTool");
+            return ToolResult.Fail(ex.Message, "DcomReadTool");
         }
     }
 
@@ -71,7 +71,7 @@ public sealed class DcomReadTool
         {
             if (string.IsNullOrWhiteSpace(appId))
             {
-                return ToolResult.Fail("appId is required.", "DcomReadTool");
+                return ToolResult.Fail("appId is required", "DcomReadTool");
             }
 
             string keyPath = $"SOFTWARE\\Classes\\AppID\\{appId}";
@@ -91,9 +91,9 @@ public sealed class DcomReadTool
 
             return ToolResult.Ok(sb.ToString(), "DcomReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("DCOM AppID read failed.", "DcomReadTool");
+            return ToolResult.Fail(ex.Message, "DcomReadTool");
         }
     }
 }

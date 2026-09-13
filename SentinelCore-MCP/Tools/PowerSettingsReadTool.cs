@@ -32,7 +32,7 @@ public sealed class PowerSettingsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Power_List_Plans", ReadOnly = true, Destructive = false)]
     [Description("Lists active and available power plans using WMI.")]
-    public async Task<ToolResult> powerListPlansAsync()
+    public async Task<ToolResult> PowerListPlansAsync()
     {
         try
         {
@@ -48,9 +48,9 @@ public sealed class PowerSettingsReadTool
 
             return ToolResult.Ok(sb.ToString(), "PowerSettingsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Power plan listing failed.", "PowerSettingsReadTool");
+            return ToolResult.Fail(ex.Message, "PowerSettingsReadTool");
         }
     }
 
@@ -64,7 +64,7 @@ public sealed class PowerSettingsReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Power_List_Settings", ReadOnly = true, Destructive = false)]
     [Description("Lists power settings for the active power plan.")]
-    public async Task<ToolResult> powerListSettingsAsync()
+    public async Task<ToolResult> PowerListSettingsAsync()
     {
         try
         {
@@ -80,9 +80,9 @@ public sealed class PowerSettingsReadTool
 
             return ToolResult.Ok(sb.ToString(), "PowerSettingsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Power setting listing failed.", "PowerSettingsReadTool");
+            return ToolResult.Fail(ex.Message, "PowerSettingsReadTool");
         }
     }
 }

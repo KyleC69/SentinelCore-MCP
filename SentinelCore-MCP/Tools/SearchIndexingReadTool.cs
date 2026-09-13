@@ -43,7 +43,7 @@ public sealed class SearchIndexingReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Search_Indexing_List_Scopes", ReadOnly = true, Destructive = false)]
     [Description("Lists indexed locations from the Windows Search crawl scope registry.")]
-    public async Task<ToolResult> searchIndexingListScopesAsync()
+    public async Task<ToolResult> SearchIndexingListScopesAsync()
     {
         try
         {
@@ -61,9 +61,9 @@ public sealed class SearchIndexingReadTool
 
             return ToolResult.Ok(sb.ToString(), "SearchIndexingReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Search indexing scope listing failed.", "SearchIndexingReadTool");
+            return ToolResult.Fail(ex.Message, "SearchIndexingReadTool");
         }
     }
 
@@ -77,7 +77,7 @@ public sealed class SearchIndexingReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Search_Indexing_Read_Settings", ReadOnly = true, Destructive = false)]
     [Description("Reads Windows Search service configuration from the registry.")]
-    public async Task<ToolResult> searchIndexingReadSettingsAsync()
+    public async Task<ToolResult> SearchIndexingReadSettingsAsync()
     {
         try
         {
@@ -93,9 +93,9 @@ public sealed class SearchIndexingReadTool
 
             return ToolResult.Ok(sb.ToString(), "SearchIndexingReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Search indexing settings read failed.", "SearchIndexingReadTool");
+            return ToolResult.Fail(ex.Message, "SearchIndexingReadTool");
         }
     }
 }

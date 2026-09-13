@@ -40,7 +40,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadSettings_ContainsConsentPromptBehavior()
     {
-        ToolResult result = await _tool.uacReadSettingsAsync();
+        ToolResult result = await _tool.UacReadSettingsAsync();
 
         Assert.True(result.Success);
         Assert.Contains("ConsentPromptBehavior", (string)result.Results!);
@@ -58,7 +58,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadSettings_ContainsEnableLUA()
     {
-        ToolResult result = await _tool.uacReadSettingsAsync();
+        ToolResult result = await _tool.UacReadSettingsAsync();
 
         Assert.True(result.Success);
         Assert.Contains("EnableLUA", (string)result.Results!);
@@ -76,7 +76,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadSettings_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.uacReadSettingsAsync();
+        ToolResult result = await _tool.UacReadSettingsAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -94,7 +94,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadSettings_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.uacReadSettingsAsync();
+        ToolResult result = await _tool.UacReadSettingsAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -112,7 +112,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadTokenElevation_ContainsIsAdministrator()
     {
-        ToolResult result = await _tool.uacReadTokenElevationAsync();
+        ToolResult result = await _tool.UacReadTokenElevationAsync();
 
         Assert.True(result.Success);
         Assert.Contains("IsAdministrator=", (string)result.Results);
@@ -130,7 +130,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadTokenElevation_ContainsIsElevated()
     {
-        ToolResult result = await _tool.uacReadTokenElevationAsync();
+        ToolResult result = await _tool.UacReadTokenElevationAsync();
 
         Assert.True(result.Success);
         Assert.Contains("IsElevated=", (string)result.Results!);
@@ -148,7 +148,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadTokenElevation_HasBooleanValues()
     {
-        ToolResult result = await _tool.uacReadTokenElevationAsync();
+        ToolResult result = await _tool.UacReadTokenElevationAsync();
 
         Assert.True(result.Success);
         // The values should be True or False
@@ -169,7 +169,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadTokenElevation_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.uacReadTokenElevationAsync();
+        ToolResult result = await _tool.UacReadTokenElevationAsync();
 
         Assert.True(result.Success);
         Assert.Null(result.ErrorDetails);
@@ -187,7 +187,7 @@ public sealed class UacReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task UacReadTokenElevation_ReturnsSuccessfulToolResult()
     {
-        ToolResult result = await _tool.uacReadTokenElevationAsync();
+        ToolResult result = await _tool.UacReadTokenElevationAsync();
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);

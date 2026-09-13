@@ -119,7 +119,7 @@ public sealed class EnvironmentExtendedReadTool
 
             return false;
         }
-        catch
+        catch 
         {
             return false;
         }

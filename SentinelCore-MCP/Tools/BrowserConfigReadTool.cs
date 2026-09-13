@@ -43,9 +43,8 @@ public sealed class BrowserConfigReadTool
             ReadRegistryValues(RegistryHive.CurrentUser, @"SOFTWARE\Policies\Google\Chrome", sb, "HKCU Chrome Policies");
             return ToolResult.Ok(sb.ToString(), "BrowserConfigReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("Chrome policy read failed.", "BrowserConfigReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "BrowserConfigReadTool");
         }
     }
 
@@ -66,15 +65,14 @@ public sealed class BrowserConfigReadTool
             using RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\Shell\Associations\UrlAssociations\http\\UserChoice", false);
             if (key is null)
             {
-                return ToolResult.Fail("Default browser UserChoice key not found.", "BrowserConfigReadTool");
+                return ToolResult.Fail("Operation failed", "BrowserConfigReadTool");
             }
 
             string progId = key.GetValue("ProgId")?.ToString() ?? string.Empty;
             return ToolResult.Ok($"DefaultBrowserProgId={progId}", "BrowserConfigReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("Default browser read failed.", "BrowserConfigReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "BrowserConfigReadTool");
         }
     }
 
@@ -120,9 +118,8 @@ public sealed class BrowserConfigReadTool
 
             return ToolResult.Ok(sb.ToString(), "BrowserConfigReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("IE/Edge browser settings read failed.", "BrowserConfigReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "BrowserConfigReadTool");
         }
     }
 

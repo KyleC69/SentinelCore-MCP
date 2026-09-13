@@ -77,7 +77,7 @@ public sealed class PowerShellReadToolTests
     public async Task PowerShellQuery_EmptyCommand_ReturnsFailure()
     {
         PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("");
+        ToolResult result = await tool.PowershellQueryAsync("");
 
         Assert.False(result.Success);
         Assert.Contains("required", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
@@ -96,7 +96,7 @@ public sealed class PowerShellReadToolTests
     public async Task PowerShellQuery_ForbiddenCommand_ReturnsFailure()
     {
         PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Remove-Item C:\\test");
+        ToolResult result = await tool.PowershellQueryAsync("Remove-Item C:\\test");
 
         Assert.False(result.Success);
         Assert.NotNull(result.ErrorDetails);
@@ -117,7 +117,7 @@ public sealed class PowerShellReadToolTests
     public async Task PowerShellQuery_GetComputerInfo_ReturnsSuccessfulToolResult()
     {
         PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-ComputerInfo");
+        ToolResult result = await tool.PowershellQueryAsync("Get-ComputerInfo");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -137,7 +137,7 @@ public sealed class PowerShellReadToolTests
     public async Task PowerShellQuery_GetDate_ReturnsSuccessfulToolResult()
     {
         PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-Date");
+        ToolResult result = await tool.PowershellQueryAsync("Get-Date");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -157,7 +157,7 @@ public sealed class PowerShellReadToolTests
     public async Task PowerShellQuery_GetProcess_ReturnsSuccessfulToolResult()
     {
         PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-Process -Name explorer");
+        ToolResult result = await tool.PowershellQueryAsync("Get-Process -Name explorer");
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);
@@ -176,7 +176,7 @@ public sealed class PowerShellReadToolTests
     public async Task PowerShellQuery_InjectionAttempt_ReturnsFailure()
     {
         PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-Process ; whoami");
+        ToolResult result = await tool.PowershellQueryAsync("Get-Process ; whoami");
 
         Assert.False(result.Success);
         Assert.Contains("forbidden pattern", result.ErrorDetails, StringComparison.OrdinalIgnoreCase);
@@ -196,7 +196,7 @@ public sealed class PowerShellReadToolTests
     public async Task PowerShellQuery_MaxResultsParameter_RespectsLimit()
     {
         PowerShellReadTool tool = new();
-        ToolResult result = await tool.powershellQueryAsync("Get-Service", maxResults: 3);
+        ToolResult result = await tool.PowershellQueryAsync("Get-Service", maxResults: 3);
 
         Assert.True(result.Success, $"Expected Success=true but got failure: {result.ErrorDetails}");
         Assert.NotNull(result.Results);

@@ -89,9 +89,8 @@ public sealed class NetworkDnsReadTool
 
             return ToolResult.Ok(sb.ToString(), "NetworkDnsReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("DNS settings read failed.", "NetworkDnsReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "NetworkDnsReadTool");
         }
     }
 }

@@ -51,9 +51,9 @@ public sealed class DefenderReadTool
 
             return ToolResult.Ok(sb.ToString(), "DefenderReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Defender registry config read failed.", "DefenderReadTool");
+            return ToolResult.Fail(ex.Message, "DefenderReadTool");
         }
     }
 
@@ -83,9 +83,9 @@ public sealed class DefenderReadTool
 
             return ToolResult.Ok(results, "DefenderReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Defender status read failed.", "DefenderReadTool");
+            return ToolResult.Fail(ex.Message, "DefenderReadTool");
         }
     }
 }

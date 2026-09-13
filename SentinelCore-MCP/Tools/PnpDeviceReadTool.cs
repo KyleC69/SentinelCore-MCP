@@ -186,7 +186,7 @@ public sealed class PnpDeviceReadTool
         {
             if (string.IsNullOrWhiteSpace(deviceId))
             {
-                return ToolResult.Fail("deviceId is required.", "PnpDeviceReadTool");
+                return ToolResult.Fail("deviceId is required", "PnpDeviceReadTool");
             }
 
             List<string> args = new() { "/device-info", deviceId };
@@ -217,18 +217,18 @@ public sealed class PnpDeviceReadTool
         output = string.Empty;
         ProcessStartInfo startInfo = new()
         {
-                FileName = "pnputil.exe",
-                Arguments = string.Join(" ", arguments.Select(EscapeArgument)),
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
+            FileName = "pnputil.exe",
+            Arguments = string.Join(" ", arguments.Select(EscapeArgument)),
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
         };
 
         using Process? process = Process.Start(startInfo);
         if (process is null)
         {
-            return ToolResult.Fail("Unable to start pnputil.exe.", "PnpDeviceReadTool");
+            return ToolResult.Fail("Failed to start pnputil process.", "PnpDeviceReadTool");
         }
 
         output = process.StandardOutput.ReadToEnd();

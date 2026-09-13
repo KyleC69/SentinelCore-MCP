@@ -52,9 +52,9 @@ public sealed class EnvironmentVariablesReadTool
 
             return ToolResult.Ok(sb.ToString(), "EnvironmentVariablesReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Environment variable listing failed.", "EnvironmentVariablesReadTool");
+            return ToolResult.Fail(ex.Message, "EnvironmentVariablesReadTool");
         }
     }
 
@@ -73,16 +73,16 @@ public sealed class EnvironmentVariablesReadTool
         {
             if (string.IsNullOrWhiteSpace(variableName))
             {
-                return ToolResult.Fail("variableName is required.", "EnvironmentVariablesReadTool");
+                return ToolResult.Fail("variableName is required", "EnvironmentVariablesReadTool");
             }
 
             string? value = Environment.GetEnvironmentVariable(variableName, target);
             return value is null ? ToolResult.Fail($"Environment variable not found: {variableName} ({target})", "EnvironmentVariablesReadTool") : ToolResult.Ok($"{variableName}={value}", "EnvironmentVariablesReadTool");
 
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Environment variable read failed.", "EnvironmentVariablesReadTool");
+            return ToolResult.Fail(ex.Message, "EnvironmentVariablesReadTool");
         }
     }
 }

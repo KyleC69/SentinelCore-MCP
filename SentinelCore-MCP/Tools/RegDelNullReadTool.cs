@@ -157,9 +157,11 @@ public sealed class RegDelNullReadTool
                     ScanKey(root, $"{keyPath}\\{subKeyName}", findings, maxRecords, depth + 1);
                 }
                 catch
-                {
+        {
+
                     // Skip unreadable subkeys.
-                }
+                
+        }
             }
         }
     }

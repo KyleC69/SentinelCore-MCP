@@ -91,9 +91,8 @@ public sealed class EventLogExtendedReadTool
 
             return ToolResult.Ok(sb.ToString(), "EventLogExtendedReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("Event log forwarding read failed.", "EventLogExtendedReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "EventLogExtendedReadTool");
         }
     }
 }

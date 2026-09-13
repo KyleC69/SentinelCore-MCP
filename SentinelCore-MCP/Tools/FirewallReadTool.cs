@@ -193,7 +193,7 @@ public sealed class FirewallReadTool
             using Process? process = Process.Start(startInfo);
             if (process is null)
             {
-                return ToolResult.Fail("Failed to start netsh.", "FirewallReadTool");
+                return ToolResult.Fail("Operation failed", "FirewallReadTool");
             }
 
             string stdout = process.StandardOutput.ReadToEnd();
@@ -202,9 +202,8 @@ public sealed class FirewallReadTool
 
             return process.ExitCode != 0 ? ToolResult.Fail($"netsh failed: {stderr}", "FirewallReadTool") : ToolResult.Ok(stdout, "FirewallReadTool");
         }
-        catch
-        {
-            return ToolResult.Fail("netsh execution failed.", "FirewallReadTool");
+        catch (Exception ex) {
+            return ToolResult.Fail(ex.Message, "FirewallReadTool");
         }
     }
 
@@ -218,7 +217,7 @@ public sealed class FirewallReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Firewall_List_Rules", ReadOnly = true, Destructive = false)]
     [Description("Lists Windows Firewall rules with optional profile and direction filters.")]
-    public async Task<ToolResult> firewallListRulesAsync([Description("Optional direction filter: Inbound or Outbound.")] string? direction = null, [Description("Optional profile filter: Domain, Private, Public.")] string? profile = null, [Description("Maximum number of rules to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> FirewallListRulesAsync([Description("Optional direction filter: Inbound or Outbound.")] string? direction = null, [Description("Optional profile filter: Domain, Private, Public.")] string? profile = null, [Description("Maximum number of rules to return. Defaults to 50.")] int maxRecords = 50)
     {
         string? normalizedDir = NormalizeDirection(direction);
         string args = BuildListRulesArgs(normalizedDir);
@@ -254,7 +253,7 @@ public sealed class FirewallReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "Firewall_Read_Profiles", ReadOnly = true, Destructive = false)]
     [Description("Reads the current firewall profile settings.")]
-    public async Task<ToolResult> firewallReadProfilesAsync()
+    public async Task<ToolResult> FirewallReadProfilesAsync()
     {
         return RunNetsh("advfirewall show allprofiles");
     }

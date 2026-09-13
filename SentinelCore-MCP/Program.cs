@@ -25,11 +25,11 @@ internal class Program
     {
         options.ServerInfo = new Implementation
         {
-                Name = "io.github.kylec69/SentinelCoreMCP",
-                Version = "1.1.1",
-                Title = "SentinelCoreMCP",
-                Description = "Windows security and configuration reconnaissance server implementing the Model Context Protocol (MCP).",
-                WebsiteUrl = "https://github.com/kylec69/SentinelCore-MCP"
+            Name = "io.github.kylec69/SentinelCoreMCP",
+            Version = "1.1.1",
+            Title = "SentinelCoreMCP",
+            Description = "Windows security and configuration reconnaissance server implementing the Model Context Protocol (MCP).",
+            WebsiteUrl = "https://github.com/kylec69/SentinelCore-MCP"
         };
 
         options.ServerInstructions = """
@@ -61,6 +61,76 @@ internal class Program
                                      - Windows Update: Windows_Update_List_History, Windows_Update_Read_Settings, Windows_Update_List_Missing
                                      - Wireless: Wireless_List_Connection_History
                                      - Environment: Environment_Read_Path
+
+                                     - PowershellReadTool uses a whitelist with the following allowed commands:
+
+                                      // ---- System information ----
+                                        "Get-ComputerInfo",
+                                        "Get-Date",
+                                        "Get-Host",
+                                        "Get-Process",
+                                        "Get-Service",
+                                        "Get-EventLog",
+                                        "Get-WinEvent",
+                                        // ---- Hardware & drivers ----
+                                        "Get-CimInstance",
+                                        "Get-WmiObject",
+                                        "Get-PnpDevice",
+                                        "Get-PnpDeviceProperty",
+                                        // ---- Network (read-only) ----
+                                        "Get-NetAdapter",
+                                        "Get-NetIPAddress",
+                                        "Get-NetRoute",
+                                        "Get-NetTCPConnection",
+                                        "Get-NetUDPEndpoint",
+                                        "Get-NetNeighbor",
+                                        "Get-DnsClientCache",
+                                        "Get-DnsClientServerAddress",
+                                        "Get-NetFirewallRule",
+                                        "Get-NetFirewallProfile",
+
+                                        // ---- Security & policy ----
+                                        "Get-AppLockerPolicy",
+                                        "Get-Acl",
+                                        "Get-ExecutionPolicy",
+                                        "Get-AuthenticodeSignature",
+                                        "Get-FileHash",
+
+                                        // ---- Storage & filesystem (read-only) ----
+                                        "Get-Volume",
+                                        "Get-Partition",
+                                        "Get-Disk",
+                                        "Get-Item",
+                                        "Get-ChildItem",
+                                        "Get-Content",
+                                        "Get-ItemProperty",
+                                        "Test-Path",
+                                        // ---- User & session ----
+                                        "Get-LocalUser",
+                                        "Get-LocalGroup",
+                                        "Get-LocalGroupMember",
+
+                                        // ---- Scheduled tasks ----
+                                        "Get-ScheduledTask",
+                                        "Get-ScheduledTaskInfo",
+
+                                        // ---- Windows Update ----
+                                        "Get-HotFix",
+                                        // ---- Format & output (safe pipeline commands) ----
+                                        "Select-Object",
+                                        "Where-Object",
+                                        "Sort-Object",
+                                        "Format-List",
+                                        "Format-Table",
+                                        "Format-Wide",
+                                        "Out-String",
+                                        "ConvertTo-Json",
+                                        "ConvertTo-Xml",
+                                        "ConvertTo-Html",
+                                        "Measure-Object",
+                                        "Group-Object",
+                                        "Tee-Object",
+                                        "ForEach-Object"
 
                                      Every tool returns a ToolResult with Success, Results, and ErrorDetails fields.
                                      """;

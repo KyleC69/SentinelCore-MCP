@@ -39,7 +39,7 @@ public sealed class PerformanceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PerformanceListCategories_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.performanceListCategoriesAsync();
+        ToolResult result = await _tool.PerformanceListCategoriesAsync();
 
         // Performance counters may not be available in all environments
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -57,7 +57,7 @@ public sealed class PerformanceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PerformanceListCategories_WhenSuccessful_ContainsCounterData()
     {
-        ToolResult result = await _tool.performanceListCategoriesAsync();
+        ToolResult result = await _tool.PerformanceListCategoriesAsync();
 
         if (!result.Success)
         {
@@ -80,7 +80,7 @@ public sealed class PerformanceReadToolTests
     [Fact]
     public async Task PerformanceListCounters_EmptyCategory_ReturnsFailure()
     {
-        ToolResult result = await _tool.performanceListCountersAsync("");
+        ToolResult result = await _tool.PerformanceListCountersAsync("");
 
         Assert.False(result.Success);
         Assert.NotNull(result.ErrorDetails);
@@ -98,7 +98,7 @@ public sealed class PerformanceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PerformanceListCounters_ProcessorCategory_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.performanceListCountersAsync("Processor");
+        ToolResult result = await _tool.PerformanceListCountersAsync("Processor");
 
         // The Processor category may not exist on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -114,7 +114,7 @@ public sealed class PerformanceReadToolTests
     [Fact]
     public async Task PerformanceReadCounter_EmptyCategory_ReturnsFailure()
     {
-        ToolResult result = await _tool.performanceReadCounterAsync("", "% Processor Time");
+        ToolResult result = await _tool.PerformanceReadCounterAsync("", "% Processor Time");
 
         Assert.False(result.Success);
         Assert.NotNull(result.ErrorDetails);
@@ -132,7 +132,7 @@ public sealed class PerformanceReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PerformanceReadCounter_ProcessorTime_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.performanceReadCounterAsync("Processor", "% Processor Time", "_Total");
+        ToolResult result = await _tool.PerformanceReadCounterAsync("Processor", "% Processor Time", "_Total");
 
         // Counter may not exist on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");

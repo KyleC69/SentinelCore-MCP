@@ -66,12 +66,12 @@ public sealed class PnpExtendedReadTool
 
                             results.Add(new
                             {
-                                    DeviceClass = deviceClass,
-                                    DeviceId = deviceId,
-                                    FriendlyName = friendlyName?.ToString() ?? "",
-                                    ClassGuid = classGuid?.ToString() ?? "",
-                                    Driver = driver?.ToString() ?? "",
-                                    Service = service?.ToString() ?? ""
+                                DeviceClass = deviceClass,
+                                DeviceId = deviceId,
+                                FriendlyName = friendlyName?.ToString() ?? "",
+                                ClassGuid = classGuid?.ToString() ?? "",
+                                Driver = driver?.ToString() ?? "",
+                                Service = service?.ToString() ?? ""
                             });
                         }
                     }
@@ -101,11 +101,11 @@ public sealed class PnpExtendedReadTool
 
                             results.Add(new
                             {
-                                    DeviceClass = "USB",
-                                    DeviceId = $"{vendorProduct}\\{instanceId}",
-                                    FriendlyName = friendlyName?.ToString() ?? "",
-                                    ClassGuid = classGuid?.ToString() ?? "",
-                                    Service = service?.ToString() ?? ""
+                                DeviceClass = "USB",
+                                DeviceId = $"{vendorProduct}\\{instanceId}",
+                                FriendlyName = friendlyName?.ToString() ?? "",
+                                ClassGuid = classGuid?.ToString() ?? "",
+                                Service = service?.ToString() ?? ""
                             });
                         }
                     }
@@ -114,9 +114,9 @@ public sealed class PnpExtendedReadTool
 
             return ToolResult.Ok(results, "PnpExtendedReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("USB history listing failed.", "PnpExtendedReadTool");
+            return ToolResult.Fail(ex.Message, "PnpExtendedReadTool");
         }
     }
 }

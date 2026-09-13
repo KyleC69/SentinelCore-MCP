@@ -78,18 +78,20 @@ public sealed class InstalledAppsReadTool
 
                 results.Add(new Dictionary<string, string?>
                 {
-                        ["DisplayName"] = displayName,
-                        ["Publisher"] = subKey.GetValue("Publisher")?.ToString(),
-                        ["Version"] = subKey.GetValue("DisplayVersion")?.ToString(),
-                        ["InstallDate"] = subKey.GetValue("InstallDate")?.ToString(),
-                        ["UninstallString"] = subKey.GetValue("UninstallString")?.ToString(),
-                        ["RegistryPath"] = $"{hive}\\{keyPath}\\{subKeyName}"
+                    ["DisplayName"] = displayName,
+                    ["Publisher"] = subKey.GetValue("Publisher")?.ToString(),
+                    ["Version"] = subKey.GetValue("DisplayVersion")?.ToString(),
+                    ["InstallDate"] = subKey.GetValue("InstallDate")?.ToString(),
+                    ["UninstallString"] = subKey.GetValue("UninstallString")?.ToString(),
+                    ["RegistryPath"] = $"{hive}\\{keyPath}\\{subKeyName}"
                 });
             }
             catch
-            {
+        {
+
                 // Ignore individual corrupted entries.
-            }
+            
+        }
         }
     }
 
@@ -114,9 +116,9 @@ public sealed class InstalledAppsReadTool
 
             return ToolResult.Ok(results, "InstalledAppsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Installed app listing failed.", "InstalledAppsReadTool");
+            return ToolResult.Fail(ex.Message, "InstalledAppsReadTool");
         }
     }
 
@@ -151,19 +153,19 @@ public sealed class InstalledAppsReadTool
 
                 results.Add(new
                 {
-                        Name = name,
-                        Version = product["Version"]?.ToString(),
-                        Vendor = product["Vendor"]?.ToString(),
-                        InstallDate = product["InstallDate"]?.ToString(),
-                        IdentifyingNumber = product["IdentifyingNumber"]?.ToString()
+                    Name = name,
+                    Version = product["Version"]?.ToString(),
+                    Vendor = product["Vendor"]?.ToString(),
+                    InstallDate = product["InstallDate"]?.ToString(),
+                    IdentifyingNumber = product["IdentifyingNumber"]?.ToString()
                 });
             }
 
             return ToolResult.Ok(results, "InstalledAppsReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("MSI product listing failed.", "InstalledAppsReadTool");
+            return ToolResult.Fail(ex.Message, "InstalledAppsReadTool");
         }
     }
 }

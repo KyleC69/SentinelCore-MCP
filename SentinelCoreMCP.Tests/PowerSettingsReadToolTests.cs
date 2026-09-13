@@ -40,7 +40,7 @@ public sealed class PowerSettingsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PowerListPlans_NullErrorDetailsOnSuccess()
     {
-        ToolResult result = await _tool.powerListPlansAsync();
+        ToolResult result = await _tool.PowerListPlansAsync();
 
         if (!result.Success)
         {
@@ -62,7 +62,7 @@ public sealed class PowerSettingsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PowerListPlans_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.powerListPlansAsync();
+        ToolResult result = await _tool.PowerListPlansAsync();
 
         // The power WMI namespace may not be available on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -80,7 +80,7 @@ public sealed class PowerSettingsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PowerListPlans_WhenSuccessful_ContainsPlanEntries()
     {
-        ToolResult result = await _tool.powerListPlansAsync();
+        ToolResult result = await _tool.PowerListPlansAsync();
 
         if (!result.Success)
         {
@@ -105,7 +105,7 @@ public sealed class PowerSettingsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PowerListSettings_ReturnsSuccessfulOrGracefulFailure()
     {
-        ToolResult result = await _tool.powerListSettingsAsync();
+        ToolResult result = await _tool.PowerListSettingsAsync();
 
         // The power WMI namespace may not be available on all systems
         Assert.True(result.Success || result.ErrorDetails != null, $"Expected success or graceful failure but got: Success={result.Success}");
@@ -123,7 +123,7 @@ public sealed class PowerSettingsReadToolTests
     [Trait("Category", "WindowsOnly")]
     public async Task PowerListSettings_WhenSuccessful_ContainsSettingEntries()
     {
-        ToolResult result = await _tool.powerListSettingsAsync();
+        ToolResult result = await _tool.PowerListSettingsAsync();
 
         if (!result.Success)
         {

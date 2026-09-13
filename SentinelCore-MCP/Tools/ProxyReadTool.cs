@@ -55,7 +55,7 @@ public sealed class ProxyReadTool
             using RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings", false);
             if (key is null)
             {
-                return ToolResult.Fail("Internet Settings registry key not found.", "ProxyReadTool");
+                return ToolResult.Fail("Proxy registry key not found.", "ProxyReadTool");
             }
 
             foreach (string valueName in key.GetValueNames())

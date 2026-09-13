@@ -47,19 +47,19 @@ public sealed class BatteryReadTool
 
                 results.Add(new
                 {
-                        Name = battery["Name"]?.ToString(),
-                        Description = battery["Description"]?.ToString(),
-                        EstimatedChargeRemaining = battery["EstimatedChargeRemaining"]?.ToString(),
-                        BatteryStatus = battery["BatteryStatus"]?.ToString(),
-                        EstimatedRunTime = battery["EstimatedRunTime"]?.ToString()
+                    Name = battery["Name"]?.ToString(),
+                    Description = battery["Description"]?.ToString(),
+                    EstimatedChargeRemaining = battery["EstimatedChargeRemaining"]?.ToString(),
+                    BatteryStatus = battery["BatteryStatus"]?.ToString(),
+                    EstimatedRunTime = battery["EstimatedRunTime"]?.ToString()
                 });
             }
 
             return ToolResult.Ok(results, "BatteryReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Battery listing failed.", "BatteryReadTool");
+            return ToolResult.Fail(ex.Message, "BatteryReadTool");
         }
     }
 
@@ -90,9 +90,9 @@ public sealed class BatteryReadTool
 
             return sb.Length == 0 ? ToolResult.Fail("No battery-specific power settings found.", "BatteryReadTool") : ToolResult.Ok(sb.ToString(), "BatteryReadTool");
         }
-        catch
+        catch (Exception ex)
         {
-            return ToolResult.Fail("Battery power settings read failed.", "BatteryReadTool");
+            return ToolResult.Fail(ex.Message, "BatteryReadTool");
         }
     }
 }
