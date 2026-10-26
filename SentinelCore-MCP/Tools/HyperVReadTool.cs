@@ -58,6 +58,10 @@ public sealed class HyperVReadTool
 
             return ToolResult.Ok(sb.ToString(), "HyperVReadTool");
         }
+        catch (CimException ex) when (ex.Message.Contains("Invalid namespace", StringComparison.OrdinalIgnoreCase) || ex.HResult == -2147023174)
+        {
+            return ToolResult.Fail("Hyper-V is not installed or the WMI provider is not available. The 'root\\virtualization\\v2' namespace was not found. Please ensure Hyper-V is installed and the Hyper-V WMI provider is enabled.", "Hyper-V switch listing");
+        }
         catch (Exception ex)
         {
             return ToolResult.Fail(ex.Message, "Hyper-V switch listing");
@@ -90,6 +94,10 @@ public sealed class HyperVReadTool
             }
 
             return ToolResult.Ok(sb.ToString(), "HyperVReadTool");
+        }
+        catch (CimException ex) when (ex.Message.Contains("Invalid namespace", StringComparison.OrdinalIgnoreCase) || ex.HResult == -2147023174)
+        {
+            return ToolResult.Fail("Hyper-V is not installed or the WMI provider is not available. The 'root\\virtualization\\v2' namespace was not found. Please ensure Hyper-V is installed and the Hyper-V WMI provider is enabled.", "Hyper-V VM listing");
         }
         catch (Exception ex)
         {
@@ -138,6 +146,10 @@ public sealed class HyperVReadTool
             }
 
             return ToolResult.Ok(results, "HyperVReadTool");
+        }
+        catch (CimException ex) when (ex.Message.Contains("Invalid namespace", StringComparison.OrdinalIgnoreCase) || ex.HResult == -2147023174)
+        {
+            return ToolResult.Fail("Hyper-V is not installed or the WMI provider is not available. The 'root\\virtualization\\v2' namespace was not found. Please ensure Hyper-V is installed and the Hyper-V WMI provider is enabled.", "Hyper-V VM read");
         }
         catch (Exception ex)
         {

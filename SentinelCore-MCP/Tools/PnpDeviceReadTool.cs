@@ -42,8 +42,6 @@ public sealed class PnpDeviceReadTool
             "/problem",
             "/ids",
             "/instanceids",
-            "/format:csv",
-            "/format:table",
             "/?"
     };
 
@@ -232,7 +230,9 @@ public sealed class PnpDeviceReadTool
         }
 
         output = process.StandardOutput.ReadToEnd();
+        output = Helpers.NormalizeToolOutput(output);
         string error = process.StandardError.ReadToEnd();
+        error = Helpers.NormalizeToolOutput(error); 
         process.WaitForExit();
 
         return process.ExitCode != 0 ? string.IsNullOrWhiteSpace(error) ? ToolResult.Fail($"pnputil exited with code {process.ExitCode}.", "PnpDeviceReadTool") : ToolResult.Fail($"pnputil exited with code {process.ExitCode}: {error.Trim()}", "PnpDeviceReadTool") : null;

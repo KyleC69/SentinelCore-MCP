@@ -11,8 +11,6 @@ using System.Runtime.Versioning;
 
 using ModelContextProtocol.Server;
 
-using SentinelCoreMCP.Tools.Interop;
-
 
 
 
@@ -32,24 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class PendMovesReadTool
 {
-
-    /// <summary>
-    ///     Probes whether Sysinternals PendMoves is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_PendMoves_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals PendMoves utility is installed and reports its version and path.")]
-    public async Task<ToolResult> PendMovesAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("pendmoves")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
 
 
     /// <summary>

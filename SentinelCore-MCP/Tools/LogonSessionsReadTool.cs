@@ -7,11 +7,11 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
+using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -32,25 +32,6 @@ public sealed class LogonSessionsReadTool
 {
 
     /// <summary>
-    ///     Probes whether Sysinternals LogonSessions is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_LogonSessions_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals LogonSessions utility is installed and reports its version and path.")]
-    public async Task<ToolResult> LogonSessionsAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("logonsessions")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
     ///     Lists active logon sessions with their authentication package, SID, and
     ///     associated processes.
     /// </summary>
@@ -67,13 +48,72 @@ public sealed class LogonSessionsReadTool
             return maxValidation;
         }
 
-        // -p lists processes in each session; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync("logonsessions", "-p -accepteula", "Logon session enumeration").ConfigureAwait(false);
-        if (!result.Success)
+        // -p lists processes in each session; -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                    FileName = "logonsessions.exe",
+                    Arguments = "-p -nobanner /accepteula",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"LogonSessions failed with exit code {process.ExitCode}: {error.Trim()}", "Logon session enumeration");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "Logon session enumeration complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "Logon session enumeration failed.");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "Logon session enumeration complete.");
+        string[] lines = output.Split('\n');
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join('\n', lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

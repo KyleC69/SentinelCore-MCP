@@ -7,12 +7,11 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -33,25 +32,6 @@ public sealed class PsListReadTool
 {
 
     /// <summary>
-    ///     Probes whether Sysinternals PsList is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_PsList_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals PsList utility is installed and reports its version and path.")]
-    public async Task<ToolResult> PsListAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("pslist")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
     ///     Lists running processes with kernel/user CPU time and thread counts using
     ///     PsList.
     /// </summary>
@@ -66,10 +46,9 @@ public sealed class PsListReadTool
     {
         if (processNameOrPid is not null)
         {
-            ToolResult? processValidation = SysinternalsHelper.ValidateArgument(processNameOrPid, "processNameOrPid");
-            if (processValidation is not null)
+            if (string.IsNullOrWhiteSpace(processNameOrPid))
             {
-                return processValidation;
+                return ToolResult.Fail("processNameOrPid cannot be empty.", "Input validation");
             }
 
             if (!uint.TryParse(processNameOrPid, out _) && !System.Text.RegularExpressions.Regex.IsMatch(processNameOrPid, @"^[a-zA-Z0-9._\- ]+$"))
@@ -84,7 +63,7 @@ public sealed class PsListReadTool
             return maxValidation;
         }
 
-        StringBuilder arguments = new("-accepteula");
+        StringBuilder arguments = new("-nobanner /accepteula");
         if (includeThreads)
         {
             arguments.Append(" -t");
@@ -95,12 +74,64 @@ public sealed class PsListReadTool
             arguments.Append(" \"").Append(processNameOrPid).Append('"');
         }
 
-        ToolResult result = await SysinternalsHelper.RunAsync("pslist", arguments.ToString(), "PsList enumeration").ConfigureAwait(false);
-        if (!result.Success)
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                FileName = "pslist.exe",
+                Arguments = arguments.ToString(),
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"PsList failed with exit code {process.ExitCode}: {error.Trim()}", "PsList enumeration");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "PsList enumeration complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "PsList enumeration failed.");
+        }
+    }
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "PsList enumeration complete.");
+        string[] lines = output.Split('\n');
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join('\n', lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

@@ -7,11 +7,10 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -32,16 +31,4 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class AccessEnumReadTool
 {
-
-    /// <summary>
-    ///     Probes whether Sysinternals AccessEnum is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_AccessEnum_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals AccessEnum utility is installed and reports its version and path. AccessEnum is GUI-only, so no automated enumeration is available.")]
-    public async Task<ToolResult> AccessEnumAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("accessenum")).ConfigureAwait(false);
-    }
 }

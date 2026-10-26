@@ -203,7 +203,7 @@ public sealed class SecurityExtendedReadTool
             }
 
             sb.AppendLine(uefiState is not null ? $"[UEFI State] SecureBootEnabled={uefiState}" : "[UEFI State] Secure Boot state not available (system may not support UEFI Secure Boot).");
-
+            sb.AppendLine(Helpers.NormalizeToolOutput(sb.ToString()));
             return ToolResult.Ok(sb.ToString(), "SecurityExtendedReadTool");
         }
         catch (Exception ex)

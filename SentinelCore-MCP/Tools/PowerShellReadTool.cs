@@ -12,6 +12,7 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Runtime.Versioning;
 using System.Text;
+using System.Text.Json;
 
 using ModelContextProtocol.Server;
 
@@ -37,7 +38,7 @@ public sealed class PowerShellReadTool
     /// <summary>
     ///     Maximum number of result objects returned from any single query.
     /// </summary>
-    private const int DefaultMaxResults = 250;
+    private const int DefaultMaxResults = 50;
 
     /// <summary>
     ///     Timeout in seconds for PowerShell command execution.
@@ -66,6 +67,14 @@ public sealed class PowerShellReadTool
     [Description("Retrieve a list of allowed powershell commands")]
     [McpServerTool(Title = "List of allowed command for this tool.", Destructive = false, Name = "AllowedCommands", ReadOnly = true)]
     public List<string> GetAllowedCommands() => AllowedCommands.ToList();
+
+
+
+
+
+
+
+
     public static readonly HashSet<string> AllowedCommands = new(StringComparer.OrdinalIgnoreCase)
     {
             // ---- System information ----
@@ -503,7 +512,7 @@ public sealed class PowerShellReadTool
     [SupportedOSPlatform("windows")]
     [McpServerTool(Name = "PowerShell_Query", ReadOnly = true, Destructive = false)]
     [Description("Executes a pre-approved, read-only PowerShell query in a sandboxed runspace. " + "Only whitelisted commands are permitted. Pipeline operators, redirects, " + "script blocks, and .NET type access are forbidden. Call AllowedCommands for a list of commands.")]
-    public async Task<ToolResult> PowershellQueryAsync([Description("The PowerShell command to execute. Must be a single read-only command " + "from the approved list. No pipelines, redirects, or script blocks.")] string command, [Description("Maximum number of result objects to return. Defaults to 50.")] int maxResults = DefaultMaxResults)
+    public async Task<ToolResult> PowershellQueryAsync([Description("The PowerShell command to execute. Must be a single read-only command " + "from the approved list. No pipelines, redirects, or script blocks.")] string command, [Description("Maximum number of result objects to return. Defaults to 50.")] int maxResults = DefaultMaxResults, CancellationToken cancellationToken = default)
     {
         // Step 1: Validate the command against whitelist and blacklist
         string? validationError = ValidateCommand(command);
@@ -517,77 +526,57 @@ public sealed class PowerShellReadTool
         {
             InitialSessionState iss = CreateConstrainedSessionState();
             using PowerShell ps = PowerShell.Create(iss);
+
+            ps.AddScript(@"
+$env:PSModulePath =
+    [Environment]::GetEnvironmentVariable('PSModulePath', 'Machine') + ';' +
+    [Environment]::GetEnvironmentVariable('PSModulePath', 'User')
+");
             ps.AddScript(command);
 
-            // Set execution timeout to prevent runaway commands
-            IAsyncResult asyncResult = ps.BeginInvoke();
-            if (!asyncResult.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(ExecutionTimeoutSeconds)))
-            {
-                ps.Stop();
-                return ToolResult.Fail($"Command execution timed out after {ExecutionTimeoutSeconds} seconds.", "PowerShellReadTool");
-            }
 
-            PSDataCollection<PSObject> results = ps.EndInvoke(asyncResult);
+            // Set execution timeout using CancellationToken
+            using CancellationTokenSource timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(ExecutionTimeoutSeconds));
+
+            // Execute asynchronously using modern InvokeAsync pattern
+                        PSDataCollection<PSObject> results = new();
+            await ps.InvokeAsync(results, new PSInvocationSettings(), null, timeoutCts.Token)!.ConfigureAwait(false);
 
             // Check for errors
             if (ps.HadErrors)
             {
-                string errors = string.Join("; ", ps.Streams.Error.Select(e => e.ToString()));
+                string errors = string.Join("; ", ps.Streams.Error?.Select(e => e.ToString()) ?? Array.Empty<string>());
                 return ToolResult.Fail($"PowerShell query failed: {errors}", "PowerShellReadTool");
             }
 
-            // Step 3: Format results
-            StringBuilder sb = new();
-            int count = 0;
 
-            foreach (PSObject result in results)
+            if (results.Count == 0)
             {
-                if (count >= maxResults)
-                {
-                    sb.AppendLine($"...[truncated at {maxResults} results]");
-                    break;
-                }
-
-                if (result.BaseObject is IDictionary dict)
-                {
-                    foreach (DictionaryEntry entry in dict)
-                    {
-                        sb.AppendLine($"  {entry.Key}={TruncateValue(entry.Value)}");
-                    }
-
-                    sb.AppendLine();
-                }
-                else if (result.BaseObject is not null && result.BaseObject.GetType().IsPrimitive)
-                {
-                    sb.AppendLine(TruncateValue(result.BaseObject));
-                }
-                else
-                {
-                    // For complex objects, enumerate properties
-                    bool hasProperties = false;
-                    foreach (PSPropertyInfo prop in result.Properties)
-                    {
-                        hasProperties = true;
-                        sb.AppendLine($"  {prop.Name}={TruncateValue(prop.Value)}");
-                    }
-
-                    if (!hasProperties)
-                    {
-                        sb.AppendLine(TruncateValue(result.BaseObject));
-                    }
-
-                    sb.AppendLine();
-                }
-
-                count++;
+                return ToolResult.Ok("[]", "PowerShellReadTool");
             }
 
-            if (count == 0)
+// Convert PSObjects to their underlying .NET objects
+            object[] objects = results.Take(maxResults).Select(r => r.BaseObject).ToArray();
+
+            string json = JsonSerializer.Serialize(objects.Length == 1 ? objects[0] : objects, new JsonSerializerOptions { WriteIndented = true });
+
+            if (results.Count > maxResults)
             {
-                sb.AppendLine("No results returned.");
+                json += Environment.NewLine + $"/* truncated: showing {maxResults} of {results.Count} results */";
             }
 
-            return ToolResult.Ok(sb.ToString(), "PowerShellReadTool");
+            return ToolResult.Ok(json, "PowerShellReadTool");
+
+
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ToolResult.Fail("Operation was cancelled.", "PowerShellReadTool");
+        }
+        catch (OperationCanceledException)
+        {
+            return ToolResult.Fail($"Command execution timed out after {ExecutionTimeoutSeconds} seconds.", "PowerShellReadTool");
         }
         catch (Exception ex)
         {

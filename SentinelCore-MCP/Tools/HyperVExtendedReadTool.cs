@@ -64,6 +64,10 @@ public sealed class HyperVExtendedReadTool
 
             return ToolResult.Ok(results, "HyperVExtendedReadTool");
         }
+        catch (CimException ex) when (ex.Message.Contains("Invalid namespace", StringComparison.OrdinalIgnoreCase) || ex.HResult == -2147023174)
+        {
+            return ToolResult.Fail("Hyper-V is not installed or the WMI provider is not available. The 'root\\virtualization\\v2' namespace was not found. Please ensure Hyper-V is installed and the Hyper-V WMI provider is enabled.", "HyperVExtendedReadTool");
+        }
         catch (Exception ex)
         {
             return ToolResult.Fail(ex.Message, "HyperVExtendedReadTool");

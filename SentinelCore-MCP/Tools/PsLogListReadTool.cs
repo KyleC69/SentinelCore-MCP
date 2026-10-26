@@ -7,11 +7,11 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
+using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -33,25 +33,6 @@ public sealed class PsLogListReadTool
 {
 
     /// <summary>
-    ///     Probes whether Sysinternals PsLogList is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_PsLogList_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals PsLogList utility is installed and reports its version and path.")]
-    public async Task<ToolResult> PsLogListAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("psloglist")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
     ///     Dumps recent events from an event log channel using PsLogList.
     /// </summary>
     /// <param name="logName">The event log name to dump, e.g. Application, System, Security.</param>
@@ -63,14 +44,13 @@ public sealed class PsLogListReadTool
     [Description("Dumps recent event log records using Sysinternals PsLogList. Requires PsLogList to be installed; the Security log requires elevation.")]
     public async Task<ToolResult> PsLogListDumpEventsAsync([Description("The event log name to dump, e.g. Application, System, Security.")] string logName, [Description("Maximum number of events to dump. Defaults to 50.")] int maxEvents = 50, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
-        ToolResult? logValidation = SysinternalsHelper.ValidateArgument(logName, "logName");
-        if (logValidation is not null)
+        if (string.IsNullOrWhiteSpace(logName))
         {
-            return logValidation;
+            return ToolResult.Fail("logName cannot be empty.", "Input validation");
         }
 
         // Log names are restricted to a safe character set to prevent argument shaping.
-        if (!System.Text.RegularExpressions.Regex.IsMatch(logName!, @"^[a-zA-Z0-9 _\-]+$"))
+        if (!System.Text.RegularExpressions.Regex.IsMatch(logName, @"^[a-zA-Z0-9 _\-]+$"))
         {
             return ToolResult.Fail("Invalid log name format.", "PsLogList dump");
         }
@@ -82,18 +62,70 @@ public sealed class PsLogListReadTool
         }
 
         ToolResult? maxLinesValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
-        if (maxValidation is not null)
+        if (maxLinesValidation is not null)
         {
-            return maxValidation;
+            return maxLinesValidation;
         }
 
-        // -n limits the event count; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync("psloglist", $"-n {maxEvents} -accepteula \"{logName}\"", "PsLogList dump").ConfigureAwait(false);
-        if (!result.Success)
+        // -n limits the event count; -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                FileName = "psloglist.exe",
+                Arguments = $"-n {maxEvents} -nobanner /accepteula \"{logName}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"PsLogList failed with exit code {process.ExitCode}: {error.Trim()}", "PsLogList dump");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "PsLogList dump complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "PsLogList dump failed.");
+        }
+    }
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "PsLogList dump complete.");
+        string[] lines = output.Split('\n');
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join('\n', lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

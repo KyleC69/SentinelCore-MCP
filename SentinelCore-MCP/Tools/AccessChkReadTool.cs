@@ -7,12 +7,11 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -33,24 +32,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class AccessChkReadTool
 {
 
-    /// <summary>
-    ///     Probes whether Sysinternals AccessChk is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_AccessChk_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals AccessChk utility is installed and reports its version and path.")]
-    public async Task<ToolResult> AccessChkAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("accesschk")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
 
     /// <summary>
     ///     Audits effective permissions granted to a user or group on a file,
@@ -69,21 +50,19 @@ public sealed class AccessChkReadTool
     [Description("Audits effective permissions on files, registry keys, services, or processes using Sysinternals AccessChk. Requires AccessChk to be installed.")]
     public async Task<ToolResult> AccessChkReadPermissionsAsync([Description("The object to inspect: file/directory path, registry key (hklm\\...), service (service:Name), or process name.")] string target, [Description("Optional account name to audit. Defaults to the current user.")] string? account = null, [Description("Whether to recurse into sub-objects. Defaults to false.")] bool recurse = false, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
-        ToolResult? targetValidation = SysinternalsHelper.ValidateArgument(target, "target");
-        if (targetValidation is not null)
+        // Validate target
+        if (string.IsNullOrWhiteSpace(target))
         {
-            return targetValidation;
+            return ToolResult.Fail("target is required.", "Input validation");
         }
 
-        if (account is not null)
+        // Validate account if provided
+        if (account is not null && string.IsNullOrWhiteSpace(account))
         {
-            ToolResult? accountValidation = SysinternalsHelper.ValidateArgument(account, "account");
-            if (accountValidation is not null)
-            {
-                return accountValidation;
-            }
+            return ToolResult.Fail("account cannot be empty.", "Input validation");
         }
 
+        // Validate maxLines
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
         if (maxValidation is not null)
         {
@@ -91,7 +70,8 @@ public sealed class AccessChkReadTool
         }
 
         // -w reports write-level access only (read-only audit surface); -q suppresses the banner.
-        StringBuilder arguments = new("-w -q");
+        // -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        StringBuilder arguments = new("-w -q -nobanner /accepteula");
         if (recurse)
         {
             arguments.Append(" -s");
@@ -99,12 +79,71 @@ public sealed class AccessChkReadTool
 
         arguments.Append(" \"").Append(account ?? Environment.UserName).Append("\" \"").Append(target).Append('"');
 
-        ToolResult result = await SysinternalsHelper.RunAsync("accesschk", arguments.ToString(), "AccessChk permission audit").ConfigureAwait(false);
-        if (!result.Success)
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                    FileName = "accesschk.exe",
+                    Arguments = arguments.ToString(),
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"AccessChk failed with exit code {process.ExitCode}: {error.Trim()}", "AccessChk permission audit");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "AccessChk permission audit complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "AccessChk permission audit failed.");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "AccessChk permission audit");
+        string[] lines = output.Split(["\r\n", "\n"], StringSplitOptions.None);
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join("\n", lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

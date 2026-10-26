@@ -7,11 +7,12 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.Versioning;
+using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -33,25 +34,6 @@ public sealed class SigCheckReadTool
 {
 
     /// <summary>
-    ///     Probes whether Sysinternals SigCheck is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_SigCheck_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals SigCheck utility is installed and reports its version and path.")]
-    public async Task<ToolResult> SigCheckAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("sigcheck")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
     ///     Verifies the digital signature of a file and reports certificate details
     ///     using SigCheck.
     /// </summary>
@@ -63,13 +45,12 @@ public sealed class SigCheckReadTool
     [Description("Verifies a file's digital signature and reports certificate details using Sysinternals SigCheck. Requires SigCheck to be installed; revocation checks make outbound network calls to certificate authorities.")]
     public async Task<ToolResult> SigCheckVerifyFileAsync([Description("The absolute path of the file to verify.")] string filePath, [Description("Maximum number of output lines to return. Defaults to 100.")] int maxLines = 100)
     {
-        ToolResult? pathValidation = SysinternalsHelper.ValidateArgument(filePath, "filePath");
-        if (pathValidation is not null)
+        if (string.IsNullOrWhiteSpace(filePath))
         {
-            return pathValidation;
+            return ToolResult.Fail("filePath cannot be empty.", "Input validation");
         }
 
-        if (!File.Exists(filePath!))
+        if (!File.Exists(filePath))
         {
             return ToolResult.Fail($"File not found: {filePath}", "SigCheck verification");
         }
@@ -80,13 +61,65 @@ public sealed class SigCheckReadTool
             return maxValidation;
         }
 
-        // -a shows extended version info; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync("sigcheck", $"-a -accepteula \"{filePath}\"", "SigCheck verification", timeoutSeconds: 120).ConfigureAwait(false);
-        if (!result.Success)
+        // -a shows extended version info; -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                FileName = "sigcheck.exe",
+                Arguments = $"-a -nobanner /accepteula \"{filePath}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"SigCheck failed with exit code {process.ExitCode}: {error.Trim()}", "SigCheck verification");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "SigCheck verification complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "SigCheck verification failed.");
+        }
+    }
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "SigCheck verification complete.");
+        string[] lines = output.Split('\n');
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join('\n', lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

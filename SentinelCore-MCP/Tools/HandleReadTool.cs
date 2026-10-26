@@ -7,12 +7,11 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -34,25 +33,6 @@ public sealed class HandleReadTool
 {
 
     /// <summary>
-    ///     Probes whether Sysinternals Handle is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_Handle_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals Handle utility is installed and reports its version and path.")]
-    public async Task<ToolResult> HandleAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("handle")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
     ///     Lists open handles for all processes, optionally filtered by a search
     ///     substring matched against handle names.
     /// </summary>
@@ -64,13 +44,10 @@ public sealed class HandleReadTool
     [Description("Lists open file and kernel object handles using Sysinternals Handle. Requires Handle to be installed; handle enumeration requires elevation.")]
     public async Task<ToolResult> HandleListAsync([Description("Optional substring to match against handle names, e.g. a file path fragment.")] string? searchFilter = null, [Description("Maximum number of output lines to return. Defaults to 200.")] int maxLines = 200)
     {
-        if (searchFilter is not null)
+        // Validate searchFilter if provided
+        if (searchFilter is not null && string.IsNullOrWhiteSpace(searchFilter))
         {
-            ToolResult? filterValidation = SysinternalsHelper.ValidateArgument(searchFilter, "searchFilter");
-            if (filterValidation is not null)
-            {
-                return filterValidation;
-            }
+            return ToolResult.Fail("searchFilter cannot be empty.", "Input validation");
         }
 
         ToolResult? maxValidation = InputValidator.ValidateMaxRecords(maxLines, "maxLines");
@@ -79,19 +56,78 @@ public sealed class HandleReadTool
             return maxValidation;
         }
 
-        // -a dumps all handle types; -accepteula suppresses the EULA prompt.
-        StringBuilder arguments = new("-a -accepteula");
+        // -a dumps all handle types; -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        StringBuilder arguments = new("-a -nobanner /accepteula");
         if (!string.IsNullOrWhiteSpace(searchFilter))
         {
             arguments.Append(" \"").Append(searchFilter).Append('"');
         }
 
-        ToolResult result = await SysinternalsHelper.RunAsync("handle", arguments.ToString(), "Handle enumeration").ConfigureAwait(false);
-        if (!result.Success)
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                    FileName = "handle.exe",
+                    Arguments = arguments.ToString(),
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"Handle failed with exit code {process.ExitCode}: {error.Trim()}", "Handle enumeration");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "Handle enumeration complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "Handle enumeration failed.");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "Handle enumeration complete.");
+        string[] lines = output.Split(["\r\n", "\n"], StringSplitOptions.None);
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join("\n", lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

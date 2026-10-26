@@ -34,24 +34,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class RegDelNullReadTool
 {
 
-    /// <summary>
-    ///     Probes whether Sysinternals RegDelNull is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_RegDelNull_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals RegDelNull utility is installed and reports its version and path.")]
-    public async Task<ToolResult> RegDelNullAvailabilityAsync()
-    {
-        return await Task.Run(() => Interop.SysinternalsHelper.ProbeAvailability("regdelnull")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
 
     /// <summary>
     ///     Scans a registry key subtree for values whose names or data contain

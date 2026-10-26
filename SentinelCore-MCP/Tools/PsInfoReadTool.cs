@@ -7,11 +7,11 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
+using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -32,25 +32,6 @@ public sealed class PsInfoReadTool
 {
 
     /// <summary>
-    ///     Probes whether Sysinternals PsInfo is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_PsInfo_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals PsInfo utility is installed and reports its version and path.")]
-    public async Task<ToolResult> PsInfoAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("psinfo")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
     ///     Reports operating system, kernel, install date, and hotfix information
     ///     using PsInfo.
     /// </summary>
@@ -67,13 +48,65 @@ public sealed class PsInfoReadTool
             return maxValidation;
         }
 
-        // -h lists hotfixes; -s lists installed software; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync("psinfo", "-h -accepteula", "PsInfo system read").ConfigureAwait(false);
-        if (!result.Success)
+        // -h lists hotfixes; -s lists installed software; -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                FileName = "psinfo.exe",
+                Arguments = "-h -nobanner /accepteula",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"PsInfo failed with exit code {process.ExitCode}: {error.Trim()}", "PsInfo system read");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "PsInfo system read complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "PsInfo system read failed.");
+        }
+    }
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "PsInfo system read complete.");
+        string[] lines = output.Split('\n');
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join('\n', lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

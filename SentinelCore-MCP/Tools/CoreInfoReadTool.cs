@@ -7,11 +7,10 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -33,25 +32,6 @@ public sealed class CoreInfoReadTool
 {
 
     /// <summary>
-    ///     Probes whether Sysinternals Coreinfo is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_CoreInfo_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals Coreinfo utility is installed and reports its version and path.")]
-    public async Task<ToolResult> CoreInfoAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("coreinfo")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
     ///     Enumerates processor topology, cache geometry, NUMA nodes, and
     ///     virtualization support using Coreinfo.
     /// </summary>
@@ -68,13 +48,72 @@ public sealed class CoreInfoReadTool
             return maxValidation;
         }
 
-        // -c processor cores, -v virtualization; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync("coreinfo", "-c -v -accepteula", "Coreinfo system read").ConfigureAwait(false);
-        if (!result.Success)
+        // -c processor cores, -v virtualization; -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                    FileName = "coreinfo.exe",
+                    Arguments = "-c -v -nobanner /accepteula",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"Coreinfo failed with exit code {process.ExitCode}: {error.Trim()}", "Coreinfo system read");
+            }
+
+            // Limit lines
+            string limitedOutput = Helpers.NormalizeToolOutput(output);
+
+            return ToolResult.Ok(limitedOutput, "Coreinfo system read complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "Coreinfo system read failed.");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "Coreinfo system read complete.");
+        string[] lines = output.Split(["\r\n", "\n"], StringSplitOptions.None);
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join("\n", lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

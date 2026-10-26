@@ -35,26 +35,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class ActiveDirectoryReadTool
 {
 
-    /// <summary>
-    ///     Reports the availability of the Sysinternals ADInsight utility. ADInsight
-    ///     is a GUI application with no supported command-line interface, so only an
-    ///     availability probe is exposed.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_ADInsight_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals ADInsight utility is installed and reports its version and path. ADInsight is GUI-only, so no automated tracing is available.")]
-    public async Task<ToolResult> AdInsightAvailabilityAsync()
-    {
-        return await Task.Run(() => Interop.SysinternalsHelper.ProbeAvailability("adinsight")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
 
     /// <summary>
     ///     Reports whether the host is joined to an Active Directory domain and, when

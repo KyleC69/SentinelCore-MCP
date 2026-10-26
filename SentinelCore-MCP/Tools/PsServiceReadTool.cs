@@ -7,11 +7,11 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
+using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -33,27 +33,7 @@ public sealed class PsServiceReadTool
 {
 
     /// <summary>
-    ///     Probes whether Sysinternals PsService is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_PsService_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals PsService utility is installed and reports its version and path.")]
-    public async Task<ToolResult> PsServiceAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("psservice")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
-
-    /// <summary>
-    ///     Lists installed services with their configuration and status, or the
-    ///     detailed configuration of a single service.
+    ///     Lists installed services with their configuration and status, or the    ///     detailed configuration of a single service.
     /// </summary>
     /// <param name="serviceName">Optional service name to inspect in detail. When omitted, all services are listed.</param>
     /// <param name="maxLines">Maximum number of output lines to return. Defaults to 200.</param>
@@ -65,13 +45,12 @@ public sealed class PsServiceReadTool
     {
         if (serviceName is not null)
         {
-            ToolResult? nameValidation = SysinternalsHelper.ValidateArgument(serviceName, "serviceName");
-            if (nameValidation is not null)
+            if (string.IsNullOrWhiteSpace(serviceName))
             {
-                return nameValidation;
+                return ToolResult.Fail("serviceName cannot be empty.", "Input validation");
             }
 
-            if (!System.Text.RegularExpressions.Regex.IsMatch(serviceName!, @"^[a-zA-Z0-9._\- ]+$"))
+            if (!System.Text.RegularExpressions.Regex.IsMatch(serviceName, @"^[a-zA-Z0-9._\- ]+$"))
             {
                 return ToolResult.Fail("Invalid service name format.", "PsService enumeration");
             }
@@ -83,15 +62,67 @@ public sealed class PsServiceReadTool
             return maxValidation;
         }
 
-        // -c renders the output as CSV; -accepteula suppresses the EULA prompt.
-        string arguments = string.IsNullOrWhiteSpace(serviceName) ? "-c -accepteula" : $"-c -accepteula \"{serviceName}\"";
+        // -c renders the output as CSV; -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        string arguments = string.IsNullOrWhiteSpace(serviceName) ? "-c -nobanner /accepteula" : $"-c -nobanner /accepteula \"{serviceName}\"";
 
-        ToolResult result = await SysinternalsHelper.RunAsync("psservice", arguments, "PsService enumeration").ConfigureAwait(false);
-        if (!result.Success)
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                FileName = "psservice.exe",
+                Arguments = arguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"PsService failed with exit code {process.ExitCode}: {error.Trim()}", "PsService enumeration");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "PsService enumeration complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "PsService enumeration failed.");
+        }
+    }
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "PsService enumeration complete.");
+        string[] lines = output.Split('\n');
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join('\n', lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

@@ -7,11 +7,12 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.Versioning;
+using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -23,34 +24,14 @@ namespace SentinelCoreMCP.Tools;
 
 
 /// <summary>
-///     Read-only tooling surface for the Sysinternals ProcDump utility.
+///     Tooling surface for the Sysinternals ProcDump utility.
 ///     ProcDump writes dump files to disk, which is a state-changing side effect;
-///     therefore only the availability probe is marked read-only and the capture
-///     operation is honestly declared as non-read-only (spec §4.3, §7.1).
+///     the capture operation is honestly declared as non-read-only (spec §4.3, §7.1).
 /// </summary>
 [McpServerToolType]
 [SupportedOSPlatform("windows")]
 public sealed class ProcDumpReadTool
 {
-
-    /// <summary>
-    ///     Probes whether Sysinternals ProcDump is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_ProcDump_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals ProcDump utility is installed and reports its version and path.")]
-    public async Task<ToolResult> ProcDumpAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("procdump")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
 
     /// <summary>
     ///     Captures a full user-mode dump of a process to a caller-specified file
@@ -70,10 +51,9 @@ public sealed class ProcDumpReadTool
             return pidValidation;
         }
 
-        ToolResult? pathValidation = SysinternalsHelper.ValidateArgument(dumpFilePath, "dumpFilePath");
-        if (pathValidation is not null)
+        if (string.IsNullOrWhiteSpace(dumpFilePath))
         {
-            return pathValidation;
+            return ToolResult.Fail("dumpFilePath cannot be empty.", "Input validation");
         }
 
         if (!Path.IsPathRooted(dumpFilePath) || !dumpFilePath.EndsWith(".dmp", StringComparison.OrdinalIgnoreCase))
@@ -87,13 +67,65 @@ public sealed class ProcDumpReadTool
             return ToolResult.Fail($"Dump directory does not exist: {directory}", "ProcDump capture");
         }
 
-        // -ma captures full memory; -accepteula suppresses the EULA prompt.
-        ToolResult result = await SysinternalsHelper.RunAsync("procdump", $"-ma -accepteula {processId} \"{dumpFilePath}\"", "ProcDump capture", timeoutSeconds: 120).ConfigureAwait(false);
-        if (!result.Success)
+        // -ma captures full memory; -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                FileName = "procdump.exe",
+                Arguments = $"-ma -nobanner /accepteula {processId} \"{dumpFilePath}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"ProcDump failed with exit code {process.ExitCode}: {error.Trim()}", "ProcDump capture");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, 100);
+
+            return ToolResult.Ok(limitedOutput, "ProcDump capture complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "ProcDump capture failed.");
+        }
+    }
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, 100), "ProcDump capture complete.");
+        string[] lines = output.Split('\n');
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join('\n', lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

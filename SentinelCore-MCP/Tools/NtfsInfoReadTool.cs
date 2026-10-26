@@ -7,11 +7,11 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
+using System.Text;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -30,25 +30,6 @@ namespace SentinelCoreMCP.Tools;
 [SupportedOSPlatform("windows")]
 public sealed class NtfsInfoReadTool
 {
-
-    /// <summary>
-    ///     Probes whether Sysinternals NTFSInfo is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_NtfsInfo_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals NTFSInfo utility is installed and reports its version and path.")]
-    public async Task<ToolResult> NtfsInfoAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("ntfsinfo")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
 
     /// <summary>
     ///     Reports NTFS volume geometry and metadata for the specified drive letter.
@@ -74,13 +55,72 @@ public sealed class NtfsInfoReadTool
             return ToolResult.Fail($"Invalid drive letter: {drive}. A single letter A-Z is required.", "NTFSInfo volume read");
         }
 
-        // -accepteula suppresses the EULA prompt; the drive letter is the sole operand.
-        ToolResult result = await SysinternalsHelper.RunAsync("ntfsinfo", $"{drive}: -accepteula", "NTFSInfo volume read").ConfigureAwait(false);
-        if (!result.Success)
+        // -nobanner suppresses the banner; /accepteula suppresses the EULA prompt; the drive letter is the sole operand.
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                    FileName = "ntfsinfo.exe",
+                    Arguments = $"{drive}: -nobanner /accepteula",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"NTFSInfo failed with exit code {process.ExitCode}: {error.Trim()}", "NTFSInfo volume read");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "NTFSInfo volume read complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "NTFSInfo volume read failed.");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "NTFSInfo volume read complete.");
+        string[] lines = output.Split('\n');
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join('\n', lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

@@ -36,9 +36,9 @@ public sealed class WindowsUpdateExtendedReadTool
     /// <param name="maxRecords">Maximum number of updates to return. Defaults to 50.</param>
     /// <returns>A <see cref="ToolResult" /> containing JSON-formatted hotfix information.</returns>
     [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Windows_Update_List_Missing", ReadOnly = true, Destructive = false)]
+    [McpServerTool(Name = "Windows_Update_List", ReadOnly = true, Destructive = false)]
     [Description("Lists installed Windows hotfixes (patch history) via the Win32_QuickFixEngineering WMI class for patch compliance analysis.")]
-    public async Task<ToolResult> WindowsUpdateListMissingAsync([Description("Maximum number of updates to return. Defaults to 50.")] int maxRecords = 50)
+    public async Task<ToolResult> WindowsUpdateListAsync([Description("Maximum number of updates to return. Defaults to 50.")] int maxRecords = 50)
     {
         try
         {

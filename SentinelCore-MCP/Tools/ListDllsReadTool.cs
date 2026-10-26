@@ -7,11 +7,10 @@
 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 
 using ModelContextProtocol.Server;
-
-using SentinelCoreMCP.Tools.Interop;
 
 
 
@@ -32,24 +31,6 @@ namespace SentinelCoreMCP.Tools;
 public sealed class ListDllsReadTool
 {
 
-    /// <summary>
-    ///     Probes whether Sysinternals ListDLLs is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_ListDlls_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals ListDLLs utility is installed and reports its version and path.")]
-    public async Task<ToolResult> ListDllsAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("listdlls")).ConfigureAwait(false);
-    }
-
-
-
-
-
-
-
 
     /// <summary>
     ///     Lists DLLs loaded by all processes, or by a specific process when a name
@@ -65,10 +46,9 @@ public sealed class ListDllsReadTool
     {
         if (processNameOrPid is not null)
         {
-            ToolResult? processValidation = SysinternalsHelper.ValidateArgument(processNameOrPid, "processNameOrPid");
-            if (processValidation is not null)
+            if (string.IsNullOrWhiteSpace(processNameOrPid))
             {
-                return processValidation;
+                return ToolResult.Fail("processNameOrPid cannot be empty.", "Input validation");
             }
 
             // Numeric PIDs and simple image names are the only accepted shapes.
@@ -84,15 +64,74 @@ public sealed class ListDllsReadTool
             return maxValidation;
         }
 
-        // -accepteula suppresses the EULA prompt.
-        string arguments = string.IsNullOrWhiteSpace(processNameOrPid) ? "-accepteula" : $"-accepteula \"{processNameOrPid}\"";
+        // -nobanner suppresses the banner; /accepteula suppresses the EULA prompt.
+        string arguments = string.IsNullOrWhiteSpace(processNameOrPid) ? "-nobanner /accepteula" : $"-nobanner /accepteula \"{processNameOrPid}\"";
 
-        ToolResult result = await SysinternalsHelper.RunAsync("listdlls", arguments, "ListDLLs enumeration").ConfigureAwait(false);
-        if (!result.Success)
+        try
         {
-            return result;
+            ProcessStartInfo psi = new()
+            {
+                    FileName = "listdlls.exe",
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+            };
+
+            using Process process = new() { StartInfo = psi };
+            process.Start();
+
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+            Task<string> errorTask = process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            string output = await outputTask.ConfigureAwait(false);
+            string error = await errorTask.ConfigureAwait(false);
+
+            if (process.ExitCode != 0 && string.IsNullOrWhiteSpace(output))
+            {
+                return ToolResult.Fail($"ListDLLs failed with exit code {process.ExitCode}: {error.Trim()}", "ListDLLs enumeration");
+            }
+
+            // Limit lines
+            string limitedOutput = LimitLines(output, maxLines);
+
+            return ToolResult.Ok(limitedOutput, "ListDLLs enumeration complete.");
+        }
+        catch (Exception ex)
+        {
+            return ToolResult.Fail(ex.Message, "ListDLLs enumeration failed.");
+        }
+    }
+
+
+
+
+
+
+
+
+    /// <summary>
+    ///     Limits the output to the specified maximum number of lines.
+    /// </summary>
+    /// <param name="output">The output to limit.</param>
+    /// <param name="maxLines">Maximum number of lines to return.</param>
+    /// <returns>The limited output.</returns>
+    private static string LimitLines(string output, int maxLines)
+    {
+        if (string.IsNullOrEmpty(output))
+        {
+            return output;
         }
 
-        return ToolResult.Ok(SysinternalsHelper.LimitLines((string)result.Results!, maxLines), "ListDLLs enumeration complete.");
+        string[] lines = output.Split(["\r\n", "\n"], StringSplitOptions.None);
+        if (lines.Length <= maxLines)
+        {
+            return output;
+        }
+
+        return string.Join("\n", lines.Take(maxLines)) + $"\n... (truncated to {maxLines} lines)";
     }
 }

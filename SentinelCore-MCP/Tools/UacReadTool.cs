@@ -42,16 +42,16 @@ public sealed class UacReadTool
             using RegistryKey? key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", false);
             if (key is null)
             {
-                return ToolResult.Fail("UAC registry key not found.", "UacReadTool");
+                return ToolResult.Fail("UAC registry key not found.", "UacReadSettingsTool");
             }
 
             foreach (string valueName in key.GetValueNames()) sb.AppendLine($"{valueName}={key.GetValue(valueName)}");
 
-            return ToolResult.Ok(sb.ToString(), "UacReadTool");
+            return ToolResult.Ok(sb.ToString(), "UacReadSettingsTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail(ex.Message, "UacReadTool");
+            return ToolResult.Fail(ex.Message, "UacReadSettingsTool");
         }
     }
 
@@ -73,11 +73,11 @@ public sealed class UacReadTool
             WindowsPrincipal principal = new(identity);
             bool isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
             bool elevated = !identity.IsSystem && isAdmin;
-            return ToolResult.Ok($"IsElevated={elevated}, IsAdministrator={isAdmin}", "UacReadTool");
+            return ToolResult.Ok($"IsElevated={elevated}, IsAdministrator={isAdmin}", "UacReadTokenElevationTool");
         }
         catch (Exception ex)
         {
-            return ToolResult.Fail(ex.Message, "UacReadTool");
+            return ToolResult.Fail(ex.Message, "UacReadTokenElevationTool");
         }
     }
 }

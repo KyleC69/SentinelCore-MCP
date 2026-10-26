@@ -11,8 +11,6 @@ using System.Runtime.Versioning;
 
 using ModelContextProtocol.Server;
 
-using SentinelCoreMCP.Tools.Interop;
-
 
 
 
@@ -33,15 +31,5 @@ namespace SentinelCoreMCP.Tools;
 public sealed class WinObjReadTool
 {
 
-    /// <summary>
-    ///     Probes whether Sysinternals WinObj is installed and reports its version.
-    /// </summary>
-    /// <returns>A <see cref="ToolResult" /> containing the availability record.</returns>
-    [SupportedOSPlatform("windows")]
-    [McpServerTool(Name = "Sysinternals_WinObj_Availability", ReadOnly = true, Destructive = false)]
-    [Description("Checks whether the Sysinternals WinObj utility is installed and reports its version and path. WinObj is GUI-only, so no automated NT object namespace enumeration is available.")]
-    public async Task<ToolResult> WinObjAvailabilityAsync()
-    {
-        return await Task.Run(() => SysinternalsHelper.ProbeAvailability("winobj")).ConfigureAwait(false);
-    }
+    // WinObj is GUI-only with no command-line interface. No tools exposed.
 }
